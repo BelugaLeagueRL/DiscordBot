@@ -1,0 +1,16 @@
+name = "beluga-discord-bot"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+
+# Production secrets (set via wrangler secret put)
+# DISCORD_TOKEN = "..."
+# DISCORD_PUBLIC_KEY = "..."
+# DISCORD_APPLICATION_ID = "..."
+# DATABASE_URL = "..."
+# GOOGLE_SHEETS_API_KEY = "..."
+
+# For local development, these are loaded from .dev.vars
