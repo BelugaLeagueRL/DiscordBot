@@ -5,6 +5,7 @@
 
 import { verifyDiscordRequest, InteractionType, InteractionResponseType } from './utils/discord';
 import { handleRegisterCommand } from './handlers/register';
+import type { DiscordInteraction } from './types/discord';
 
 export interface Env {
   DISCORD_TOKEN: string;
@@ -23,7 +24,8 @@ export default {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Signature-Ed25519, X-Signature-Timestamp',
+          'Access-Control-Allow-Headers':
+            'Content-Type, Authorization, X-Signature-Ed25519, X-Signature-Timestamp',
         },
       });
     }
@@ -47,7 +49,7 @@ export default {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const interaction = await request.json();
+    const interaction = (await request.json()) as DiscordInteraction;
     console.log('Received interaction:', interaction.type, interaction.data?.name);
 
     // Handle ping from Discord
@@ -59,12 +61,12 @@ export default {
 
     // Handle application commands
     if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-      const { name } = interaction.data;
+      const { name } = interaction.data ?? { name: '' };
 
       switch (name) {
         case 'register':
           return await handleRegisterCommand(interaction, env);
-        
+
         default:
           console.error('Unknown command:', name);
           return new Response(
