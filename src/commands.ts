@@ -3,8 +3,6 @@
  * Following Discord sample app pattern from commands.js
  */
 
-import { SlashCommandBuilder } from 'discord-interactions';
-
 // Define the /register command
 export const REGISTER_COMMAND = {
   name: 'register',

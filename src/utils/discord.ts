@@ -49,7 +49,7 @@ export async function verifyDiscordRequest(request: Request, publicKey: string):
 /**
  * Create a Discord interaction response
  */
-export function createInteractionResponse(type: InteractionResponseType, data?: any): Response {
+export function createInteractionResponse(type: InteractionResponseType, data?: unknown): Response {
   return new Response(
     JSON.stringify({
       type,
@@ -85,6 +85,8 @@ export function createPublicResponse(content: string): Response {
 /**
  * Create an error response
  */
-export function createErrorResponse(message: string = 'An error occurred. Please try again.'): Response {
+export function createErrorResponse(
+  message: string = 'An error occurred. Please try again.'
+): Response {
   return createEphemeralResponse(`❌ ${message}`);
 }

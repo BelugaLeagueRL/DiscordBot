@@ -1,6 +1,7 @@
 {
   "name": "beluga-discord-bot",
   "version": "1.0.0",
+  "type": "module",
   "description": "Serverless Discord bot for Rocket League using Cloudflare Workers",
   "main": "src/index.ts",
   "scripts": {
@@ -34,7 +35,7 @@
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "@vitest/coverage-v8": "^2.1.8",
-    "@vitest/environment-miniflare": "^2.1.8",
+    "@cloudflare/vitest-pool-workers": "^0.8.47",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -44,6 +45,7 @@
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
     "vitest": "^2.1.8",
     "wrangler": "^3.97.0"
   },

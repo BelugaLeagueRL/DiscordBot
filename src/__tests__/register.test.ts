@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { handleRegisterCommand } from '../handlers/register';
 import type { Env } from '../index';
+import type { DiscordInteraction } from '../types/discord';
 
 // Mock environment
 const mockEnv: Env = {
@@ -12,21 +13,24 @@ const mockEnv: Env = {
 
 describe('Register command handler', () => {
   it('should validate tracker URLs correctly', async () => {
-    const validInteraction = {
+    const validInteraction: DiscordInteraction = {
+      type: 2,
       member: { user: { id: 'test-user-123' } },
       data: {
+        name: 'register',
         options: [
           {
             name: 'tracker1',
-            value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview'
-          }
-        ]
-      }
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview',
+          },
+        ],
+      },
     };
 
     const response = await handleRegisterCommand(validInteraction, mockEnv);
-    const data = await response.json();
-    
+    const data = (await response.json()) as any;
+
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
     expect(data.data.content).toContain('✅ Successfully registered');
@@ -34,21 +38,23 @@ describe('Register command handler', () => {
   });
 
   it('should reject invalid tracker URLs', async () => {
-    const invalidInteraction = {
+    const invalidInteraction: DiscordInteraction = {
+      type: 2,
       member: { user: { id: 'test-user-123' } },
       data: {
+        name: 'register',
         options: [
           {
             name: 'tracker1',
-            value: 'https://invalid-url.com/profile'
-          }
-        ]
-      }
+            value: 'https://invalid-url.com/profile',
+          },
+        ],
+      },
     };
 
     const response = await handleRegisterCommand(invalidInteraction, mockEnv);
-    const data = await response.json();
-    
+    const data = (await response.json()) as any;
+
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
     expect(data.data.content).toContain('Invalid tracker URLs');
@@ -56,35 +62,40 @@ describe('Register command handler', () => {
   });
 
   it('should handle missing user ID', async () => {
-    const noUserInteraction = {
+    const noUserInteraction: DiscordInteraction = {
+      type: 2,
       data: {
+        name: 'register',
         options: [
           {
             name: 'tracker1',
-            value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview'
-          }
-        ]
-      }
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview',
+          },
+        ],
+      },
     };
 
     const response = await handleRegisterCommand(noUserInteraction, mockEnv);
-    const data = await response.json();
-    
+    const data = (await response.json()) as any;
+
     expect(data.data.content).toContain('❌ Could not identify user');
     expect(data.data.flags).toBe(64); // Ephemeral
   });
 
   it('should handle missing tracker URLs', async () => {
-    const noOptionsInteraction = {
+    const noOptionsInteraction: DiscordInteraction = {
+      type: 2,
       member: { user: { id: 'test-user-123' } },
       data: {
-        options: []
-      }
+        name: 'register',
+        options: [],
+      },
     };
 
     const response = await handleRegisterCommand(noOptionsInteraction, mockEnv);
-    const data = await response.json();
-    
+    const data = (await response.json()) as any;
+
     expect(data.data.content).toContain('❌ Please provide at least one tracker URL');
     expect(data.data.flags).toBe(64); // Ephemeral
   });

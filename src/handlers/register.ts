@@ -5,6 +5,7 @@
 
 import { createEphemeralResponse, createErrorResponse } from '../utils/discord';
 import type { Env } from '../index';
+import type { DiscordInteraction } from '../types/discord';
 
 interface TrackerValidationResult {
   isValid: boolean;
@@ -20,7 +21,7 @@ interface TrackerValidationResult {
 function validateTrackerUrl(url: string): TrackerValidationResult {
   try {
     const urlObj = new URL(url);
-    
+
     // Check domain
     if (urlObj.hostname !== 'rocketleague.tracker.network') {
       return {
@@ -31,20 +32,31 @@ function validateTrackerUrl(url: string): TrackerValidationResult {
 
     // Check path pattern
     const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
-    
+
     // Expected: ['rocket-league', 'profile', platform, platform_id, 'overview']
-    if (pathParts.length !== 5 || 
-        pathParts[0] !== 'rocket-league' || 
-        pathParts[1] !== 'profile' || 
-        pathParts[4] !== 'overview') {
+    if (
+      pathParts.length !== 5 ||
+      pathParts[0] !== 'rocket-league' ||
+      pathParts[1] !== 'profile' ||
+      pathParts[4] !== 'overview'
+    ) {
       return {
         isValid: false,
-        error: 'URL must follow the format: https://rocketleague.tracker.network/rocket-league/profile/<platform>/<platform_id>/overview',
+        error:
+          'URL must follow the format: https://rocketleague.tracker.network/rocket-league/profile/<platform>/<platform_id>/overview',
       };
     }
 
     const platform = pathParts[2];
     const platformId = pathParts[3];
+
+    // Validate platform exists
+    if (!platform || !platformId) {
+      return {
+        isValid: false,
+        error: 'Missing platform or platform ID in URL',
+      };
+    }
 
     // Validate supported platforms
     const supportedPlatforms = ['steam', 'epic', 'psn', 'xbl', 'switch'];
@@ -56,7 +68,7 @@ function validateTrackerUrl(url: string): TrackerValidationResult {
     }
 
     // Basic platform ID validation
-    if (!platformId || platformId.length < 3) {
+    if (platformId.length < 3) {
       return {
         isValid: false,
         error: 'Invalid platform ID',
@@ -68,7 +80,7 @@ function validateTrackerUrl(url: string): TrackerValidationResult {
       platform: platform.toLowerCase(),
       platformId,
     };
-  } catch (error) {
+  } catch {
     return {
       isValid: false,
       error: 'Invalid URL format',
@@ -79,15 +91,18 @@ function validateTrackerUrl(url: string): TrackerValidationResult {
 /**
  * Handle the /register command
  */
-export async function handleRegisterCommand(interaction: any, env: Env): Promise<Response> {
+export async function handleRegisterCommand(
+  interaction: DiscordInteraction,
+  _env: Env
+): Promise<Response> {
   try {
     const userId = interaction.member?.user?.id || interaction.user?.id;
-    
+
     if (!userId) {
       return createErrorResponse('Could not identify user. Please try again.');
     }
 
-    const options = interaction.data.options || [];
+    const options = interaction.data?.options || [];
     const trackerUrls: string[] = [];
 
     // Extract tracker URLs from command options
@@ -102,8 +117,8 @@ export async function handleRegisterCommand(interaction: any, env: Env): Promise
     }
 
     // Validate all tracker URLs
-    const validationResults: Array<{url: string, result: TrackerValidationResult}> = [];
-    const validTrackers: Array<{url: string, platform: string, platformId: string}> = [];
+    const validationResults: Array<{ url: string; result: TrackerValidationResult }> = [];
+    const validTrackers: Array<{ url: string; platform: string; platformId: string }> = [];
     const errors: string[] = [];
 
     for (const url of trackerUrls) {
@@ -131,7 +146,9 @@ export async function handleRegisterCommand(interaction: any, env: Env): Promise
     const successMessage = [
       `✅ Successfully registered ${validTrackers.length} tracker URL(s) for <@${userId}>:`,
       '',
-      ...validTrackers.map(tracker => `• ${tracker.platform.toUpperCase()}: ${tracker.platformId}`),
+      ...validTrackers.map(
+        tracker => `• ${tracker.platform?.toUpperCase()}: ${tracker.platformId}`
+      ),
     ];
 
     if (errors.length > 0) {
@@ -139,7 +156,6 @@ export async function handleRegisterCommand(interaction: any, env: Env): Promise
     }
 
     return createEphemeralResponse(successMessage.join('\n'));
-
   } catch (error) {
     console.error('Error handling register command:', error);
     return createErrorResponse('An error occurred while processing your registration.');

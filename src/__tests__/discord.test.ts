@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { InteractionType, InteractionResponseType, createEphemeralResponse, createPublicResponse, createErrorResponse } from '../utils/discord';
+import {
+  InteractionType,
+  InteractionResponseType,
+  createEphemeralResponse,
+  createPublicResponse,
+  createErrorResponse,
+} from '../utils/discord';
 
 describe('Discord utilities', () => {
   describe('constants', () => {
@@ -19,8 +25,8 @@ describe('Discord utilities', () => {
   describe('response creators', () => {
     it('should create ephemeral response', async () => {
       const response = createEphemeralResponse('Test message');
-      const data = await response.json();
-      
+      const data = (await response.json()) as any;
+
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toBe('Test message');
       expect(data.data.flags).toBe(64); // Ephemeral flag
@@ -28,8 +34,8 @@ describe('Discord utilities', () => {
 
     it('should create public response', async () => {
       const response = createPublicResponse('Public message');
-      const data = await response.json();
-      
+      const data = (await response.json()) as any;
+
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toBe('Public message');
       expect(data.data.flags).toBeUndefined();
@@ -37,8 +43,8 @@ describe('Discord utilities', () => {
 
     it('should create error response', async () => {
       const response = createErrorResponse('Custom error');
-      const data = await response.json();
-      
+      const data = (await response.json()) as any;
+
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toBe('❌ Custom error');
       expect(data.data.flags).toBe(64); // Ephemeral flag
@@ -46,8 +52,8 @@ describe('Discord utilities', () => {
 
     it('should create default error response', async () => {
       const response = createErrorResponse();
-      const data = await response.json();
-      
+      const data = (await response.json()) as any;
+
       expect(data.data.content).toBe('❌ An error occurred. Please try again.');
     });
   });

@@ -3,17 +3,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'miniflare',
-    environmentOptions: {
-      // Miniflare options for Cloudflare Workers testing
-      bindings: {
-        DISCORD_TOKEN: 'test-token',
-        DISCORD_PUBLIC_KEY: 'test-key',
-        DISCORD_APPLICATION_ID: 'test-app-id',
-        ENVIRONMENT: 'test',
+    pool: '@cloudflare/vitest-pool-workers',
+    poolOptions: {
+      workers: {
+        wrangler: { configPath: './wrangler.toml' },
       },
-      kvNamespaces: [],
-      durableObjects: {},
     },
     coverage: {
       provider: 'v8',
