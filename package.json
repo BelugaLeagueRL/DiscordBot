@@ -41,7 +41,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
-    "miniflare": "^3.20241218.4",
+    "miniflare": "^4.20250617.4",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
