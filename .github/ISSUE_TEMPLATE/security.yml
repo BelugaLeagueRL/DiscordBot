@@ -1,0 +1,72 @@
+name: Security Issue
+description: Report a security vulnerability
+title: "[SECURITY] "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **⚠️ SECURITY NOTICE**
+        
+        If this is a critical security vulnerability, please consider reporting it privately first.
+        
+  - type: textarea
+    id: security-description
+    attributes:
+      label: Security Issue Description
+      description: Describe the security issue or vulnerability.
+      placeholder: Describe the security concern...
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How severe is this security issue?
+      options:
+        - Low - Minor security concern
+        - Medium - Moderate security risk
+        - High - Significant security vulnerability
+        - Critical - Severe security vulnerability requiring immediate attention
+    validations:
+      required: true
+      
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What could happen if this security issue is not addressed?
+      placeholder: Describe the potential impact...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can this security issue be reproduced?
+      placeholder: |
+        1. Step 1
+        2. Step 2
+        3. Step 3
+    validations:
+      required: false
+      
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: Suggested Fix
+      description: If you have suggestions for how to fix this issue, please share them.
+      placeholder: Suggested approach to fix this security issue...
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any additional context about the security issue.
+      placeholder: Any additional information...
+    validations:
+      required: false

@@ -1,0 +1,93 @@
+name: Development Task
+description: Create a development task or work item
+title: "[TASK] "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for development tasks, refactoring, documentation, or other work items.
+        
+  - type: textarea
+    id: task-description
+    attributes:
+      label: Task Description
+      description: A clear description of the work to be done.
+      placeholder: Describe what needs to be accomplished...
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: Task Type
+      description: What type of task is this?
+      options:
+        - Development
+        - Refactoring
+        - Documentation
+        - Testing
+        - Configuration
+        - Research
+        - Other
+    validations:
+      required: true
+      
+  - type: textarea
+    id: tasks-checklist
+    attributes:
+      label: Tasks Checklist
+      description: Break down the work into specific tasks
+      placeholder: |
+        - [ ] Task 1
+        - [ ] Task 2
+        - [ ] Task 3
+    validations:
+      required: true
+      
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define what needs to be completed for this task to be considered done.
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Tests pass
+        - [ ] Documentation updated
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this task?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+      
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any issues or tasks that must be completed before this one.
+      placeholder: |
+        Depends on:
+        - #123
+        - #456
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, links, or resources related to this task.
+      placeholder: Any additional information, links, or resources...
+    validations:
+      required: false
