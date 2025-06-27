@@ -1,6 +1,6 @@
 # Beluga Discord Bot - Development Makefile
 
-.PHONY: help install clean build test lint format typecheck ci pre-commit dev deploy register
+.PHONY: help install clean build test lint format typecheck ci pre-commit dev deploy register secrets-setup secrets-validate secrets-prod secrets-list
 
 # Default target
 help: ## Show this help message
@@ -90,3 +90,16 @@ check: lint typecheck ## Quick lint and type check
 # Full quality assurance
 qa: clean install lint format-check typecheck test ## Full quality assurance pipeline
 	@echo "✅ Full QA pipeline completed!"
+
+# Secrets management
+secrets-setup: ## Setup local development secrets
+	./scripts/manage-secrets.sh setup-dev
+
+secrets-validate: ## Validate local development secrets
+	./scripts/manage-secrets.sh validate-dev
+
+secrets-prod: ## Setup production secrets (interactive)
+	./scripts/manage-secrets.sh setup-prod
+
+secrets-list: ## List production secrets
+	./scripts/manage-secrets.sh list-prod
