@@ -1,0 +1,62 @@
+{
+  "name": "beluga-discord-bot",
+  "version": "1.0.0",
+  "description": "Serverless Discord bot for Rocket League using Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts,.js",
+    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "format": "prettier --write src/**/*.{ts,js,json}",
+    "format:check": "prettier --check src/**/*.{ts,js,json}",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc && wrangler deploy --dry-run",
+    "register": "node --loader ts-node/esm src/register.ts"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "cloudflare",
+    "workers",
+    "rocket-league",
+    "serverless"
+  ],
+  "author": "Beluga League",
+  "license": "GPL-2.0",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.97.0"
+  },
+  "dependencies": {
+    "discord-interactions": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
