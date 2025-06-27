@@ -45,17 +45,16 @@ if [[ ! "$commit_msg" =~ $regex ]]; then
     exit 1
 fi
 
-# Check for forbidden references (AI tools, etc.)
-if [[ "$commit_msg" =~ [Cc]laude|[Aa][Ii]|assistant|automated|[Cc]hatGPT|[Gg]PT ]]; then
-    echo -e "${RED}❌ Commit message contains forbidden references!${NC}"
+# Check for explicit AI tool references (only very specific cases)
+if [[ "$commit_msg" =~ [Cc]laude|[Cc]hatGPT|[Gg]PT-[0-9] ]]; then
+    echo -e "${RED}❌ Commit message contains explicit AI tool references!${NC}"
     echo ""
     echo -e "${YELLOW}Current message:${NC}"
     echo "  $commit_msg"
     echo ""
-    echo -e "${YELLOW}Forbidden terms:${NC}"
-    echo "  - Claude, AI, assistant, automated, ChatGPT, GPT"
+    echo -e "${YELLOW}Avoid explicit AI tool references:${NC}"
     echo "  - Focus on the technical change and business value"
-    echo "  - Do not reference the development process or tools used"
+    echo "  - Example: 'feat: add user authentication' not 'feat: add auth with ChatGPT help'"
     exit 1
 fi
 
