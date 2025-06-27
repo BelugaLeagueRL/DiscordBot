@@ -60,20 +60,28 @@ jobs:
         # Check that commits follow conventional commit format
         echo "Checking commit messages..."
         
-        # Get commit messages from PR
-        git log --format="%s" origin/main..HEAD | while read commit_msg; do
+        # Get commit messages from PR and check each one
+        failed=false
+        
+        while IFS= read -r commit_msg; do
+          echo "Checking: $commit_msg"
+          
           if [[ ! "$commit_msg" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+ ]]; then
             echo "❌ Invalid commit message format: '$commit_msg'"
             echo "Must follow conventional commits: type(scope): description"
-            exit 1
+            failed=true
           fi
           
           # Check for forbidden references
           if [[ "$commit_msg" =~ [Cc]laude|[Aa][Ii]|assistant|automated ]]; then
             echo "❌ Commit message contains forbidden references: '$commit_msg'"
             echo "Do not reference AI tools or automation in commit messages"
-            exit 1
+            failed=true
           fi
-        done
+        done < <(git log --format="%s" origin/main..HEAD)
+        
+        if [[ "$failed" == "true" ]]; then
+          exit 1
+        fi
         
         echo "✅ All commit messages are valid"
