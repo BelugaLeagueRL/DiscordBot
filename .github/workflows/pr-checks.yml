@@ -1,0 +1,79 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run all checks
+      run: |
+        npm run typecheck
+        npm run lint
+        npm run format:check
+        npm test
+        
+    - name: Build check
+      run: npm run build
+      
+    - name: Security audit
+      run: npm audit --audit-level=high
+      
+    - name: Check for secrets
+      run: |
+        # Simple check for common secret patterns
+        if grep -r -E "(password|secret|key|token).*=" src/ --include="*.ts" --include="*.js"; then
+          echo "❌ Potential secrets found in code!"
+          exit 1
+        else
+          echo "✅ No obvious secrets detected"
+        fi
+        
+  conventional-commits:
+    name: Check Conventional Commits
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Check commit messages
+      run: |
+        # Check that commits follow conventional commit format
+        echo "Checking commit messages..."
+        
+        # Get commit messages from PR
+        git log --format="%s" origin/main..HEAD | while read commit_msg; do
+          if [[ ! "$commit_msg" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+ ]]; then
+            echo "❌ Invalid commit message format: '$commit_msg'"
+            echo "Must follow conventional commits: type(scope): description"
+            exit 1
+          fi
+          
+          # Check for forbidden references
+          if [[ "$commit_msg" =~ [Cc]laude|[Aa][Ii]|assistant|automated ]]; then
+            echo "❌ Commit message contains forbidden references: '$commit_msg'"
+            echo "Do not reference AI tools or automation in commit messages"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All commit messages are valid"
