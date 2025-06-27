@@ -24,9 +24,9 @@ src/
    cp .dev.vars.example .dev.vars
    ```
 
-2. Install dependencies:
+2. Full project setup (installs dependencies and Git hooks):
    ```bash
-   make install
+   make setup
    ```
 
 3. Register Discord commands:
@@ -38,6 +38,14 @@ src/
    ```bash
    make dev
    ```
+
+### Git Hooks
+
+The project includes Git hooks that enforce code quality:
+
+- **commit-msg**: Validates conventional commit format and prevents forbidden references
+- Automatically installed with `make setup`
+- Provides helpful error messages and examples when validation fails
 
 ## Development Commands
 
