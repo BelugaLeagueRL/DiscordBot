@@ -5,10 +5,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { InteractionType, InteractionResponseType } from '../../utils/discord';
+import { InteractionResponseType } from '../../utils/discord';
 import { handleRegisterCommand } from '../../handlers/register';
 import { createMockCommandInteraction, createTrackerOptions, createValidTrackerUrl } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
+import type { DiscordInteraction } from '../../types/discord';
 
 // Type guard for Discord response data
 function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags: number } } {
@@ -128,7 +129,8 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle missing user information gracefully', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(1), { member: undefined });
+      const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', createTrackerOptions(1));
+      const interaction = interactionWithoutMember as DiscordInteraction;
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -184,30 +186,13 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should validate PSN platform URLs correctly', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/psn/testpsnuser/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('psn'),
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -220,30 +205,13 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should validate Xbox platform URLs correctly', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/xbl/TestGamer/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('xbl'),
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -256,30 +224,13 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should validate Switch platform URLs correctly', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/switch/test-switch-user/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('switch'),
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -294,23 +245,13 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Error Handling Workflows', () => {
     it('should handle command execution errors gracefully', async () => {
-      // Simulate an error by passing invalid interaction structure
-      const invalidInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
+      const invalidInteraction = createMockCommandInteraction('register', [], {
         data: {
+          id: '987654321098765432',
           name: 'register',
-          // Missing options field
+          type: 1,
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      });
 
       const response = handleRegisterCommand(invalidInteraction, mockEnv);
       expect(response.status).toBe(200);
@@ -326,34 +267,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle all invalid URLs scenario', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value: 'https://another-invalid.com/profile/epic/testuser/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(2, 0));
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -369,30 +283,7 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Performance Validation in E2E Context', () => {
     it('should process commands efficiently', () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(1));
 
       const startTime = performance.now();
       const response = handleRegisterCommand(interaction, mockEnv);
@@ -405,48 +296,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle multiple tracker URLs efficiently', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/epic/epicuser/overview',
-            },
-            {
-              name: 'tracker3',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/psn/psnuser/overview',
-            },
-            {
-              name: 'tracker4',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/xbl/xboxuser/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(4));
 
       const startTime = performance.now();
       const response = handleRegisterCommand(interaction, mockEnv);
