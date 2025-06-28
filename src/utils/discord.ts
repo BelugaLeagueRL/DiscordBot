@@ -7,23 +7,25 @@ import { verifyKey } from 'discord-interactions';
 
 // Discord interaction types
 export enum InteractionType {
-  PING = 1,
-  APPLICATION_COMMAND = 2,
-  MESSAGE_COMPONENT = 3,
-  APPLICATION_COMMAND_AUTOCOMPLETE = 4,
-  MODAL_SUBMIT = 5,
+  Ping = 1,
+  ApplicationCommand = 2,
+  MessageComponent = 3,
+  ApplicationCommandAutocomplete = 4,
+  ModalSubmit = 5,
 }
 
-// Discord interaction response types
-export enum InteractionResponseType {
-  PONG = 1,
-  CHANNEL_MESSAGE_WITH_SOURCE = 4,
-  DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5,
-  DEFERRED_UPDATE_MESSAGE = 6,
-  UPDATE_MESSAGE = 7,
-  APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8,
-  MODAL = 9,
-}
+// Discord interaction response types (Discord API constants)
+export const InteractionResponseType = {
+  Pong: 1,
+  ChannelMessageWithSource: 4,
+  DeferredChannelMessageWithSource: 5,
+  DeferredUpdateMessage: 6,
+  UpdateMessage: 7,
+  ApplicationCommandAutocompleteResult: 8,
+  Modal: 9,
+} as const;
+
+export type InteractionResponseType = typeof InteractionResponseType[keyof typeof InteractionResponseType];
 
 /**
  * Verify Discord request signature
@@ -42,7 +44,7 @@ export async function verifyDiscordRequest(
       return false;
     }
 
-    return await verifyKey(body, signature, timestamp, publicKey);
+    return verifyKey(body, signature, timestamp, publicKey);
   } catch (error) {
     console.error('Error verifying Discord request:', error);
     return false;
@@ -70,9 +72,10 @@ export function createInteractionResponse(type: InteractionResponseType, data?: 
  * Create an ephemeral (private) message response
  */
 export function createEphemeralResponse(content: string): Response {
-  return createInteractionResponse(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, {
+  const EPHEMERAL_FLAG = 64;
+  return createInteractionResponse(InteractionResponseType.ChannelMessageWithSource, {
     content,
-    flags: 64, // Ephemeral flag
+    flags: EPHEMERAL_FLAG,
   });
 }
 
@@ -80,7 +83,7 @@ export function createEphemeralResponse(content: string): Response {
  * Create a public message response
  */
 export function createPublicResponse(content: string): Response {
-  return createInteractionResponse(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, {
+  return createInteractionResponse(InteractionResponseType.ChannelMessageWithSource, {
     content,
   });
 }

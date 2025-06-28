@@ -154,129 +154,127 @@ function isValidInteractionResponseBody(body: unknown): body is DiscordInteracti
 }
 
 // Factories for Discord API Data Structures
-export class DiscordApiFactory {
-  static createUser(overrides: Partial<DiscordUser> = {}): DiscordUser {
-    const baseUser = {
-      id: faker.string.numeric(18),
-      username: 'BelugaBot',
-      discriminator: '0',
-      global_name: 'Beluga League Bot',
-      avatar: faker.string.alphanumeric(32),
-      bot: true,
-      system: false,
-      mfa_enabled: true,
-      locale: 'en-US',
-      verified: true,
-      flags: 0,
-      premium_type: 0,
-      public_flags: 0,
-    };
-    return { ...baseUser, ...overrides };
-  }
+export function createMockDiscordUser(overrides: Partial<DiscordUser> = {}): DiscordUser {
+  const baseUser = {
+    id: faker.string.numeric(18),
+    username: 'BelugaBot',
+    discriminator: '0',
+    global_name: 'Beluga League Bot',
+    avatar: faker.string.alphanumeric(32),
+    bot: true,
+    system: false,
+    mfa_enabled: true,
+    locale: 'en-US',
+    verified: true,
+    flags: 0,
+    premium_type: 0,
+    public_flags: 0,
+  };
+  return { ...baseUser, ...overrides };
+}
 
-  static createGuild(overrides: Partial<DiscordGuild> = {}): DiscordGuild {
-    const baseGuild = {
-      id: faker.string.numeric(18),
-      name: 'Test Guild',
-      icon: faker.string.alphanumeric(32),
-      description: 'A test Discord guild',
-      owner_id: faker.string.numeric(18),
-      permissions: '0',
-      region: 'us-west',
-      afk_timeout: 300,
-      widget_enabled: false,
-      verification_level: 1,
-      default_message_notifications: 0,
-      explicit_content_filter: 0,
-      roles: [],
-      emojis: [],
-      features: [],
-      mfa_level: 0,
-      max_members: 250000,
-      premium_tier: 0,
-      preferred_locale: 'en-US',
-    };
-    return { ...baseGuild, ...overrides };
-  }
+export function createMockDiscordGuild(overrides: Partial<DiscordGuild> = {}): DiscordGuild {
+  const baseGuild = {
+    id: faker.string.numeric(18),
+    name: 'Test Guild',
+    icon: faker.string.alphanumeric(32),
+    description: 'A test Discord guild',
+    owner_id: faker.string.numeric(18),
+    permissions: '0',
+    region: 'us-west',
+    afk_timeout: 300,
+    widget_enabled: false,
+    verification_level: 1,
+    default_message_notifications: 0,
+    explicit_content_filter: 0,
+    roles: [],
+    emojis: [],
+    features: [],
+    mfa_level: 0,
+    max_members: 250000,
+    premium_tier: 0,
+    preferred_locale: 'en-US',
+  };
+  return { ...baseGuild, ...overrides };
+}
 
-  static createChannel(overrides: Partial<DiscordChannel> = {}): DiscordChannel {
-    const baseChannel = {
-      id: faker.string.numeric(18),
-      type: 0, // GUILD_TEXT
-      guild_id: faker.string.numeric(18),
-      position: 0,
-      name: 'general',
-      nsfw: false,
-      last_message_id: faker.string.numeric(18),
-      rate_limit_per_user: 0,
-    };
-    return { ...baseChannel, ...overrides };
-  }
+export function createMockDiscordChannel(overrides: Partial<DiscordChannel> = {}): DiscordChannel {
+  const baseChannel = {
+    id: faker.string.numeric(18),
+    type: 0, // GUILD_TEXT
+    guild_id: faker.string.numeric(18),
+    position: 0,
+    name: 'general',
+    nsfw: false,
+    last_message_id: faker.string.numeric(18),
+    rate_limit_per_user: 0,
+  };
+  return { ...baseChannel, ...overrides };
+}
 
-  static createMessage(overrides: Partial<DiscordMessage> = {}): DiscordMessage {
-    const baseMessage = {
-      id: faker.string.numeric(18),
-      type: 0,
-      content: '',
-      channel_id: faker.string.numeric(18),
-      author: this.createUser(),
-      attachments: [],
-      embeds: [],
-      mentions: [],
-      mention_roles: [],
-      pinned: false,
-      mention_everyone: false,
-      tts: false,
-      timestamp: new Date().toISOString(),
-      flags: 0,
-      components: [],
-    };
-    return { ...baseMessage, ...overrides };
-  }
+export function createMockDiscordMessage(overrides: Partial<DiscordMessage> = {}): DiscordMessage {
+  const baseMessage = {
+    id: faker.string.numeric(18),
+    type: 0,
+    content: '',
+    channel_id: faker.string.numeric(18),
+    author: createMockDiscordUser(),
+    attachments: [],
+    embeds: [],
+    mentions: [],
+    mention_roles: [],
+    pinned: false,
+    mention_everyone: false,
+    tts: false,
+    timestamp: new Date().toISOString(),
+    flags: 0,
+    components: [],
+  };
+  return { ...baseMessage, ...overrides };
+}
 
-  static createApplication(overrides: Partial<DiscordApplication> = {}): DiscordApplication {
-    const baseApplication = {
-      id: faker.string.numeric(18),
-      name: 'Beluga League Bot',
-      icon: faker.string.alphanumeric(32),
-      description: 'Discord bot for Rocket League community management',
-      bot_public: true,
-      bot_require_code_grant: false,
-      owner: this.createUser({
-        username: 'owner',
-        bot: false,
-      }),
-      verify_key: faker.string.alphanumeric(64),
-      flags: 0,
-    };
-    return { ...baseApplication, ...overrides };
-  }
+export function createMockDiscordApplication(overrides: Partial<DiscordApplication> = {}): DiscordApplication {
+  const baseApplication = {
+    id: faker.string.numeric(18),
+    name: 'Beluga League Bot',
+    icon: faker.string.alphanumeric(32),
+    description: 'Discord bot for Rocket League community management',
+    bot_public: true,
+    bot_require_code_grant: false,
+    owner: createMockDiscordUser({
+      username: 'owner',
+      bot: false,
+    }),
+    verify_key: faker.string.alphanumeric(64),
+    flags: 0,
+  };
+  return { ...baseApplication, ...overrides };
+}
 
-  static createCommand(overrides: Partial<DiscordCommand> = {}): DiscordCommand {
-    return {
-      id: faker.string.numeric(18),
-      type: 1, // CHAT_INPUT
-      application_id: faker.string.numeric(18),
-      name: 'register',
-      description: 'Register your Rocket League tracker URLs',
-      options: [
-        {
-          type: 3, // STRING
-          name: 'tracker1',
-          description: 'First Rocket League tracker URL',
-          required: true,
-        },
-        {
-          type: 3, // STRING
-          name: 'tracker2',
-          description: 'Second Rocket League tracker URL',
-          required: false,
-        },
-      ],
-      version: faker.string.numeric(18),
-      ...overrides,
-    };
-  }
+export function createMockDiscordCommand(overrides: Partial<DiscordCommand> = {}): DiscordCommand {
+  return {
+    id: faker.string.numeric(18),
+    type: 1, // CHAT_INPUT
+    application_id: faker.string.numeric(18),
+    name: 'register',
+    description: 'Register your Rocket League tracker URLs',
+    options: [
+      {
+        type: 3, // STRING
+        name: 'tracker1',
+        description: 'First Rocket League tracker URL',
+        required: true,
+      },
+      {
+        type: 3, // STRING
+        name: 'tracker2',
+        description: 'Second Rocket League tracker URL',
+        required: false,
+      },
+    ],
+    version: faker.string.numeric(18),
+    ...overrides,
+  };
 }
 
 /**
@@ -290,7 +288,7 @@ const DISCORD_API_BASE = 'https://discord.com/api/v10';
 export const discordApiHandlers = [
   // Get application commands
   http.get(`${DISCORD_API_BASE}/applications/:appId/commands`, () => {
-    const command = DiscordApiFactory.createCommand();
+    const command = createMockDiscordCommand();
     return HttpResponse.json([command]);
   }),
 
@@ -302,7 +300,7 @@ export const discordApiHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     
-    const command = DiscordApiFactory.createCommand({
+    const command = createMockDiscordCommand({
       application_id: appId,
       ...body,
     });
@@ -319,7 +317,7 @@ export const discordApiHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     
-    const command = DiscordApiFactory.createCommand({
+    const command = createMockDiscordCommand({
       id: commandId,
       application_id: appId,
       ...body,
@@ -334,7 +332,7 @@ export const discordApiHandlers = [
 
   // Get current bot user
   http.get(`${DISCORD_API_BASE}/users/@me`, () => {
-    const user = DiscordApiFactory.createUser();
+    const user = createMockDiscordUser();
     return HttpResponse.json(user);
   }),
 
@@ -345,7 +343,7 @@ export const discordApiHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     
-    const guild = DiscordApiFactory.createGuild({ id: guildId });
+    const guild = createMockDiscordGuild({ id: guildId });
     return HttpResponse.json(guild);
   }),
 
@@ -356,7 +354,7 @@ export const discordApiHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     
-    const channel = DiscordApiFactory.createChannel({ id: channelId });
+    const channel = createMockDiscordChannel({ id: channelId });
     return HttpResponse.json(channel);
   }),
 
@@ -369,7 +367,7 @@ export const discordApiHandlers = [
       return new HttpResponse(null, { status: 400 });
     }
     
-    const message = DiscordApiFactory.createMessage({
+    const message = createMockDiscordMessage({
       content: typeof body['content'] === 'string' ? body['content'] : '',
       channel_id: channelId,
       embeds: Array.isArray(body['embeds']) ? body['embeds'] : [],
@@ -404,9 +402,9 @@ export const discordApiHandlers = [
         return new HttpResponse(null, { status: 400 });
       }
       
-      const message = DiscordApiFactory.createMessage({
+      const message = createMockDiscordMessage({
         content: typeof body['content'] === 'string' ? body['content'] : '',
-        author: DiscordApiFactory.createUser({ id: appId }),
+        author: createMockDiscordUser({ id: appId }),
         embeds: Array.isArray(body['embeds']) ? body['embeds'] : [],
         components: Array.isArray(body['components']) ? body['components'] : [],
         edited_timestamp: new Date().toISOString(),
@@ -418,7 +416,7 @@ export const discordApiHandlers = [
 
   // Get application
   http.get(`${DISCORD_API_BASE}/applications/@me`, () => {
-    const application = DiscordApiFactory.createApplication();
+    const application = createMockDiscordApplication();
     return HttpResponse.json(application);
   }),
 ];

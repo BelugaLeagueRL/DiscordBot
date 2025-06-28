@@ -108,7 +108,7 @@ function handlePingInteraction(
     responseTime,
   });
 
-  return new Response(JSON.stringify({ type: InteractionResponseType.PONG }), {
+  return new Response(JSON.stringify({ type: InteractionResponseType.Pong }), {
     headers: {
       'Content-Type': 'application/json',
       ...createSecurityHeaders(),
@@ -206,10 +206,11 @@ function initializeRequest(
   audit: AuditLogger;
 } {
   const context = extractSecurityContext(request);
-  const audit = new AuditLogger(env.ENVIRONMENT !== '' ? env.ENVIRONMENT : 'development');
+  const audit = new AuditLogger(env.ENVIRONMENT === '' ? 'development' : env.ENVIRONMENT);
 
   // Cleanup rate limits periodically
-  if (Math.random() < 0.01) {
+  const CLEANUP_PROBABILITY = 0.01; // 1% chance
+  if (Math.random() < CLEANUP_PROBABILITY) {
     cleanupRateLimits();
   }
 
@@ -291,12 +292,12 @@ async function processDiscordInteraction(
   }
 
   // Handle ping from Discord
-  if (interaction.type === (InteractionType.PING as number)) {
+  if (interaction.type === (InteractionType.Ping as number)) {
     return handlePingInteraction(audit, context, interaction, startTime);
   }
 
   // Handle application commands
-  if (interaction.type === (InteractionType.APPLICATION_COMMAND as number)) {
+  if (interaction.type === (InteractionType.ApplicationCommand as number)) {
     return await handleApplicationCommand(interaction, env, audit, context);
   }
 

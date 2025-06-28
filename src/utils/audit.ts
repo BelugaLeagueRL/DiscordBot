@@ -6,15 +6,15 @@ import type { SecurityContext } from '../middleware/security';
 import type { DiscordInteraction } from '../types/discord';
 
 export enum AuditEventType {
-  REQUEST_RECEIVED = 'request_received',
-  REQUEST_VERIFIED = 'request_verified',
-  REQUEST_REJECTED = 'request_rejected',
-  COMMAND_EXECUTED = 'command_executed',
-  COMMAND_FAILED = 'command_failed',
-  SECURITY_VIOLATION = 'security_violation',
-  RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded',
-  HEALTH_CHECK = 'health_check',
-  ERROR_OCCURRED = 'error_occurred',
+  RequestReceived = 'request_received',
+  RequestVerified = 'request_verified',
+  RequestRejected = 'request_rejected',
+  CommandExecuted = 'command_executed',
+  CommandFailed = 'command_failed',
+  SecurityViolation = 'security_violation',
+  RateLimitExceeded = 'rate_limit_exceeded',
+  HealthCheck = 'health_check',
+  ErrorOccurred = 'error_occurred',
 }
 
 export interface AuditLogEntry {
@@ -34,7 +34,7 @@ export interface AuditLogEntry {
 }
 
 export class AuditLogger {
-  private environment: string;
+  private readonly environment: string;
 
   constructor(environment: string) {
     this.environment = environment;
@@ -128,7 +128,7 @@ export class AuditLogger {
     context: Readonly<SecurityContext>,
     requestData: { readonly method: string; readonly path: string }
   ): void {
-    this.log(AuditEventType.REQUEST_RECEIVED, context, {
+    this.log(AuditEventType.RequestReceived, context, {
       metadata: { method: requestData.method, path: requestData.path },
     });
   }
@@ -137,7 +137,7 @@ export class AuditLogger {
    * Log successful request verification
    */
   logRequestVerified(context: Readonly<SecurityContext>): void {
-    this.log(AuditEventType.REQUEST_VERIFIED, context);
+    this.log(AuditEventType.RequestVerified, context);
   }
 
   /**
@@ -147,7 +147,7 @@ export class AuditLogger {
     context: Readonly<SecurityContext>,
     rejectionData: { readonly reason: string }
   ): void {
-    this.log(AuditEventType.REQUEST_REJECTED, context, {
+    this.log(AuditEventType.RequestRejected, context, {
       success: false,
       error: rejectionData.reason,
     });
@@ -167,8 +167,8 @@ export class AuditLogger {
   ): void {
     this.log(
       commandExecutionData.success
-        ? AuditEventType.COMMAND_EXECUTED
-        : AuditEventType.COMMAND_FAILED,
+        ? AuditEventType.CommandExecuted
+        : AuditEventType.CommandFailed,
       context,
       {
         interaction: commandExecutionData.interaction,
@@ -186,7 +186,7 @@ export class AuditLogger {
     context: Readonly<SecurityContext>,
     violationData: { readonly violationType: string; readonly details: string }
   ): void {
-    this.log(AuditEventType.SECURITY_VIOLATION, context, {
+    this.log(AuditEventType.SecurityViolation, context, {
       success: false,
       error: `${violationData.violationType}: ${violationData.details}`,
       metadata: { violationType: violationData.violationType },
@@ -197,7 +197,7 @@ export class AuditLogger {
    * Log rate limit exceeded
    */
   logRateLimitExceeded(context: Readonly<SecurityContext>): void {
-    this.log(AuditEventType.RATE_LIMIT_EXCEEDED, context, {
+    this.log(AuditEventType.RateLimitExceeded, context, {
       success: false,
       error: 'Rate limit exceeded',
     });
@@ -207,7 +207,7 @@ export class AuditLogger {
    * Log health check
    */
   logHealthCheck(context: Readonly<SecurityContext>): void {
-    this.log(AuditEventType.HEALTH_CHECK, context);
+    this.log(AuditEventType.HealthCheck, context);
   }
 
   /**
@@ -220,7 +220,7 @@ export class AuditLogger {
       readonly metadata?: Readonly<Record<string, unknown>>;
     }>
   ): void {
-    this.log(AuditEventType.ERROR_OCCURRED, context, {
+    this.log(AuditEventType.ErrorOccurred, context, {
       success: false,
       error: errorData.error,
       metadata: errorData.metadata,

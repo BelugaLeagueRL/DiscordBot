@@ -51,9 +51,9 @@ describe('Security Middleware', () => {
       expect(context).toMatchObject({
         clientIP: '192.168.1.100',
         userAgent: 'Discord-Interactions/1.0',
-        timestamp: expect.any(Number),
-        requestId: expect.any(String),
       });
+      expect(context.timestamp).toBeTypeOf('number');
+      expect(context.requestId).toBeTypeOf('string');
       expect(context.requestId).toMatch(/^[0-9a-f-]{36}$/); // UUID format
     });
 
@@ -70,9 +70,9 @@ describe('Security Middleware', () => {
       expect(context).toMatchObject({
         clientIP: 'unknown',
         userAgent: 'unknown',
-        timestamp: expect.any(Number),
-        requestId: expect.any(String),
       });
+      expect(context.timestamp).toBeTypeOf('number');
+      expect(context.requestId).toBeTypeOf('string');
     });
 
     it('should prefer CF-Connecting-IP over X-Forwarded-For', () => {
@@ -289,7 +289,7 @@ describe('Security Middleware', () => {
 
       // Mock the verifyKey function to return false
       const { verifyKey } = await import('discord-interactions');
-      vi.mocked(verifyKey).mockResolvedValue(false);
+      vi.mocked(verifyKey).mockReturnValue(false);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -341,7 +341,9 @@ describe('Security Middleware', () => {
 
       // Mock verifyKey to throw error
       const { verifyKey } = await import('discord-interactions');
-      vi.mocked(verifyKey).mockRejectedValue(new Error('Verification failed'));
+      vi.mocked(verifyKey).mockImplementation(() => {
+        throw new Error('Verification failed');
+      });
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -432,7 +434,7 @@ describe('Security Middleware', () => {
     it('should reject promise that exceeds timeout', async () => {
       vi.useFakeTimers();
 
-      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 2000));
+      const slowPromise = new Promise(resolve => setTimeout(() => { resolve('late'); }, 2000));
       const timeoutPromise = withTimeout(slowPromise, 1000);
 
       // Advance time past the timeout
@@ -446,7 +448,7 @@ describe('Security Middleware', () => {
     it('should use default timeout when not specified', async () => {
       vi.useFakeTimers();
 
-      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 15000));
+      const slowPromise = new Promise(resolve => setTimeout(() => { resolve('late'); }, 15000));
       const timeoutPromise = withTimeout(slowPromise);
 
       // Advance time past the default timeout (10 seconds)

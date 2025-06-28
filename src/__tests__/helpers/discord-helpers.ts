@@ -25,7 +25,7 @@ export function createValidTrackerUrl(platform: 'steam' | 'epic' | 'psn' | 'xbl'
     case 'switch':
       return `${baseUrl}/switch/${faker.internet.username()}/overview`;
     default:
-      throw new Error(`Unknown platform: ${platform}`);
+      throw new Error(`Unknown platform: ${platform as string}`);
   }
 }
 

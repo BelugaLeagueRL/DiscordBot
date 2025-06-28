@@ -7,11 +7,17 @@ import { verifyKey } from 'discord-interactions';
 // Rate limiting storage (in-memory for Workers)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-// Security configuration
+// Security configuration constants
 const RATE_LIMIT_REQUESTS = 100; // requests per window
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const REQUEST_TIMEOUT = 10 * 1000; // 10 seconds
-const MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
+const BYTES_PER_KB = 1024;
+const KB_PER_MB = 1024;
+const REQUEST_TIMEOUT_SECONDS = 10;
+
+const RATE_LIMIT_WINDOW = SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND; // 1 minute
+const REQUEST_TIMEOUT = REQUEST_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND; // 10 seconds
+const MAX_PAYLOAD_SIZE = BYTES_PER_KB * KB_PER_MB; // 1MB
 
 export interface SecurityContext {
   readonly clientIP: string;
@@ -98,8 +104,8 @@ export function validateDiscordHeaders(request: Readonly<Request>): {
   const now = Date.now() / 1000;
   const timeDiff = Math.abs(now - timestampNum);
 
-  if (timeDiff > 300) {
-    // 5 minutes
+  const MAX_TIMESTAMP_DIFF_SECONDS = 300; // 5 minutes
+  if (timeDiff > MAX_TIMESTAMP_DIFF_SECONDS) {
     return { isValid: false, error: 'Request timestamp too old or too far in future' };
   }
 
@@ -148,7 +154,7 @@ export async function verifyDiscordRequestSecure(
       };
     }
 
-    const isValidSignature = await verifyKey(body, signature, timestamp, publicKey);
+    const isValidSignature = verifyKey(body, signature, timestamp, publicKey);
 
     if (!isValidSignature) {
       return {

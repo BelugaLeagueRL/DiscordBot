@@ -42,7 +42,7 @@ describe('Register command handler', () => {
       },
     ]);
 
-    const response = await handleRegisterCommand(validInteraction, mockEnv);
+    const response = handleRegisterCommand(validInteraction, mockEnv);
     const rawData = await response.json();
     
     if (!isDiscordResponse(rawData)) {
@@ -65,7 +65,7 @@ describe('Register command handler', () => {
       },
     ]);
 
-    const response = await handleRegisterCommand(invalidInteraction, mockEnv);
+    const response = handleRegisterCommand(invalidInteraction, mockEnv);
     const rawData = await response.json();
     
     if (!isDiscordResponse(rawData)) {
@@ -89,7 +89,7 @@ describe('Register command handler', () => {
       },
     ]);
 
-    const response = await handleRegisterCommand(noUserInteraction, mockEnv);
+    const response = handleRegisterCommand(noUserInteraction, mockEnv);
     const rawData = await response.json();
     
     if (!isDiscordResponse(rawData)) {
@@ -104,7 +104,7 @@ describe('Register command handler', () => {
   it('should handle missing tracker URLs', async () => {
     const noOptionsInteraction = createMockCommandInteraction('register', []);
 
-    const response = await handleRegisterCommand(noOptionsInteraction, mockEnv);
+    const response = handleRegisterCommand(noOptionsInteraction, mockEnv);
     const rawData = await response.json();
     
     if (!isDiscordResponse(rawData)) {

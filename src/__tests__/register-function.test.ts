@@ -4,20 +4,21 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import type { MockedFunction } from 'vitest';
 import { registerCommands } from '../register';
 
 describe('registerCommands function with valid environment', () => {
   let originalEnv: typeof process.env;
   let originalFetch: typeof globalThis.fetch;
   let originalConsole: typeof console;
-  let originalProcessExit: typeof process.exit;
+  let mockProcessExit: MockedFunction<typeof process.exit>;
 
   beforeEach(() => {
     // Store originals
     originalEnv = { ...process.env };
     originalFetch = globalThis.fetch;
     originalConsole = console;
-    originalProcessExit = process.exit;
+    mockProcessExit = vi.fn() as MockedFunction<typeof process.exit>;
 
     // Set valid environment variables
     process.env['DISCORD_TOKEN'] = 'test_token';
@@ -26,17 +27,18 @@ describe('registerCommands function with valid environment', () => {
     // Mock fetch
     globalThis.fetch = vi.fn();
     // Mock console
-    (globalThis as any).console = { ...console, log: vi.fn(), error: vi.fn() };
+    const mockConsole = { ...console, log: vi.fn(), error: vi.fn() };
+    (globalThis as unknown as { console: typeof console }).console = mockConsole;
     // Mock process.exit
-    process.exit = vi.fn() as any;
+    process.exit = mockProcessExit;
   });
 
   afterEach(() => {
     // Restore originals
     process.env = originalEnv;
     globalThis.fetch = originalFetch;
-    (globalThis as any).console = originalConsole;
-    process.exit = originalProcessExit;
+    (globalThis as unknown as { console: typeof console }).console = originalConsole;
+    // process.exit is restored by mockProcessExit.mockRestore() if needed
   });
 
   it('should make Discord API call successfully', async () => {
@@ -45,21 +47,19 @@ describe('registerCommands function with valid environment', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn().mockResolvedValue([{ name: 'register', description: 'Test command' }]),
-    } as any);
+    } as Partial<Response> as Response);
 
     // Call the function directly
     await registerCommands();
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://discord.com/api/v10/applications/test_app_id/commands',
-      expect.objectContaining({
-        method: 'PUT',
-        headers: expect.objectContaining({
-          'Content-Type': 'application/json',
-          Authorization: 'Bot test_token',
-        }),
-      })
-    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, options] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://discord.com/api/v10/applications/test_app_id/commands');
+    expect(options.method).toBe('PUT');
+    expect(options.headers).toBeDefined();
+    const headers = options.headers as Record<string, string>;
+    expect(headers['Content-Type']).toBe('application/json');
+    expect(headers['Authorization']).toBe('Bot test_token');
   });
 
   it('should handle API error response', async () => {
@@ -70,13 +70,13 @@ describe('registerCommands function with valid environment', () => {
       status: 400,
       statusText: 'Bad Request',
       text: vi.fn().mockResolvedValue('Invalid command format'),
-    } as any);
+    } as Partial<Response> as Response);
 
     // Function already imported at top of file
 
     // Should call process.exit(1) on error
     await registerCommands();
-    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(mockProcessExit).toHaveBeenCalledWith(1);
   });
 
   it('should handle network errors', async () => {
@@ -88,7 +88,7 @@ describe('registerCommands function with valid environment', () => {
 
     // Should call process.exit(1) on network error
     await registerCommands();
-    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(mockProcessExit).toHaveBeenCalledWith(1);
   });
 
   it('should send correct command payload to Discord API', async () => {
@@ -102,7 +102,7 @@ describe('registerCommands function with valid environment', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: mockJson,
-    } as any);
+    } as Partial<Response> as Response);
 
     // Function already imported at top of file
     await registerCommands();
@@ -154,7 +154,7 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log registration success with command details', async () => {
     // RED: Test logging functionality
-    const mockConsoleLog = vi.mocked((globalThis as any).console.log);
+    const mockConsoleLog = vi.mocked((globalThis as unknown as { console: { log: MockedFunction<typeof console.log> } }).console.log);
     const mockFetch = vi.mocked(globalThis.fetch);
 
     const apiResponse = [
@@ -164,7 +164,7 @@ describe('registerCommands function with valid environment', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn().mockResolvedValue(apiResponse),
-    } as any);
+    } as Partial<Response> as Response);
 
     // Function already imported at top of file
     await registerCommands();
@@ -179,7 +179,7 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log error details when API call fails', async () => {
     // RED: Test error logging functionality
-    const mockConsoleError = vi.mocked((globalThis as any).console.error);
+    const mockConsoleError = vi.mocked((globalThis as unknown as { console: { error: MockedFunction<typeof console.error> } }).console.error);
     const mockFetch = vi.mocked(globalThis.fetch);
 
     const errorResponse = 'Invalid command structure';
@@ -188,12 +188,15 @@ describe('registerCommands function with valid environment', () => {
       status: 400,
       statusText: 'Bad Request',
       text: vi.fn().mockResolvedValue(errorResponse),
-    } as any);
+    } as Partial<Response> as Response);
 
     // Function already imported at top of file
     await registerCommands();
 
     // Verify error logging
-    expect(mockConsoleError).toHaveBeenCalledWith('Error registering commands:', expect.any(Error));
+    expect(mockConsoleError).toHaveBeenCalledTimes(1);
+    const [firstArg, secondArg] = mockConsoleError.mock.calls[0] as [string, Error];
+    expect(firstArg).toBe('Error registering commands:');
+    expect(secondArg).toBeInstanceOf(Error);
   });
 });

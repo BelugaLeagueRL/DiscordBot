@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// Removed SpyInstance import - using vi.spyOn return type instead
 import { AuditLogger, AuditEventType } from '../../utils/audit';
 import { SecurityContextFactory } from '../helpers/test-factories';
 import { mockInteractions } from '../mocks/interactions';
@@ -11,7 +12,7 @@ import type { SecurityContext } from '../../middleware/security';
 describe('AuditLogger', () => {
   let logger: AuditLogger;
   let context: SecurityContext;
-  let consoleSpy: { log: any; warn: any };
+  let consoleSpy: { log: ReturnType<typeof vi.spyOn>; warn: ReturnType<typeof vi.spyOn> };
 
   beforeEach(() => {
     logger = new AuditLogger('test');
@@ -19,8 +20,12 @@ describe('AuditLogger', () => {
 
     // Mock console methods
     consoleSpy = {
-      log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-      warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
+      log: vi.spyOn(console, 'log').mockImplementation(() => {
+        // Mock implementation
+      }),
+      warn: vi.spyOn(console, 'warn').mockImplementation(() => {
+        // Mock implementation
+      }),
     };
 
     // Mock Date.now for consistent timestamps
@@ -46,14 +51,14 @@ describe('AuditLogger', () => {
 
   describe('log method', () => {
     it('should create basic audit entry', () => {
-      logger.log(AuditEventType.REQUEST_RECEIVED, context);
+      logger.log(AuditEventType.RequestReceived, context);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
         `[INFO] request_received - ${context.requestId}`,
         expect.objectContaining({
           timestamp: '2024-01-01T00:00:00.000Z',
           requestId: context.requestId,
-          eventType: AuditEventType.REQUEST_RECEIVED,
+          eventType: AuditEventType.RequestReceived,
           clientIP: context.clientIP,
           userAgent: context.userAgent,
           success: true,
@@ -64,7 +69,7 @@ describe('AuditLogger', () => {
     it('should create audit entry with interaction data', () => {
       const interaction = mockInteractions.registerValid();
 
-      logger.log(AuditEventType.COMMAND_EXECUTED, context, {
+      logger.log(AuditEventType.CommandExecuted, context, {
         interaction,
         success: true,
         responseTime: 150,
@@ -84,7 +89,7 @@ describe('AuditLogger', () => {
     });
 
     it('should create audit entry with error details', () => {
-      logger.log(AuditEventType.COMMAND_FAILED, context, {
+      logger.log(AuditEventType.CommandFailed, context, {
         success: false,
         error: 'Invalid command parameters',
         metadata: { reason: 'validation_failed' },
@@ -103,7 +108,7 @@ describe('AuditLogger', () => {
     it('should handle interaction with user instead of member', () => {
       const dmInteraction = mockInteractions.directMessage();
 
-      logger.log(AuditEventType.COMMAND_EXECUTED, context, {
+      logger.log(AuditEventType.CommandExecuted, context, {
         interaction: dmInteraction,
       });
 
@@ -119,7 +124,7 @@ describe('AuditLogger', () => {
     it('should use production logging for production environment', () => {
       const prodLogger = new AuditLogger('production');
 
-      prodLogger.log(AuditEventType.REQUEST_RECEIVED, context);
+      prodLogger.log(AuditEventType.RequestReceived, context);
 
       // Should log to both console.log and external service
       expect(consoleSpy.log).toHaveBeenCalledTimes(2);
@@ -139,7 +144,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.log).toHaveBeenCalledWith(
         `[INFO] request_received - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.REQUEST_RECEIVED,
+          eventType: AuditEventType.RequestReceived,
           metadata: { method: 'POST', path: '/interactions' },
           success: true,
         })
@@ -154,7 +159,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.log).toHaveBeenCalledWith(
         `[INFO] request_verified - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.REQUEST_VERIFIED,
+          eventType: AuditEventType.RequestVerified,
           success: true,
         })
       );
@@ -170,7 +175,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] request_rejected - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.REQUEST_REJECTED,
+          eventType: AuditEventType.RequestRejected,
           success: false,
           error: reason,
         })
@@ -188,7 +193,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.log).toHaveBeenCalledWith(
         `[INFO] command_executed - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.COMMAND_EXECUTED,
+          eventType: AuditEventType.CommandExecuted,
           commandName: 'register',
           success: true,
           responseTime,
@@ -206,7 +211,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] command_failed - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.COMMAND_FAILED,
+          eventType: AuditEventType.CommandFailed,
           success: false,
           responseTime,
           error,
@@ -222,7 +227,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          eventType: AuditEventType.COMMAND_FAILED,
+          eventType: AuditEventType.CommandFailed,
           success: false,
           error: undefined,
         })
@@ -240,7 +245,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] security_violation - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.SECURITY_VIOLATION,
+          eventType: AuditEventType.SecurityViolation,
           success: false,
           error: `${violationType}: ${details}`,
           metadata: { violationType },
@@ -256,7 +261,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] rate_limit_exceeded - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.RATE_LIMIT_EXCEEDED,
+          eventType: AuditEventType.RateLimitExceeded,
           success: false,
           error: 'Rate limit exceeded',
         })
@@ -271,7 +276,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.log).toHaveBeenCalledWith(
         `[INFO] health_check - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.HEALTH_CHECK,
+          eventType: AuditEventType.HealthCheck,
           success: true,
         })
       );
@@ -287,7 +292,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] error_occurred - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.ERROR_OCCURRED,
+          eventType: AuditEventType.ErrorOccurred,
           success: false,
           error,
           metadata: undefined,
@@ -304,7 +309,7 @@ describe('AuditLogger', () => {
       expect(consoleSpy.warn).toHaveBeenCalledWith(
         `[WARN] error_occurred - ${context.requestId}`,
         expect.objectContaining({
-          eventType: AuditEventType.ERROR_OCCURRED,
+          eventType: AuditEventType.ErrorOccurred,
           success: false,
           error,
           metadata,
@@ -351,21 +356,21 @@ describe('AuditLogger', () => {
 
   describe('AuditEventType enum', () => {
     it('should have all expected event types', () => {
-      expect(AuditEventType.REQUEST_RECEIVED).toBe('request_received');
-      expect(AuditEventType.REQUEST_VERIFIED).toBe('request_verified');
-      expect(AuditEventType.REQUEST_REJECTED).toBe('request_rejected');
-      expect(AuditEventType.COMMAND_EXECUTED).toBe('command_executed');
-      expect(AuditEventType.COMMAND_FAILED).toBe('command_failed');
-      expect(AuditEventType.SECURITY_VIOLATION).toBe('security_violation');
-      expect(AuditEventType.RATE_LIMIT_EXCEEDED).toBe('rate_limit_exceeded');
-      expect(AuditEventType.HEALTH_CHECK).toBe('health_check');
-      expect(AuditEventType.ERROR_OCCURRED).toBe('error_occurred');
+      expect(AuditEventType.RequestReceived).toBe('request_received');
+      expect(AuditEventType.RequestVerified).toBe('request_verified');
+      expect(AuditEventType.RequestRejected).toBe('request_rejected');
+      expect(AuditEventType.CommandExecuted).toBe('command_executed');
+      expect(AuditEventType.CommandFailed).toBe('command_failed');
+      expect(AuditEventType.SecurityViolation).toBe('security_violation');
+      expect(AuditEventType.RateLimitExceeded).toBe('rate_limit_exceeded');
+      expect(AuditEventType.HealthCheck).toBe('health_check');
+      expect(AuditEventType.ErrorOccurred).toBe('error_occurred');
     });
   });
 
   describe('edge cases', () => {
     it('should handle empty metadata', () => {
-      logger.log(AuditEventType.REQUEST_RECEIVED, context, {
+      logger.log(AuditEventType.RequestReceived, context, {
         metadata: {},
       });
 
@@ -378,7 +383,7 @@ describe('AuditLogger', () => {
     });
 
     it('should handle undefined options', () => {
-      logger.log(AuditEventType.REQUEST_RECEIVED, context, undefined as any);
+      logger.log(AuditEventType.RequestReceived, context, undefined);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
         expect.any(String),
@@ -391,7 +396,7 @@ describe('AuditLogger', () => {
     it('should handle interaction without data', () => {
       const interaction = mockInteractions.ping();
 
-      logger.log(AuditEventType.REQUEST_RECEIVED, context, {
+      logger.log(AuditEventType.RequestReceived, context, {
         interaction,
       });
 

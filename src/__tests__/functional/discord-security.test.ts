@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { MockedFunction } from 'vitest';
 import { verifyDiscordRequest } from '../../utils/discord';
 
 // Mock the discord-interactions module
@@ -12,19 +13,21 @@ vi.mock('discord-interactions', () => ({
 }));
 
 describe('Discord Signature Verification Functional Tests', () => {
-  let mockVerifyKey: any;
-  let consoleSpy: any;
+  let mockVerifyKey: MockedFunction<(rawBody: string | ArrayBuffer | Uint8Array | Buffer, signature: string | ArrayBuffer | Uint8Array | Buffer, timestamp: string | ArrayBuffer | Uint8Array | Buffer, clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer) => boolean>;
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
-    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+      // Mock implementation
+    });
   });
 
   describe('Real Discord Request Format Validation', () => {
     it('should verify request with valid Discord headers and signature', async () => {
       // Based on research: real Discord request format
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -55,7 +58,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
     it('should reject request with invalid signature', async () => {
       // Real scenario: signature verification fails
-      mockVerifyKey.mockResolvedValue(false);
+      mockVerifyKey.mockReturnValue(false);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -127,7 +130,9 @@ describe('Discord Signature Verification Functional Tests', () => {
   describe('Cryptographic Edge Cases', () => {
     it('should handle verification library errors gracefully', async () => {
       // Real scenario: crypto library throws error
-      mockVerifyKey.mockRejectedValue(new Error('Invalid key format'));
+      mockVerifyKey.mockImplementation(() => {
+        throw new Error('Invalid key format');
+      });
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -149,7 +154,9 @@ describe('Discord Signature Verification Functional Tests', () => {
 
     it('should handle malformed hex signatures', async () => {
       // Discord signatures should be valid hex strings
-      mockVerifyKey.mockRejectedValue(new Error('Invalid hex encoding'));
+      mockVerifyKey.mockImplementation(() => {
+        throw new Error('Invalid hex encoding');
+      });
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -172,7 +179,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
   describe('Body Handling Edge Cases', () => {
     it('should handle empty request body', async () => {
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -196,7 +203,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
     it('should handle large request bodies', async () => {
       // Test with realistic Discord interaction payload size
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const largePayload = {
         id: '123456789012345678',
@@ -259,7 +266,7 @@ describe('Discord Signature Verification Functional Tests', () => {
   describe('Timestamp Security Considerations', () => {
     it('should accept current timestamp values', async () => {
       // Real scenario: current Unix timestamp
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
       const currentTimestamp = Math.floor(Date.now() / 1000).toString();
 
       const request = new Request('https://example.com/discord-webhook', {
@@ -285,7 +292,7 @@ describe('Discord Signature Verification Functional Tests', () => {
     it('should handle very old timestamp values', async () => {
       // Test with old timestamp - signature verification should still work
       // (timestamp age validation would happen at higher level)
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -305,7 +312,7 @@ describe('Discord Signature Verification Functional Tests', () => {
   describe('Real-World Integration Scenarios', () => {
     it('should handle Discord PING interaction verification', async () => {
       // Real Discord PING interaction format
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const pingPayload = {
         id: '123456789012345678',
@@ -338,7 +345,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
     it('should handle Discord APPLICATION_COMMAND interaction verification', async () => {
       // Real Discord application command interaction
-      mockVerifyKey.mockResolvedValue(true);
+      mockVerifyKey.mockReturnValue(true);
 
       const commandPayload = {
         id: '123456789012345678',

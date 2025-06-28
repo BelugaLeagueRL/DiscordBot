@@ -61,235 +61,247 @@ export const EnvFactory = {
 /**
  * Factory for creating mock audit log entries
  */
-export class AuditLogFactory {
-  static createEntry(overrides: any = {}) {
-    return {
-      timestamp: new Date().toISOString(),
-      requestId: faker.string.uuid(),
-      eventType: 'request_received',
-      clientIP: faker.internet.ip(),
-      userAgent: 'Discord-Interactions/1.0',
-      success: true,
-      ...overrides,
-    };
-  }
+export function createMockAuditEntry(overrides: {
+  timestamp?: string;
+  requestId?: string;
+  eventType?: string;
+  clientIP?: string;
+  userAgent?: string;
+  success?: boolean;
+  commandName?: string;
+  responseTime?: number;
+  error?: string;
+  metadata?: Record<string, unknown>;
+} = {}) {
+  return {
+    timestamp: new Date().toISOString(),
+    requestId: faker.string.uuid(),
+    eventType: 'request_received',
+    clientIP: faker.internet.ip(),
+    userAgent: 'Discord-Interactions/1.0',
+    success: true,
+    ...overrides,
+  };
+}
 
-  static securityViolation(violationType: string, details: string) {
-    return this.createEntry({
-      eventType: 'security_violation',
-      success: false,
-      error: `${violationType}: ${details}`,
-      metadata: { violationType },
-    });
-  }
+export function createMockSecurityViolation(violationType: string, details: string) {
+  return createMockAuditEntry({
+    eventType: 'security_violation',
+    success: false,
+    error: `${violationType}: ${details}`,
+    metadata: { violationType },
+  });
+}
 
-  static commandExecution(
-    commandName: string,
-    success: boolean = true,
-    responseTime: number = 100
-  ) {
-    return this.createEntry({
-      eventType: success ? 'command_executed' : 'command_failed',
-      commandName,
-      success,
-      responseTime,
-    });
-  }
+export function createMockCommandExecution(
+  commandName: string,
+  success: boolean = true,
+  responseTime: number = 100
+) {
+  return createMockAuditEntry({
+    eventType: success ? 'command_executed' : 'command_failed',
+    commandName,
+    success,
+    responseTime,
+  });
 }
 
 /**
  * Factory for creating test rate limiting scenarios
  */
-export class RateLimitFactory {
-  static createRateLimitData(requests: number, windowMs: number = 60000) {
-    return {
-      count: requests,
-      resetTime: Date.now() + windowMs,
-    };
-  }
+export function createMockRateLimitData(requests: number, windowMs: number = 60000) {
+  return {
+    count: requests,
+    resetTime: Date.now() + windowMs,
+  };
+}
 
-  static nearLimit(limit: number = 100) {
-    return this.createRateLimitData(limit - 1);
-  }
+export function createNearLimitRateLimit(limit: number = 100) {
+  return createMockRateLimitData(limit - 1);
+}
 
-  static atLimit(limit: number = 100) {
-    return this.createRateLimitData(limit);
-  }
+export function createAtLimitRateLimit(limit: number = 100) {
+  return createMockRateLimitData(limit);
+}
 
-  static overLimit(limit: number = 100) {
-    return this.createRateLimitData(limit + 10);
-  }
+export function createOverLimitRateLimit(limit: number = 100) {
+  return createMockRateLimitData(limit + 10);
 }
 
 /**
  * Factory for creating test tracker URLs
  */
-export class TrackerUrlFactory {
-  private static readonly VALID_PLATFORMS = ['steam', 'epic', 'psn', 'xbox', 'switch'];
-  private static readonly BASE_URL = 'https://rocketleague.tracker.network/rocket-league/profile';
+const VALID_PLATFORMS = ['steam', 'epic', 'psn', 'xbox', 'switch'] as const;
+const BASE_URL = 'https://rocketleague.tracker.network/rocket-league/profile';
 
-  static valid(platform?: string): string {
-    const selectedPlatform = platform ?? faker.helpers.arrayElement(this.VALID_PLATFORMS);
-    const playerId = this.generatePlayerId(selectedPlatform);
-    return `${this.BASE_URL}/${selectedPlatform}/${playerId}/overview`;
+function generatePlayerId(platform: string): string {
+  switch (platform) {
+    case 'steam':
+      return `7656119${faker.string.numeric(10)}`; // Steam ID64 format
+    case 'epic':
+      return faker.internet.username();
+    case 'psn':
+    case 'xbox':
+    case 'switch':
+      return faker.internet.username();
+    default:
+      return faker.internet.username();
   }
+}
 
-  static validBatch(count: number = 4): string[] {
-    return Array.from({ length: count }, () => this.valid());
-  }
+export function createValidTrackerUrl(platform?: string): string {
+  const selectedPlatform = platform ?? faker.helpers.arrayElement(VALID_PLATFORMS);
+  const playerId = generatePlayerId(selectedPlatform);
+  return `${BASE_URL}/${selectedPlatform}/${playerId}/overview`;
+}
 
-  static invalid(): string {
-    const invalidUrls = [
-      'https://example.com/profile/steam/123',
-      'not-a-url',
-      'https://rocketleague.tracker.network/invalid',
-      'https://different-site.com/rocket-league/profile/steam/123/overview',
-    ];
-    return faker.helpers.arrayElement(invalidUrls);
-  }
+export function createValidTrackerUrlBatch(count: number = 4): string[] {
+  return Array.from({ length: count }, () => createValidTrackerUrl());
+}
 
-  static steam(): string {
-    return this.valid('steam');
-  }
+export function createInvalidTrackerUrl(): string {
+  const invalidUrls = [
+    'https://example.com/profile/steam/123',
+    'not-a-url',
+    'https://rocketleague.tracker.network/invalid',
+    'https://different-site.com/rocket-league/profile/steam/123/overview',
+  ];
+  return faker.helpers.arrayElement(invalidUrls);
+}
 
-  static epic(): string {
-    return this.valid('epic');
-  }
+export function createSteamTrackerUrl(): string {
+  return createValidTrackerUrl('steam');
+}
 
-  static psn(): string {
-    return this.valid('psn');
-  }
+export function createEpicTrackerUrl(): string {
+  return createValidTrackerUrl('epic');
+}
 
-  static xbox(): string {
-    return this.valid('xbox');
-  }
+export function createPsnTrackerUrl(): string {
+  return createValidTrackerUrl('psn');
+}
 
-  static switch(): string {
-    return this.valid('switch');
-  }
+export function createXboxTrackerUrl(): string {
+  return createValidTrackerUrl('xbox');
+}
 
-  private static generatePlayerId(platform: string): string {
-    switch (platform) {
-      case 'steam':
-        return `7656119${faker.string.numeric(10)}`; // Steam ID64 format
-      case 'epic':
-        return faker.internet.username();
-      case 'psn':
-      case 'xbox':
-      case 'switch':
-        return faker.internet.username();
-      default:
-        return faker.internet.username();
-    }
-  }
+export function createSwitchTrackerUrl(): string {
+  return createValidTrackerUrl('switch');
 }
 
 /**
  * Factory for creating test error scenarios
  */
-export class ErrorFactory {
-  static networkError(): Error {
-    return new Error('Network request failed');
-  }
+export function createNetworkError(): Error {
+  return new Error('Network request failed');
+}
 
-  static timeoutError(): Error {
-    return new Error('Request timeout');
-  }
+export function createTimeoutError(): Error {
+  return new Error('Request timeout');
+}
 
-  static validationError(field: string): Error {
-    return new Error(`Validation failed for field: ${field}`);
-  }
+export function createValidationError(field: string): Error {
+  return new Error(`Validation failed for field: ${field}`);
+}
 
-  static authenticationError(): Error {
-    return new Error('Authentication failed');
-  }
+export function createAuthenticationError(): Error {
+  return new Error('Authentication failed');
+}
 
-  static rateLimitError(): Error {
-    return new Error('Rate limit exceeded');
-  }
+export function createRateLimitError(): Error {
+  return new Error('Rate limit exceeded');
+}
 
-  static internalError(): Error {
-    return new Error('Internal server error');
-  }
+export function createInternalError(): Error {
+  return new Error('Internal server error');
 }
 
 /**
  * Factory for creating performance test data
  */
-export class PerformanceFactory {
-  static createMemoryTestData(sizeMB: number = 10): any[] {
-    const itemSize = 1024; // 1KB per item
-    const itemCount = (sizeMB * 1024 * 1024) / itemSize;
+export function createMemoryTestData(sizeMB: number = 10): Array<{
+  id: number;
+  data: string;
+  timestamp: Date;
+}> {
+  const itemSize = 1024; // 1KB per item
+  const itemCount = (sizeMB * 1024 * 1024) / itemSize;
 
-    return Array.from({ length: itemCount }, (_, index) => ({
-      id: index,
-      data: faker.string.alphanumeric(itemSize - 100), // Leave room for other properties
-      timestamp: faker.date.recent(),
-    }));
-  }
+  return Array.from({ length: itemCount }, (_, index) => ({
+    id: index,
+    data: faker.string.alphanumeric(itemSize - 100), // Leave room for other properties
+    timestamp: faker.date.recent(),
+  }));
+}
 
-  static createCpuIntensiveTask(): () => number {
-    return () => {
-      let result = 0;
-      for (let i = 0; i < 1000000; i++) {
-        result += Math.random() * Math.random();
-      }
-      return result;
-    };
-  }
+export function createCpuIntensiveTask(): () => number {
+  return () => {
+    let result = 0;
+    for (let i = 0; i < 1000000; i++) {
+      result += Math.random() * Math.random();
+    }
+    return result;
+  };
+}
 
-  static createConcurrentRequests(count: number = 10): Promise<any>[] {
-    return Array.from(
-      { length: count },
-      () =>
-        new Promise(resolve =>
-          setTimeout(
-            () => {
-              resolve(faker.string.uuid());
-            },
-            faker.number.int({ min: 50, max: 200 })
-          )
+export function createConcurrentRequests(count: number = 10): Promise<string>[] {
+  return Array.from(
+    { length: count },
+    () =>
+      new Promise<string>(resolve =>
+        setTimeout(
+          () => {
+            resolve(faker.string.uuid());
+          },
+          faker.number.int({ min: 50, max: 200 })
         )
-    );
-  }
+      )
+  );
 }
 
 /**
- * Builder pattern for complex test scenarios
+ * Simple function for creating complex test scenarios
  */
-export class TestScenarioBuilder {
-  private scenario: any = {};
+export interface TestScenario {
+  user?: { id: string; username?: string };
+  command?: { name: string; options: unknown[] };
+  securityContext?: SecurityContext;
+  environment?: Env;
+  rateLimit?: { count: number; resetTime: number };
+}
 
-  withUser(user: any): this {
-    this.scenario.user = user;
-    return this;
+export function createTestScenario(config: {
+  user?: { id: string; username?: string };
+  commandName?: string;
+  commandOptions?: unknown[];
+  securityContext?: SecurityContext;
+  environment?: Env;
+  rateLimit?: { count: number; resetTime: number };
+} = {}): TestScenario {
+  const scenario: TestScenario = {};
+
+  if (config.user) {
+    scenario.user = config.user;
   }
 
-  withCommand(commandName: string, options: any[] = []): this {
-    this.scenario.command = { name: commandName, options };
-    return this;
+  if (config.commandName) {
+    scenario.command = {
+      name: config.commandName,
+      options: config.commandOptions ?? [],
+    };
   }
 
-  withSecurityContext(context: SecurityContext): this {
-    this.scenario.securityContext = context;
-    return this;
+  if (config.securityContext) {
+    scenario.securityContext = config.securityContext;
   }
 
-  withEnvironment(env: Env): this {
-    this.scenario.environment = env;
-    return this;
+  if (config.environment) {
+    scenario.environment = config.environment;
   }
 
-  withRateLimit(rateLimitData: any): this {
-    this.scenario.rateLimit = rateLimitData;
-    return this;
+  if (config.rateLimit) {
+    scenario.rateLimit = config.rateLimit;
   }
 
-  build(): any {
-    return { ...this.scenario };
-  }
-
-  static start(): TestScenarioBuilder {
-    return new TestScenarioBuilder();
-  }
+  return scenario;
 }

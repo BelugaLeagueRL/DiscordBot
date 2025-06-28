@@ -42,6 +42,71 @@ function validatePlatformSupported(platform: string): boolean {
 }
 
 /**
+ * Validate Steam ID64 format
+ */
+function validateSteamId(platformId: string): { isValid: boolean; error?: string } {
+  if (!/^7656119\d{10}$/.test(platformId)) {
+    return {
+      isValid: false,
+      error: 'Invalid Steam ID64 format. Must be 17 digits starting with 7656119',
+    };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate PSN ID format
+ */
+function validatePsnId(platformId: string): { isValid: boolean; error?: string } {
+  if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,15}$/.test(platformId)) {
+    return {
+      isValid: false,
+      error: 'Invalid PSN ID format. Must be 3-16 characters, start with letter, contain only letters/numbers/hyphens/underscores',
+    };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate Xbox gamertag format
+ */
+function validateXboxGamertag(platformId: string): { isValid: boolean; error?: string } {
+  if (!/^[a-zA-Z][a-zA-Z0-9 ]{2,11}$/.test(platformId)) {
+    return {
+      isValid: false,
+      error: 'Invalid Xbox gamertag format. Must be 3-12 characters, start with letter, contain only letters/numbers/spaces',
+    };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate Epic Games display name format
+ */
+function validateEpicId(platformId: string): { isValid: boolean; error?: string } {
+  if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
+    return {
+      isValid: false,
+      error: 'Invalid Epic Games display name format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
+    };
+  }
+  return { isValid: true };
+}
+
+/**
+ * Validate Nintendo Switch ID format (uses Epic Games account linking)
+ */
+function validateSwitchId(platformId: string): { isValid: boolean; error?: string } {
+  if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
+    return {
+      isValid: false,
+      error: 'Invalid Nintendo Switch ID format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
+    };
+  }
+  return { isValid: true };
+}
+
+/**
  * Validate platform-specific ID format
  */
 function validatePlatformId(
@@ -52,64 +117,75 @@ function validatePlatformId(
 
   switch (platformLower) {
     case 'steam':
-      // Steam ID64 format: 17-digit number starting with 7656119
-      if (!/^7656119\d{10}$/.test(platformId)) {
-        return {
-          isValid: false,
-          error: 'Invalid Steam ID64 format. Must be 17 digits starting with 7656119',
-        };
-      }
-      break;
-
+      return validateSteamId(platformId);
     case 'psn':
-      // PSN ID format: 3-16 characters, must start with letter, only letters/numbers/hyphens/underscores
-      if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,15}$/.test(platformId)) {
-        return {
-          isValid: false,
-          error:
-            'Invalid PSN ID format. Must be 3-16 characters, start with letter, contain only letters/numbers/hyphens/underscores',
-        };
-      }
-      break;
-
+      return validatePsnId(platformId);
     case 'xbl':
-      // Xbox gamertag format: 3-12 characters, must start with letter, letters/numbers/spaces only
-      if (!/^[a-zA-Z][a-zA-Z0-9 ]{2,11}$/.test(platformId)) {
-        return {
-          isValid: false,
-          error:
-            'Invalid Xbox gamertag format. Must be 3-12 characters, start with letter, contain only letters/numbers/spaces',
-        };
-      }
-      break;
-
+      return validateXboxGamertag(platformId);
     case 'epic':
-      // Epic Games display name: 3+ characters, alphanumeric and common special chars
-      if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
-        return {
-          isValid: false,
-          error:
-            'Invalid Epic Games display name format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
-        };
-      }
-      break;
-
+      return validateEpicId(platformId);
     case 'switch':
-      // Nintendo Switch uses Epic Games account linking, so same validation as Epic
-      if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
-        return {
-          isValid: false,
-          error:
-            'Invalid Nintendo Switch ID format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
-        };
-      }
-      break;
-
+      return validateSwitchId(platformId);
     default:
       return {
         isValid: false,
         error: `Unknown platform: ${platform}`,
       };
+  }
+}
+
+/**
+ * Validate platform and platform ID from path parts
+ */
+function validatePlatformData(
+  platform: string | undefined,
+  platformId: string | undefined
+): TrackerValidationResult {
+  if (
+    platform === undefined ||
+    platform === '' ||
+    platformId === undefined ||
+    platformId === ''
+  ) {
+    return {
+      isValid: false,
+      error: 'Missing platform or platform ID in URL',
+    };
+  }
+
+  if (!validatePlatformSupported(platform)) {
+    return {
+      isValid: false,
+      error: `Unsupported platform: ${platform}. Supported platforms: steam, epic, psn, xbl, switch`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validate platform ID length and format
+ */
+function validatePlatformIdSafety(platformId: string, platform: string): TrackerValidationResult {
+  // DoS protection: limit platform ID length
+  const MAX_PLATFORM_ID_LENGTH = 100;
+  if (platformId.length > MAX_PLATFORM_ID_LENGTH) {
+    return {
+      isValid: false,
+      error: 'Platform ID too long (maximum 100 characters)',
+    };
+  }
+
+  // Platform-specific validation
+  const platformValidation = validatePlatformId(platform, platformId);
+  if (!platformValidation.isValid) {
+    const result: TrackerValidationResult = {
+      isValid: false,
+    };
+    if (platformValidation.error !== undefined) {
+      result.error = platformValidation.error;
+    }
+    return result;
   }
 
   return { isValid: true };
@@ -145,48 +221,27 @@ export function validateTrackerUrl(url: string): TrackerValidationResult {
     const platform = pathParts[2];
     const platformId = pathParts[3];
 
-    // Validate platform exists
-    if (
-      platform === undefined ||
-      platform === '' ||
-      platformId === undefined ||
-      platformId === ''
-    ) {
+    // Additional TypeScript safety checks (validatePathStructure should ensure these exist)
+    if (platform === undefined || platformId === undefined) {
       return {
         isValid: false,
-        error: 'Missing platform or platform ID in URL',
+        error: 'Invalid path structure: missing platform or platform ID',
       };
     }
 
-    // Validate supported platforms
-    if (!validatePlatformSupported(platform)) {
-      return {
-        isValid: false,
-        error: `Unsupported platform: ${platform}. Supported platforms: steam, epic, psn, xbl, switch`,
-      };
+    // Validate platform and platform ID existence
+    const platformDataValidation = validatePlatformData(platform, platformId);
+    if (!platformDataValidation.isValid) {
+      return platformDataValidation;
     }
 
     // Decode URL-encoded platform ID
     const decodedPlatformId = decodeURIComponent(platformId);
 
-    // DoS protection: limit platform ID length
-    if (decodedPlatformId.length > 100) {
-      return {
-        isValid: false,
-        error: 'Platform ID too long (maximum 100 characters)',
-      };
-    }
-
-    // Platform-specific validation
-    const platformValidation = validatePlatformId(platform, decodedPlatformId);
-    if (!platformValidation.isValid) {
-      const result: TrackerValidationResult = {
-        isValid: false,
-      };
-      if (platformValidation.error) {
-        result.error = platformValidation.error;
-      }
-      return result;
+    // Validate platform ID safety and format
+    const platformIdValidation = validatePlatformIdSafety(decodedPlatformId, platform);
+    if (!platformIdValidation.isValid) {
+      return platformIdValidation;
     }
 
     return {
