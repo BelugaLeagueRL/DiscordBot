@@ -8,25 +8,25 @@ import { registerCommands } from '../register';
 
 describe('registerCommands function with valid environment', () => {
   let originalEnv: typeof process.env;
-  let originalFetch: typeof global.fetch;
-  let originalConsole: typeof global.console;
+  let originalFetch: typeof globalThis.fetch;
+  let originalConsole: typeof console;
   let originalProcessExit: typeof process.exit;
 
   beforeEach(() => {
     // Store originals
     originalEnv = { ...process.env };
-    originalFetch = global.fetch;
-    originalConsole = global.console;
+    originalFetch = globalThis.fetch;
+    originalConsole = console;
     originalProcessExit = process.exit;
 
     // Set valid environment variables
-    process.env.DISCORD_TOKEN = 'test_token';
-    process.env.DISCORD_APPLICATION_ID = 'test_app_id';
+    process.env['DISCORD_TOKEN'] = 'test_token';
+    process.env['DISCORD_APPLICATION_ID'] = 'test_app_id';
 
     // Mock fetch
-    global.fetch = vi.fn();
+    globalThis.fetch = vi.fn();
     // Mock console
-    global.console = { ...global.console, log: vi.fn(), error: vi.fn() };
+    (globalThis as any).console = { ...console, log: vi.fn(), error: vi.fn() };
     // Mock process.exit
     process.exit = vi.fn() as any;
   });
@@ -34,8 +34,8 @@ describe('registerCommands function with valid environment', () => {
   afterEach(() => {
     // Restore originals
     process.env = originalEnv;
-    global.fetch = originalFetch;
-    global.console = originalConsole;
+    globalThis.fetch = originalFetch;
+    (globalThis as any).console = originalConsole;
     process.exit = originalProcessExit;
   });
 
@@ -154,8 +154,8 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log registration success with command details', async () => {
     // RED: Test logging functionality
-    const mockConsoleLog = vi.mocked(global.console.log);
-    const mockFetch = vi.mocked(global.fetch);
+    const mockConsoleLog = vi.mocked((globalThis as any).console.log);
+    const mockFetch = vi.mocked(globalThis.fetch);
 
     const apiResponse = [
       { name: 'register', description: 'Register your Rocket League tracker URLs' },
@@ -179,8 +179,8 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log error details when API call fails', async () => {
     // RED: Test error logging functionality
-    const mockConsoleError = vi.mocked(global.console.error);
-    const mockFetch = vi.mocked(global.fetch);
+    const mockConsoleError = vi.mocked((globalThis as any).console.error);
+    const mockFetch = vi.mocked(globalThis.fetch);
 
     const errorResponse = 'Invalid command structure';
     mockFetch.mockResolvedValueOnce({
