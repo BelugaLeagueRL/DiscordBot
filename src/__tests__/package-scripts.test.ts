@@ -18,8 +18,8 @@ describe('Development NPM Scripts', () => {
     it('should have dev script for local wrangler development server', () => {
       // RED: Test for development server script
       expect(packageJson.scripts).toHaveProperty('dev');
-      expect(packageJson.scripts.dev).toContain('wrangler dev');
-      expect(packageJson.scripts.dev).toContain('--env development');
+      expect(packageJson.scripts['dev']).toContain('wrangler dev');
+      expect(packageJson.scripts['dev']).toContain('--env development');
     });
 
     it('should have dev:tunnel script for remote tunnel development', () => {
@@ -77,7 +77,7 @@ describe('Development NPM Scripts', () => {
     it('should update existing deploy script for production environment', () => {
       // RED: Test that deploy script is environment-aware
       expect(packageJson.scripts).toHaveProperty('deploy');
-      expect(packageJson.scripts.deploy).toContain('--env production');
+      expect(packageJson.scripts['deploy']).toContain('--env production');
     });
   });
 
