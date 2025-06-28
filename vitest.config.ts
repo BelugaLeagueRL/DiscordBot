@@ -7,6 +7,11 @@ export default defineConfig({
     poolOptions: {
       workers: {
         wrangler: { configPath: './wrangler.toml' },
+        miniflare: {
+          // Fix for discord-api-types module resolution
+          compatibilityDate: '2024-01-01',
+          compatibilityFlags: ['nodejs_compat'],
+        },
       },
     },
     coverage: {
