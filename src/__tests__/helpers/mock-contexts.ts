@@ -1,6 +1,13 @@
 /**
  * Mock execution contexts for testing
+ * 
+ * Note: This file uses globalThis type assertions for test infrastructure
+ * ESLint rules are relaxed for necessary global mocking
  */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { vi } from 'vitest';
 import type { SecurityContext } from '../../middleware/security';
@@ -48,7 +55,7 @@ export function createMockSecurityContext(
  * Mock environment with test-safe values
  */
 export function createMockEnv(overrides: Partial<Env> = {}): Env {
-  return EnvFactory.test(overrides);
+  return EnvFactory.create({ ENVIRONMENT: 'test', ...overrides });
 }
 
 /**
@@ -120,7 +127,7 @@ export function createMockRequest(
     body?: string;
   } = {}
 ): Request {
-  const { method = 'POST', url = 'https://example.com/', headers = {}, body = '{}' } = options;
+  const { method = 'POST', url = 'https://example.com/', headers = {}, body } = options;
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -129,11 +136,16 @@ export function createMockRequest(
     ...headers,
   };
 
-  return new Request(url, {
+  const requestInit: RequestInit = {
     method,
     headers: defaultHeaders,
-    body: method !== 'GET' ? body : undefined,
-  });
+  };
+  
+  if (method !== 'GET' && body) {
+    requestInit.body = body;
+  }
+  
+  return new Request(url, requestInit);
 }
 
 /**
@@ -168,7 +180,7 @@ export function createMockResponse(
 export function createMockCrypto() {
   return {
     randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
-    getRandomValues: vi.fn(array => {
+    getRandomValues: vi.fn((array: Uint8Array) => {
       for (let i = 0; i < array.length; i++) {
         array[i] = Math.floor(Math.random() * 256);
       }
@@ -199,21 +211,21 @@ export function createMockTiming() {
  */
 export function setupGlobalMocks() {
   // Mock global fetch
-  global.fetch = createMockFetch();
+  (globalThis as any).fetch = createMockFetch();
 
   // Mock global crypto
-  global.crypto = createMockCrypto() as any;
+  (globalThis as any).crypto = createMockCrypto();
 
   // Mock console methods
   const mockConsole = createMockConsole();
-  global.console = { ...global.console, ...mockConsole };
+  (globalThis as any).console = { ...(globalThis as any).console, ...mockConsole };
 
   // Mock setTimeout and setInterval for testing
   vi.useFakeTimers();
 
   return {
-    fetch: global.fetch,
-    crypto: global.crypto,
+    fetch: (globalThis as any).fetch,
+    crypto: (globalThis as any).crypto,
     console: mockConsole,
     restoreTimers: () => vi.useRealTimers(),
   };
