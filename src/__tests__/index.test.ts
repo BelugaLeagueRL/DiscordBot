@@ -9,8 +9,8 @@ import { EnvFactory } from './helpers/test-factories';
 import workerModule from '../index';
 import type { Env } from '../index';
 
-// Type guard for Discord response data
-function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags?: number } } {
+// Type guard for Discord response data - handles both PONG and message responses
+function isDiscordResponse(data: unknown): data is { type: number; data?: { content: string; flags?: number } } {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
@@ -21,6 +21,12 @@ function isDiscordResponse(data: unknown): data is { type: number; data: { conte
     return false;
   }
   
+  // PONG responses (type: 1) don't have data property
+  if (obj['type'] === 1) {
+    return true;
+  }
+  
+  // Message responses should have data with content
   if (typeof obj['data'] !== 'object' || obj['data'] === null) {
     return false;
   }
@@ -192,7 +198,7 @@ describe('Main Index Handler', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // Error response type
-      expect(responseData.data.content).toContain('Invalid request format');
+      expect(responseData.data?.content).toContain('Invalid request format');
     });
 
     it('should handle empty request body', async () => {
@@ -248,7 +254,7 @@ describe('Main Index Handler', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
-      expect(responseData.data.content).toBe('Success!');
+      expect(responseData.data?.content).toBe('Success!');
     });
 
     it('should handle unknown command', async () => {
@@ -264,7 +270,7 @@ describe('Main Index Handler', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // Error response
-      expect(responseData.data.content).toContain('Unknown command');
+      expect(responseData.data?.content).toContain('Unknown command');
     });
 
     it('should handle command execution error', async () => {
@@ -283,7 +289,7 @@ describe('Main Index Handler', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(4);
-      expect(responseData.data.content).toContain('An error occurred');
+      expect(responseData.data?.content).toContain('An error occurred');
     });
 
     it('should handle unknown interaction type', async () => {
