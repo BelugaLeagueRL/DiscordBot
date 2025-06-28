@@ -3,6 +3,7 @@
  */
 
 import { faker } from '@faker-js/faker';
+import { expect } from 'vitest';
 import type { DiscordInteraction } from '../../types/discord';
 
 // Define constants locally to avoid module resolution issues
@@ -14,11 +15,7 @@ const InteractionType = {
   ModalSubmit: 5,
 } as const;
 
-const ApplicationCommandType = {
-  ChatInput: 1,
-  User: 2,
-  Message: 3,
-} as const;
+// Removed unused ApplicationCommandType constant
 
 // Define types locally
 interface APIUser {
@@ -38,7 +35,7 @@ interface APIUser {
   flags?: number;
   premium_type?: number;
   public_flags?: number;
-  avatar_decoration_data?: any;
+  avatar_decoration_data?: unknown;
 }
 
 interface APIGuildMember {
@@ -54,7 +51,7 @@ interface APIGuildMember {
   pending?: boolean;
   permissions?: string;
   communication_disabled_until?: string | null;
-  avatar_decoration_data?: any;
+  avatar_decoration_data?: unknown;
 }
 
 /**
@@ -123,22 +120,28 @@ export function createMockPingInteraction(): DiscordInteraction {
  */
 export function createMockCommandInteraction(
   commandName: string,
-  options: any[] = [],
-  overrides: Partial<APIApplicationCommandInteraction> = {}
+  options: ReadonlyArray<{ readonly name: string; readonly value: string; readonly type: number }> = [],
+  overrides: Partial<DiscordInteraction> = {}
 ): DiscordInteraction {
-  const baseInteraction: APIApplicationCommandInteraction = {
+  const baseInteraction: DiscordInteraction = {
     id: faker.string.numeric(18),
     application_id: faker.string.numeric(18),
     type: InteractionType.ApplicationCommand,
     data: {
       id: faker.string.numeric(18),
       name: commandName,
-      type: ApplicationCommandType.ChatInput,
+      type: 1, // ApplicationCommandType.ChatInput
       options,
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: {
+      user: {
+        id: faker.string.numeric(18),
+        username: faker.internet.username(),
+        discriminator: faker.string.numeric(4),
+      },
+    },
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -147,7 +150,7 @@ export function createMockCommandInteraction(
     ...overrides,
   };
 
-  return baseInteraction as DiscordInteraction;
+  return baseInteraction;
 }
 
 /**
