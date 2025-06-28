@@ -9,6 +9,30 @@ import { InteractionType, InteractionResponseType } from '../../utils/discord';
 import { handleRegisterCommand } from '../../handlers/register';
 import type { Env } from '../../index';
 
+// Type guard for Discord response data
+function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags: number } } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  if (typeof obj['type'] !== 'number') {
+    return false;
+  }
+  
+  if (typeof obj['data'] !== 'object' || obj['data'] === null) {
+    return false;
+  }
+  
+  const dataObj = obj['data'] as Record<string, unknown>;
+  
+  return (
+    typeof dataObj['content'] === 'string' &&
+    typeof dataObj['flags'] === 'number'
+  );
+}
+
 // Mock discord-interactions for E2E tests
 vi.mock('discord-interactions', () => ({
   verifyKey: vi.fn(() => true), // Always pass verification for E2E tests
@@ -70,7 +94,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
       expect(responseData.data.content).toContain('STEAM: 76561198144145654');
@@ -111,7 +139,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Invalid tracker URLs:');
       expect(responseData.data.content).toContain('rocketleague.tracker.network');
@@ -158,7 +190,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
       expect(responseData.data.content).toContain('PSN: validuser123');
@@ -189,7 +225,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Please provide at least one tracker URL');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
@@ -219,7 +259,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Could not identify user');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
@@ -253,7 +297,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('STEAM: 76561198144145654');
     });
@@ -284,7 +332,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('EPIC: test-epic-user');
     });
@@ -315,7 +367,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('PSN: testpsnuser');
     });
@@ -346,7 +402,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('XBL: TestGamer');
     });
@@ -377,7 +437,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('SWITCH: test-switch-user');
     });
@@ -406,7 +470,11 @@ describe('Discord Command Workflows E2E', () => {
       const response = handleRegisterCommand(invalidInteraction, mockEnv);
       expect(response.status).toBe(200);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Please provide at least one tracker URL');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
@@ -442,7 +510,11 @@ describe('Discord Command Workflows E2E', () => {
       };
 
       const response = handleRegisterCommand(interaction, mockEnv);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
 
       expect(responseData.data.content).toContain('Invalid tracker URLs:');
       expect(responseData.data.content).not.toContain('Successfully registered');
@@ -537,7 +609,11 @@ describe('Discord Command Workflows E2E', () => {
       expect(response.status).toBe(200);
       expect(processingTime).toBeLessThan(150); // Should handle multiple URLs efficiently
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.data.content).toContain('Successfully registered 4 tracker URL(s)');
     });
   });
