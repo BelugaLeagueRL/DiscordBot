@@ -6,6 +6,74 @@ import { faker } from '@faker-js/faker';
 import { expect } from 'vitest';
 import type { DiscordInteraction } from '../../types/discord';
 
+/**
+ * Factory for creating valid tracker URLs for different platforms
+ */
+export function createValidTrackerUrl(platform: 'steam' | 'epic' | 'psn' | 'xbl' | 'switch' = 'steam'): string {
+  const baseUrl = 'https://rocketleague.tracker.network/rocket-league/profile';
+  
+  switch (platform) {
+    case 'steam':
+      return `${baseUrl}/steam/${faker.string.numeric(17)}/overview`;
+    case 'epic':
+      return `${baseUrl}/epic/${faker.internet.username()}/overview`;
+    case 'psn':
+      return `${baseUrl}/psn/${faker.internet.username()}/overview`;
+    case 'xbl':
+      return `${baseUrl}/xbl/${faker.internet.username()}/overview`;
+    case 'switch':
+      return `${baseUrl}/switch/${faker.internet.username()}/overview`;
+    default:
+      throw new Error(`Unknown platform: ${platform}`);
+  }
+}
+
+/**
+ * Factory for creating invalid tracker URLs
+ */
+export function createInvalidTrackerUrl(): string {
+  const invalidDomains = [
+    'https://invalid-domain.com/profile/steam/testuser/overview',
+    'https://rocketleague.tracker.network/wrong/path/format',
+    'https://another-invalid.com/profile/epic/testuser/overview',
+  ];
+  
+  return faker.helpers.arrayElement(invalidDomains);
+}
+
+/**
+ * Factory for creating tracker options for command interactions
+ */
+export function createTrackerOptions(count: number = 1, validCount?: number): ReadonlyArray<{ readonly name: string; readonly value: string; readonly type: number }> {
+  const actualValidCount = validCount ?? count;
+  const invalidCount = count - actualValidCount;
+  
+  const options = [];
+  
+  // Add valid URLs
+  for (let i = 0; i < actualValidCount; i++) {
+    const platforms: Array<'steam' | 'epic' | 'psn' | 'xbl' | 'switch'> = ['steam', 'epic', 'psn', 'xbl', 'switch'];
+    const platform = faker.helpers.arrayElement(platforms);
+    
+    options.push({
+      name: `tracker${String(i + 1)}`,
+      type: 3,
+      value: createValidTrackerUrl(platform),
+    });
+  }
+  
+  // Add invalid URLs
+  for (let i = 0; i < invalidCount; i++) {
+    options.push({
+      name: `tracker${String(actualValidCount + i + 1)}`,
+      type: 3,
+      value: createInvalidTrackerUrl(),
+    });
+  }
+  
+  return options;
+}
+
 // Define constants locally to avoid module resolution issues
 const InteractionType = {
   Ping: 1,

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from '../../utils/discord';
 import { handleRegisterCommand } from '../../handlers/register';
-import { createMockCommandInteraction } from '../helpers/discord-helpers';
+import { createMockCommandInteraction, createTrackerOptions, createValidTrackerUrl } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
 
 // Type guard for Discord response data
@@ -58,18 +58,7 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Complete Command Processing Workflows', () => {
     it('should process successful /register command with valid tracker URLs', async () => {
-      const interaction = createMockCommandInteraction('register', [
-        {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/epic/test-player/overview',
-        },
-      ]);
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(2));
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -87,18 +76,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should process /register command with invalid tracker URLs', async () => {
-      const interaction = createMockCommandInteraction('register', [
-        {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/wrong/path/format',
-        },
-      ]);
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(2, 0)); // 2 total, 0 valid
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -115,23 +93,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should process /register command with mixed valid/invalid URLs', async () => {
-      const interaction = createMockCommandInteraction('register', [
-        {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/psn/validuser123/overview',
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-        },
-        {
-          name: 'tracker3',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/xbl/ValidGamer/overview',
-        },
-      ]);
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(3, 2)); // 3 total, 2 valid
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -166,13 +128,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle missing user information gracefully', async () => {
-      const interaction = createMockCommandInteraction('register', [
-        {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-        },
-      ], { member: undefined });
+      const interaction = createMockCommandInteraction('register', createTrackerOptions(1), { member: undefined });
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -190,30 +146,13 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('URL Validation Workflow Integration', () => {
     it('should validate Steam platform URLs correctly', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('steam'),
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -226,30 +165,13 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should validate Epic platform URLs correctly', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        application_id: '987654321098765432',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/epic/test-epic-user/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('epic'),
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
