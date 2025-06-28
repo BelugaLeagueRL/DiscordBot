@@ -7,32 +7,38 @@ import { verifyKey } from 'discord-interactions';
 // Rate limiting storage (in-memory for Workers)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-// Security configuration
+// Security configuration constants
 const RATE_LIMIT_REQUESTS = 100; // requests per window
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const REQUEST_TIMEOUT = 10 * 1000; // 10 seconds
-const MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
+const BYTES_PER_KB = 1024;
+const KB_PER_MB = 1024;
+const REQUEST_TIMEOUT_SECONDS = 10;
+
+const RATE_LIMIT_WINDOW = SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND; // 1 minute
+const REQUEST_TIMEOUT = REQUEST_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND; // 10 seconds
+const MAX_PAYLOAD_SIZE = BYTES_PER_KB * KB_PER_MB; // 1MB
 
 export interface SecurityContext {
-  clientIP: string;
-  userAgent: string;
-  timestamp: number;
-  requestId: string;
+  readonly clientIP: string;
+  readonly userAgent: string;
+  readonly timestamp: number;
+  readonly requestId: string;
 }
 
 export interface SecurityValidationResult {
-  isValid: boolean;
-  error?: string | undefined;
-  context?: SecurityContext | undefined;
+  readonly isValid: boolean;
+  readonly error?: string | undefined;
+  readonly context?: SecurityContext | undefined;
 }
 
 /**
  * Extract security context from request
  */
-export function extractSecurityContext(request: Request): SecurityContext {
+export function extractSecurityContext(request: Readonly<Request>): SecurityContext {
   const clientIP =
-    request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
-  const userAgent = request.headers.get('User-Agent') || 'unknown';
+    request.headers.get('CF-Connecting-IP') ?? request.headers.get('X-Forwarded-For') ?? 'unknown';
+  const userAgent = request.headers.get('User-Agent') ?? 'unknown';
   const timestamp = Date.now();
   const requestId = crypto.randomUUID();
 
@@ -52,7 +58,7 @@ export function validateRateLimit(clientIP: string): boolean {
   const key = `rate_limit:${clientIP}`;
   const existing = rateLimitMap.get(key);
 
-  if (!existing || now > existing.resetTime) {
+  if (existing === undefined || now > existing.resetTime) {
     // Reset or create new rate limit entry
     rateLimitMap.set(key, {
       count: 1,
@@ -73,20 +79,23 @@ export function validateRateLimit(clientIP: string): boolean {
 /**
  * Validate request headers for Discord requirements
  */
-export function validateDiscordHeaders(request: Request): { isValid: boolean; error?: string } {
+export function validateDiscordHeaders(request: Readonly<Request>): {
+  isValid: boolean;
+  error?: string;
+} {
   const signature = request.headers.get('X-Signature-Ed25519');
   const timestamp = request.headers.get('X-Signature-Timestamp');
   const contentType = request.headers.get('Content-Type');
 
-  if (!signature) {
+  if (signature === null) {
     return { isValid: false, error: 'Missing X-Signature-Ed25519 header' };
   }
 
-  if (!timestamp) {
+  if (timestamp === null) {
     return { isValid: false, error: 'Missing X-Signature-Timestamp header' };
   }
 
-  if (!contentType || !contentType.includes('application/json')) {
+  if (contentType?.includes('application/json') !== true) {
     return { isValid: false, error: 'Invalid Content-Type, expected application/json' };
   }
 
@@ -95,8 +104,8 @@ export function validateDiscordHeaders(request: Request): { isValid: boolean; er
   const now = Date.now() / 1000;
   const timeDiff = Math.abs(now - timestampNum);
 
-  if (timeDiff > 300) {
-    // 5 minutes
+  const MAX_TIMESTAMP_DIFF_SECONDS = 300; // 5 minutes
+  if (timeDiff > MAX_TIMESTAMP_DIFF_SECONDS) {
     return { isValid: false, error: 'Request timestamp too old or too far in future' };
   }
 
@@ -107,9 +116,9 @@ export function validateDiscordHeaders(request: Request): { isValid: boolean; er
  * Enhanced Discord request verification with security checks
  */
 export async function verifyDiscordRequestSecure(
-  request: Request,
+  request: Readonly<Request>,
   publicKey: string,
-  context: SecurityContext
+  context: Readonly<SecurityContext>
 ): Promise<SecurityValidationResult> {
   try {
     // Validate headers first
@@ -145,7 +154,7 @@ export async function verifyDiscordRequestSecure(
       };
     }
 
-    const isValidSignature = await verifyKey(body, signature, timestamp, publicKey);
+    const isValidSignature = verifyKey(body, signature, timestamp, publicKey);
 
     if (!isValidSignature) {
       return {
@@ -206,16 +215,25 @@ export function cleanupRateLimits(): void {
 }
 
 /**
+ * Clear all rate limit entries (for testing purposes)
+ */
+export function clearRateLimits(): void {
+  rateLimitMap.clear();
+}
+
+/**
  * Timeout wrapper for request processing
  */
-export function withTimeout<T>(
-  promise: Promise<T>,
+export function withTimeout<TData>(
+  promise: Promise<TData>,
   timeoutMs: number = REQUEST_TIMEOUT
-): Promise<T> {
+): Promise<TData> {
   return Promise.race([
     promise,
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+      setTimeout(() => {
+        reject(new Error('Request timeout'));
+      }, timeoutMs)
     ),
   ]);
 }

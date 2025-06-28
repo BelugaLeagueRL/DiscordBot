@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔧 Running pre-commit quality checks..."
+
+# ZERO TOLERANCE - FAIL FAST APPROACH
+echo "📝 Running lint-staged (ESLint + Prettier)..."
+npx lint-staged --verbose
+
+echo "🔍 Running TypeScript compilation check..."
+npm run typecheck
+
+echo "📊 Running type coverage check..."
+npm run type-coverage
+
+echo "✅ All pre-commit checks passed!"
