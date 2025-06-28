@@ -1,59 +1,83 @@
 import { describe, it, expect } from 'vitest';
 import { handleRegisterCommand } from '../handlers/register';
+import {
+  createMockCommandInteraction,
+  createValidTrackerUrl,
+  createInvalidTrackerUrl,
+} from './helpers/discord-helpers';
+import { EnvFactory } from './helpers/test-factories';
 import type { Env } from '../index';
-import type { DiscordInteraction } from '../types/discord';
 
-// Mock environment
-const mockEnv: Env = {
-  DISCORD_TOKEN: 'test-token',
-  DISCORD_PUBLIC_KEY: 'test-key',
-  DISCORD_APPLICATION_ID: 'test-app-id',
-  ENVIRONMENT: 'test',
-};
+// Type guard for Discord response data
+function isDiscordResponse(
+  data: unknown
+): data is { type: number; data: { content: string; flags?: number } } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  if (typeof obj['type'] !== 'number') {
+    return false;
+  }
+
+  if (typeof obj['data'] !== 'object' || obj['data'] === null) {
+    return false;
+  }
+
+  const dataObj = obj['data'] as Record<string, unknown>;
+
+  return typeof dataObj['content'] === 'string';
+}
+
+// Mock environment using factory
+const mockEnv: Env = EnvFactory.create();
 
 describe('Register command handler', () => {
   it('should validate tracker URLs correctly', async () => {
-    const validInteraction: DiscordInteraction = {
-      type: 2,
-      member: { user: { id: 'test-user-123' } },
-      data: {
-        name: 'register',
-        options: [
-          {
-            name: 'tracker1',
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview',
-          },
-        ],
-      },
-    };
+    // Use a specific known Steam ID for deterministic testing
+    const knownSteamId = '76561198144145654';
+    const knownTrackerUrl = `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`;
 
-    const response = await handleRegisterCommand(validInteraction, mockEnv);
-    const data = (await response.json()) as any;
+    const validInteraction = createMockCommandInteraction('register', [
+      {
+        name: 'tracker1',
+        type: 3,
+        value: knownTrackerUrl,
+      },
+    ]);
+
+    const response = handleRegisterCommand(validInteraction, mockEnv);
+    const rawData = await response.json();
+
+    if (!isDiscordResponse(rawData)) {
+      throw new Error('Invalid response format');
+    }
+    const data = rawData;
 
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
     expect(data.data.content).toContain('✅ Successfully registered');
-    expect(data.data.content).toContain('STEAM: 76561198000000000');
+    expect(data.data.content).toContain(`STEAM: ${knownSteamId}`);
   });
 
   it('should reject invalid tracker URLs', async () => {
-    const invalidInteraction: DiscordInteraction = {
-      type: 2,
-      member: { user: { id: 'test-user-123' } },
-      data: {
-        name: 'register',
-        options: [
-          {
-            name: 'tracker1',
-            value: 'https://invalid-url.com/profile',
-          },
-        ],
+    const invalidInteraction = createMockCommandInteraction('register', [
+      {
+        name: 'tracker1',
+        type: 3,
+        value: createInvalidTrackerUrl(),
       },
-    };
+    ]);
 
-    const response = await handleRegisterCommand(invalidInteraction, mockEnv);
-    const data = (await response.json()) as any;
+    const response = handleRegisterCommand(invalidInteraction, mockEnv);
+    const rawData = await response.json();
+
+    if (!isDiscordResponse(rawData)) {
+      throw new Error('Invalid response format');
+    }
+    const data = rawData;
 
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
@@ -62,39 +86,37 @@ describe('Register command handler', () => {
   });
 
   it('should handle missing user ID', async () => {
-    const noUserInteraction: DiscordInteraction = {
-      type: 2,
-      data: {
-        name: 'register',
-        options: [
-          {
-            name: 'tracker1',
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198000000000/overview',
-          },
-        ],
+    // Create interaction without member info
+    const { member: _member, ...noUserInteraction } = createMockCommandInteraction('register', [
+      {
+        name: 'tracker1',
+        type: 3,
+        value: createValidTrackerUrl('steam'),
       },
-    };
+    ]);
 
-    const response = await handleRegisterCommand(noUserInteraction, mockEnv);
-    const data = (await response.json()) as any;
+    const response = handleRegisterCommand(noUserInteraction, mockEnv);
+    const rawData = await response.json();
+
+    if (!isDiscordResponse(rawData)) {
+      throw new Error('Invalid response format');
+    }
+    const data = rawData;
 
     expect(data.data.content).toContain('❌ Could not identify user');
     expect(data.data.flags).toBe(64); // Ephemeral
   });
 
   it('should handle missing tracker URLs', async () => {
-    const noOptionsInteraction: DiscordInteraction = {
-      type: 2,
-      member: { user: { id: 'test-user-123' } },
-      data: {
-        name: 'register',
-        options: [],
-      },
-    };
+    const noOptionsInteraction = createMockCommandInteraction('register', []);
 
-    const response = await handleRegisterCommand(noOptionsInteraction, mockEnv);
-    const data = (await response.json()) as any;
+    const response = handleRegisterCommand(noOptionsInteraction, mockEnv);
+    const rawData = await response.json();
+
+    if (!isDiscordResponse(rawData)) {
+      throw new Error('Invalid response format');
+    }
+    const data = rawData;
 
     expect(data.data.content).toContain('❌ Please provide at least one tracker URL');
     expect(data.data.flags).toBe(64); // Ephemeral

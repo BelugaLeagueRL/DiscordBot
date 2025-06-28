@@ -5,20 +5,31 @@
 
 import { commands } from './commands';
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID;
+/**
+ * Validate required environment variables
+ */
+export function validateEnvironmentVariables(): { token: string; applicationId: string } {
+  const DISCORD_TOKEN = process.env['DISCORD_TOKEN'];
+  const DISCORD_APPLICATION_ID = process.env['DISCORD_APPLICATION_ID'];
 
-if (!DISCORD_TOKEN || !DISCORD_APPLICATION_ID) {
-  throw new Error(
-    'Missing required environment variables: DISCORD_TOKEN and DISCORD_APPLICATION_ID'
-  );
+  if (DISCORD_TOKEN === undefined || DISCORD_APPLICATION_ID === undefined) {
+    throw new Error(
+      'Missing required environment variables: DISCORD_TOKEN and DISCORD_APPLICATION_ID'
+    );
+  }
+
+  return {
+    token: DISCORD_TOKEN,
+    applicationId: DISCORD_APPLICATION_ID,
+  };
 }
 
 /**
  * Register all commands with Discord
  */
-async function registerCommands(): Promise<void> {
-  const url = `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/commands`;
+export async function registerCommands(): Promise<void> {
+  const { token, applicationId } = validateEnvironmentVariables();
+  const url = `https://discord.com/api/v10/applications/${applicationId}/commands`;
 
   try {
     console.log('Registering commands...');
@@ -27,7 +38,7 @@ async function registerCommands(): Promise<void> {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bot ${DISCORD_TOKEN}`,
+        Authorization: `Bot ${token}`,
       },
       body: JSON.stringify(commands),
     });
@@ -35,24 +46,26 @@ async function registerCommands(): Promise<void> {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Failed to register commands: ${response.status} ${response.statusText}\n${errorText}`
+        `Failed to register commands: ${String(response.status)} ${response.statusText}\n${errorText}`
       );
     }
 
-    const data = (await response.json()) as Array<{ name: string; description: string }>;
+    const responseData = await response.json();
+    const data = responseData as unknown[];
     console.log('Successfully registered', data.length, 'commands');
 
     // Log registered commands
-    data.forEach(command => {
-      console.log(`  - ${command.name}: ${command.description}`);
-    });
-  } catch (error) {
+    for (const command of data) {
+      const cmd = command as { name?: unknown; description?: unknown };
+      console.log(`  - ${String(cmd.name)}: ${String(cmd.description)}`);
+    }
+  } catch (error: unknown) {
     console.error('Error registering commands:', error);
     process.exit(1);
   }
 }
 
 // Run command registration if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  registerCommands();
+if (import.meta.url === `file://${String(process.argv[1])}`) {
+  void registerCommands();
 }

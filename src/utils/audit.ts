@@ -6,38 +6,59 @@ import type { SecurityContext } from '../middleware/security';
 import type { DiscordInteraction } from '../types/discord';
 
 export enum AuditEventType {
-  REQUEST_RECEIVED = 'request_received',
-  REQUEST_VERIFIED = 'request_verified',
-  REQUEST_REJECTED = 'request_rejected',
-  COMMAND_EXECUTED = 'command_executed',
-  COMMAND_FAILED = 'command_failed',
-  SECURITY_VIOLATION = 'security_violation',
-  RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded',
-  HEALTH_CHECK = 'health_check',
-  ERROR_OCCURRED = 'error_occurred',
+  RequestReceived = 'request_received',
+  RequestVerified = 'request_verified',
+  RequestRejected = 'request_rejected',
+  CommandExecuted = 'command_executed',
+  CommandFailed = 'command_failed',
+  SecurityViolation = 'security_violation',
+  RateLimitExceeded = 'rate_limit_exceeded',
+  HealthCheck = 'health_check',
+  ErrorOccurred = 'error_occurred',
 }
 
 export interface AuditLogEntry {
-  timestamp: string;
-  requestId: string;
-  eventType: AuditEventType;
-  clientIP: string;
-  userAgent: string;
-  userId?: string | undefined;
-  guildId?: string | undefined;
-  channelId?: string | undefined;
-  commandName?: string | undefined;
-  success: boolean;
-  error?: string | undefined;
-  responseTime?: number | undefined;
-  metadata?: Record<string, unknown> | undefined;
+  readonly timestamp: string;
+  readonly requestId: string;
+  readonly eventType: AuditEventType;
+  readonly clientIP: string;
+  readonly userAgent: string;
+  readonly userId?: string | undefined;
+  readonly guildId?: string | undefined;
+  readonly channelId?: string | undefined;
+  readonly commandName?: string | undefined;
+  readonly success: boolean;
+  readonly error?: string | undefined;
+  readonly responseTime?: number | undefined;
+  readonly metadata?: Readonly<Record<string, unknown>> | undefined;
 }
 
 export class AuditLogger {
-  private environment: string;
+  private readonly environment: string;
 
   constructor(environment: string) {
     this.environment = environment;
+  }
+
+  /**
+   * Extract user ID from interaction
+   */
+  private extractUserId(interaction?: Readonly<DiscordInteraction>): string | undefined {
+    return interaction?.member?.user?.id ?? interaction?.user?.id;
+  }
+
+  /**
+   * Extract guild ID from interaction
+   */
+  private extractGuildId(interaction?: Readonly<DiscordInteraction>): string | undefined {
+    return (interaction as { guild_id?: string } | undefined)?.guild_id;
+  }
+
+  /**
+   * Extract channel ID from interaction
+   */
+  private extractChannelId(interaction?: Readonly<DiscordInteraction>): string | undefined {
+    return (interaction as { channel_id?: string } | undefined)?.channel_id;
   }
 
   /**
@@ -45,35 +66,56 @@ export class AuditLogger {
    */
   log(
     eventType: AuditEventType,
-    context: SecurityContext,
-    options: {
-      interaction?: DiscordInteraction | undefined;
-      success?: boolean | undefined;
-      error?: string | undefined;
-      responseTime?: number | undefined;
-      metadata?: Record<string, unknown> | undefined;
-    } = {}
+    context: Readonly<SecurityContext>,
+    options: Readonly<{
+      readonly interaction?: DiscordInteraction | undefined;
+      readonly success?: boolean | undefined;
+      readonly error?: string | undefined;
+      readonly responseTime?: number | undefined;
+      readonly metadata?: Readonly<Record<string, unknown>> | undefined;
+    }> = {}
   ): void {
-    const entry: AuditLogEntry = {
+    const entry = this.createAuditEntry(eventType, context, options);
+    this.writeAuditEntry(entry);
+  }
+
+  /**
+   * Create audit log entry
+   */
+  private createAuditEntry(
+    eventType: AuditEventType,
+    context: Readonly<SecurityContext>,
+    options: Readonly<{
+      readonly interaction?: DiscordInteraction | undefined;
+      readonly success?: boolean | undefined;
+      readonly error?: string | undefined;
+      readonly responseTime?: number | undefined;
+      readonly metadata?: Readonly<Record<string, unknown>> | undefined;
+    }>
+  ): AuditLogEntry {
+    return {
       timestamp: new Date().toISOString(),
       requestId: context.requestId,
       eventType,
       clientIP: context.clientIP,
       userAgent: context.userAgent,
-      userId: options.interaction?.member?.user?.id || options.interaction?.user?.id,
-      guildId: (options.interaction as { guild_id?: string })?.guild_id,
-      channelId: (options.interaction as { channel_id?: string })?.channel_id,
+      userId: this.extractUserId(options.interaction),
+      guildId: this.extractGuildId(options.interaction),
+      channelId: this.extractChannelId(options.interaction),
       commandName: options.interaction?.data?.name,
       success: options.success ?? true,
       error: options.error,
       responseTime: options.responseTime,
       metadata: options.metadata,
     };
+  }
 
-    // Log to console (Cloudflare Workers logs)
+  /**
+   * Write audit entry to appropriate destinations
+   */
+  private writeAuditEntry(entry: Readonly<AuditLogEntry>): void {
     this.logToConsole(entry);
 
-    // In production, could also send to external logging service
     if (this.environment === 'production') {
       this.logToExternalService(entry);
     }
@@ -82,26 +124,32 @@ export class AuditLogger {
   /**
    * Log request received
    */
-  logRequestReceived(context: SecurityContext, method: string, path: string): void {
-    this.log(AuditEventType.REQUEST_RECEIVED, context, {
-      metadata: { method, path },
+  logRequestReceived(
+    context: Readonly<SecurityContext>,
+    requestData: { readonly method: string; readonly path: string }
+  ): void {
+    this.log(AuditEventType.RequestReceived, context, {
+      metadata: { method: requestData.method, path: requestData.path },
     });
   }
 
   /**
    * Log successful request verification
    */
-  logRequestVerified(context: SecurityContext): void {
-    this.log(AuditEventType.REQUEST_VERIFIED, context);
+  logRequestVerified(context: Readonly<SecurityContext>): void {
+    this.log(AuditEventType.RequestVerified, context);
   }
 
   /**
    * Log request rejection
    */
-  logRequestRejected(context: SecurityContext, reason: string): void {
-    this.log(AuditEventType.REQUEST_REJECTED, context, {
+  logRequestRejected(
+    context: Readonly<SecurityContext>,
+    rejectionData: { readonly reason: string }
+  ): void {
+    this.log(AuditEventType.RequestRejected, context, {
       success: false,
-      error: reason,
+      error: rejectionData.reason,
     });
   }
 
@@ -109,36 +157,45 @@ export class AuditLogger {
    * Log command execution
    */
   logCommandExecution(
-    context: SecurityContext,
-    interaction: DiscordInteraction,
-    success: boolean,
-    responseTime: number,
-    error?: string
+    context: Readonly<SecurityContext>,
+    commandExecutionData: Readonly<{
+      readonly interaction: DiscordInteraction;
+      readonly success: boolean;
+      readonly responseTime: number;
+      readonly error?: string;
+    }>
   ): void {
-    this.log(success ? AuditEventType.COMMAND_EXECUTED : AuditEventType.COMMAND_FAILED, context, {
-      interaction,
-      success,
-      responseTime,
-      error: error || undefined,
-    });
+    this.log(
+      commandExecutionData.success ? AuditEventType.CommandExecuted : AuditEventType.CommandFailed,
+      context,
+      {
+        interaction: commandExecutionData.interaction,
+        success: commandExecutionData.success,
+        responseTime: commandExecutionData.responseTime,
+        error: commandExecutionData.error,
+      }
+    );
   }
 
   /**
    * Log security violation
    */
-  logSecurityViolation(context: SecurityContext, violationType: string, details: string): void {
-    this.log(AuditEventType.SECURITY_VIOLATION, context, {
+  logSecurityViolation(
+    context: Readonly<SecurityContext>,
+    violationData: { readonly violationType: string; readonly details: string }
+  ): void {
+    this.log(AuditEventType.SecurityViolation, context, {
       success: false,
-      error: `${violationType}: ${details}`,
-      metadata: { violationType },
+      error: `${violationData.violationType}: ${violationData.details}`,
+      metadata: { violationType: violationData.violationType },
     });
   }
 
   /**
    * Log rate limit exceeded
    */
-  logRateLimitExceeded(context: SecurityContext): void {
-    this.log(AuditEventType.RATE_LIMIT_EXCEEDED, context, {
+  logRateLimitExceeded(context: Readonly<SecurityContext>): void {
+    this.log(AuditEventType.RateLimitExceeded, context, {
       success: false,
       error: 'Rate limit exceeded',
     });
@@ -147,25 +204,31 @@ export class AuditLogger {
   /**
    * Log health check
    */
-  logHealthCheck(context: SecurityContext): void {
-    this.log(AuditEventType.HEALTH_CHECK, context);
+  logHealthCheck(context: Readonly<SecurityContext>): void {
+    this.log(AuditEventType.HealthCheck, context);
   }
 
   /**
    * Log general error
    */
-  logError(context: SecurityContext, error: string, metadata?: Record<string, unknown>): void {
-    this.log(AuditEventType.ERROR_OCCURRED, context, {
+  logError(
+    context: Readonly<SecurityContext>,
+    errorData: Readonly<{
+      readonly error: string;
+      readonly metadata?: Readonly<Record<string, unknown>>;
+    }>
+  ): void {
+    this.log(AuditEventType.ErrorOccurred, context, {
       success: false,
-      error,
-      metadata: metadata || undefined,
+      error: errorData.error,
+      metadata: errorData.metadata,
     });
   }
 
   /**
    * Log to console with structured format
    */
-  private logToConsole(entry: AuditLogEntry): void {
+  private logToConsole(entry: Readonly<AuditLogEntry>): void {
     const logLevel = entry.success ? 'INFO' : 'WARN';
     const message = `[${logLevel}] ${entry.eventType} - ${entry.requestId}`;
 
@@ -179,7 +242,7 @@ export class AuditLogger {
   /**
    * Log to external service (placeholder for production)
    */
-  private logToExternalService(entry: AuditLogEntry): void {
+  private logToExternalService(entry: Readonly<AuditLogEntry>): void {
     // In production, this could send to:
     // - Cloudflare Analytics
     // - External logging service (DataDog, LogRocket, etc.)
