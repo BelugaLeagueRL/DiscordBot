@@ -154,7 +154,7 @@ export function createMockResponse(
     status?: number;
     statusText?: string;
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
   } = {}
 ): Response {
   const { status = 200, statusText = 'OK', headers = {}, body = null } = options;
@@ -175,12 +175,13 @@ export function createMockResponse(
 /**
  * Mock crypto object for testing
  */
-export function createMockCrypto() {
+export function createMockCrypto(): Partial<Crypto> {
   return {
     randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
-    getRandomValues: vi.fn((array: Uint8Array) => {
-      for (let i = 0; i < array.length; i++) {
-        array[i] = Math.floor(Math.random() * 256);
+    getRandomValues: vi.fn(<T extends ArrayBufferView & { length: number }>(array: T): T => {
+      const view = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+      for (let i = 0; i < view.length; i++) {
+        view[i] = Math.floor(Math.random() * 256);
       }
       return array;
     }),
@@ -209,21 +210,24 @@ export function createMockTiming() {
  */
 export function setupGlobalMocks() {
   // Mock global fetch
-  (globalThis as any).fetch = createMockFetch();
+  (globalThis as unknown as { fetch: typeof fetch }).fetch = createMockFetch();
 
   // Mock global crypto
-  (globalThis as any).crypto = createMockCrypto();
+  (globalThis as unknown as { crypto: Partial<Crypto> }).crypto = createMockCrypto();
 
   // Mock console methods
   const mockConsole = createMockConsole();
-  (globalThis as any).console = { ...(globalThis as any).console, ...mockConsole };
+  (globalThis as unknown as { console: typeof console }).console = { 
+    ...(globalThis as unknown as { console: typeof console }).console, 
+    ...mockConsole 
+  };
 
   // Mock setTimeout and setInterval for testing
   vi.useFakeTimers();
 
   return {
-    fetch: (globalThis as any).fetch,
-    crypto: (globalThis as any).crypto,
+    fetch: (globalThis as unknown as { fetch: typeof fetch }).fetch,
+    crypto: (globalThis as unknown as { crypto: Partial<Crypto> }).crypto,
     console: mockConsole,
     restoreTimers: () => vi.useRealTimers(),
   };
