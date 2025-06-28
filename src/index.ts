@@ -133,7 +133,7 @@ async function handleApplicationCommand(
 
     switch (name) {
       case 'register':
-        response = await withTimeout(handleRegisterCommand(interaction, env));
+        response = await withTimeout(Promise.resolve(handleRegisterCommand(interaction, env)));
         break;
 
       default:

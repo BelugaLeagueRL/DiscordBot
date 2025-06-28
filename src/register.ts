@@ -9,8 +9,8 @@ import { commands } from './commands';
  * Validate required environment variables
  */
 export function validateEnvironmentVariables(): { token: string; applicationId: string } {
-  const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-  const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID;
+  const DISCORD_TOKEN = process.env['DISCORD_TOKEN'];
+  const DISCORD_APPLICATION_ID = process.env['DISCORD_APPLICATION_ID'];
 
   if (DISCORD_TOKEN === undefined || DISCORD_APPLICATION_ID === undefined) {
     throw new Error(

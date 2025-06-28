@@ -180,10 +180,13 @@ export function validateTrackerUrl(url: string): TrackerValidationResult {
     // Platform-specific validation
     const platformValidation = validatePlatformId(platform, decodedPlatformId);
     if (!platformValidation.isValid) {
-      return {
+      const result: TrackerValidationResult = {
         isValid: false,
-        error: platformValidation.error,
       };
+      if (platformValidation.error) {
+        result.error = platformValidation.error;
+      }
+      return result;
     }
 
     return {
