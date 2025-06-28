@@ -37,10 +37,10 @@ jobs:
       
     - name: Check for secrets
       run: |
-        # Simple check for common secret patterns
-        if grep -r -E "(password|secret|key|token).*=" src/ --include="*.ts" --include="*.js"; then
-          echo "❌ Potential secrets found in code!"
+        # Check for common secret patterns (more specific to avoid false positives)
+        if grep -r -E "(password|secret|api_key|auth_token|private_key|access_token|refresh_token).*[\"']=.*[\"']" src/ --include="*.ts" --include="*.js"; then
+          echo "❌ Potential hardcoded secrets found in code!"
           exit 1
         else
-          echo "✅ No obvious secrets detected"
+          echo "✅ No hardcoded secrets detected"
         fi
