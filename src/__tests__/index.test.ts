@@ -9,6 +9,27 @@ import { EnvFactory } from './helpers/test-factories';
 import workerModule from '../index';
 import type { Env } from '../index';
 
+// Type guard for Discord response data
+function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags?: number } } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  if (typeof obj['type'] !== 'number') {
+    return false;
+  }
+  
+  if (typeof obj['data'] !== 'object' || obj['data'] === null) {
+    return false;
+  }
+  
+  const dataObj = obj['data'] as Record<string, unknown>;
+  
+  return typeof dataObj['content'] === 'string';
+}
+
 // Mock the security middleware to control validation results
 vi.mock('../middleware/security', async () => {
   const actual = await vi.importActual('../middleware/security');
@@ -33,7 +54,7 @@ describe('Main Index Handler', () => {
   let env: Env;
   beforeEach(() => {
     env = EnvFactory.create();
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => { /* Mock console.error for tests */ });
     vi.clearAllMocks();
   });
 
@@ -95,7 +116,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData).toEqual({ type: 1 }); // PONG response
     });
 
@@ -161,7 +186,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // Error response type
       expect(responseData.data.content).toContain('Invalid request format');
     });
@@ -180,7 +209,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // Error response type
     });
   });
@@ -193,7 +226,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(1); // PONG
       expect(response.headers.get('Content-Type')).toBe('application/json');
     });
@@ -205,7 +242,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
       expect(responseData.data.content).toBe('Success!');
     });
@@ -217,7 +258,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(4); // Error response
       expect(responseData.data.content).toContain('Unknown command');
     });
@@ -232,7 +277,11 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.type).toBe(4);
       expect(responseData.data.content).toContain('An error occurred');
     });
@@ -331,7 +380,7 @@ describe('Main Index Handler', () => {
 
     it('should handle errors without audit context', async () => {
       // Create a malformed environment that will cause an error
-      const badEnv = { ...env, DISCORD_PUBLIC_KEY: null as any };
+      const badEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: null as unknown as string });
 
       // Mock verifyDiscordRequestSecure to throw an error that breaks audit context
       const { verifyDiscordRequestSecure } = await import('../middleware/security');
@@ -364,8 +413,7 @@ describe('Main Index Handler', () => {
 
   describe('Environment configuration', () => {
     it('should use development environment when ENVIRONMENT is undefined', async () => {
-      const testEnv = { ...env };
-      delete (testEnv as any).ENVIRONMENT;
+      const testEnv = EnvFactory.create({ ENVIRONMENT: undefined as unknown as string });
 
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
@@ -376,7 +424,7 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle missing Discord public key', async () => {
-      const testEnv = { ...env, DISCORD_PUBLIC_KEY: undefined as any };
+      const testEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: undefined as unknown as string });
 
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
