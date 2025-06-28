@@ -61,7 +61,8 @@ function validatePsnId(platformId: string): { isValid: boolean; error?: string }
   if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,15}$/.test(platformId)) {
     return {
       isValid: false,
-      error: 'Invalid PSN ID format. Must be 3-16 characters, start with letter, contain only letters/numbers/hyphens/underscores',
+      error:
+        'Invalid PSN ID format. Must be 3-16 characters, start with letter, contain only letters/numbers/hyphens/underscores',
     };
   }
   return { isValid: true };
@@ -74,7 +75,8 @@ function validateXboxGamertag(platformId: string): { isValid: boolean; error?: s
   if (!/^[a-zA-Z][a-zA-Z0-9 ]{2,11}$/.test(platformId)) {
     return {
       isValid: false,
-      error: 'Invalid Xbox gamertag format. Must be 3-12 characters, start with letter, contain only letters/numbers/spaces',
+      error:
+        'Invalid Xbox gamertag format. Must be 3-12 characters, start with letter, contain only letters/numbers/spaces',
     };
   }
   return { isValid: true };
@@ -87,7 +89,8 @@ function validateEpicId(platformId: string): { isValid: boolean; error?: string 
   if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
     return {
       isValid: false,
-      error: 'Invalid Epic Games display name format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
+      error:
+        'Invalid Epic Games display name format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
     };
   }
   return { isValid: true };
@@ -100,7 +103,8 @@ function validateSwitchId(platformId: string): { isValid: boolean; error?: strin
   if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
     return {
       isValid: false,
-      error: 'Invalid Nintendo Switch ID format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
+      error:
+        'Invalid Nintendo Switch ID format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
     };
   }
   return { isValid: true };
@@ -141,12 +145,7 @@ function validatePlatformData(
   platform: string | undefined,
   platformId: string | undefined
 ): TrackerValidationResult {
-  if (
-    platform === undefined ||
-    platform === '' ||
-    platformId === undefined ||
-    platformId === ''
-  ) {
+  if (platform === undefined || platform === '' || platformId === undefined || platformId === '') {
     return {
       isValid: false,
       error: 'Missing platform or platform ID in URL',

@@ -12,27 +12,26 @@ import type { Env } from '../../index';
 import type { DiscordInteraction } from '../../types/discord';
 
 // Type guard for Discord response data
-function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags: number } } {
+function isDiscordResponse(
+  data: unknown
+): data is { type: number; data: { content: string; flags: number } } {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
-  
+
   const obj = data as Record<string, unknown>;
-  
+
   if (typeof obj['type'] !== 'number') {
     return false;
   }
-  
+
   if (typeof obj['data'] !== 'object' || obj['data'] === null) {
     return false;
   }
-  
+
   const dataObj = obj['data'] as Record<string, unknown>;
-  
-  return (
-    typeof dataObj['content'] === 'string' &&
-    typeof dataObj['flags'] === 'number'
-  );
+
+  return typeof dataObj['content'] === 'string' && typeof dataObj['flags'] === 'number';
 }
 
 // Mock discord-interactions for E2E tests
@@ -176,13 +175,16 @@ describe('Discord Command Workflows E2E', () => {
     it('should handle missing user information gracefully', async () => {
       // Use deterministic known tracker URL for predictable testing
       const knownSteamId = '76561198999999999';
-      const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', [
-        {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-      ]);
+      const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+        ]
+      );
       const interaction = interactionWithoutMember as DiscordInteraction;
 
       const response = handleRegisterCommand(interaction, mockEnv);

@@ -25,7 +25,8 @@ export const InteractionResponseType = {
   Modal: 9,
 } as const;
 
-export type InteractionResponseType = typeof InteractionResponseType[keyof typeof InteractionResponseType];
+export type InteractionResponseType =
+  (typeof InteractionResponseType)[keyof typeof InteractionResponseType];
 
 /**
  * Verify Discord request signature

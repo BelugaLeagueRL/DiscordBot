@@ -1,6 +1,6 @@
 /**
  * Mock execution contexts for testing
- * 
+ *
  * Note: This file uses globalThis type assertions for test infrastructure
  * ESLint rules are relaxed for necessary global mocking
  */
@@ -138,11 +138,11 @@ export function createMockRequest(
     method,
     headers: defaultHeaders,
   };
-  
+
   if (method !== 'GET' && body) {
     requestInit.body = body;
   }
-  
+
   return new Request(url, requestInit);
 }
 
@@ -217,9 +217,9 @@ export function setupGlobalMocks() {
 
   // Mock console methods
   const mockConsole = createMockConsole();
-  (globalThis as unknown as { console: typeof console }).console = { 
-    ...(globalThis as unknown as { console: typeof console }).console, 
-    ...mockConsole 
+  (globalThis as unknown as { console: typeof console }).console = {
+    ...(globalThis as unknown as { console: typeof console }).console,
+    ...mockConsole,
   };
 
   // Mock setTimeout and setInterval for testing

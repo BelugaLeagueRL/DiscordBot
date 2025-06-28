@@ -1,27 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import { handleRegisterCommand } from '../handlers/register';
-import { createMockCommandInteraction, createValidTrackerUrl, createInvalidTrackerUrl } from './helpers/discord-helpers';
+import {
+  createMockCommandInteraction,
+  createValidTrackerUrl,
+  createInvalidTrackerUrl,
+} from './helpers/discord-helpers';
 import { EnvFactory } from './helpers/test-factories';
 import type { Env } from '../index';
 
 // Type guard for Discord response data
-function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags?: number } } {
+function isDiscordResponse(
+  data: unknown
+): data is { type: number; data: { content: string; flags?: number } } {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
-  
+
   const obj = data as Record<string, unknown>;
-  
+
   if (typeof obj['type'] !== 'number') {
     return false;
   }
-  
+
   if (typeof obj['data'] !== 'object' || obj['data'] === null) {
     return false;
   }
-  
+
   const dataObj = obj['data'] as Record<string, unknown>;
-  
+
   return typeof dataObj['content'] === 'string';
 }
 
@@ -33,7 +39,7 @@ describe('Register command handler', () => {
     // Use a specific known Steam ID for deterministic testing
     const knownSteamId = '76561198144145654';
     const knownTrackerUrl = `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`;
-    
+
     const validInteraction = createMockCommandInteraction('register', [
       {
         name: 'tracker1',
@@ -44,7 +50,7 @@ describe('Register command handler', () => {
 
     const response = handleRegisterCommand(validInteraction, mockEnv);
     const rawData = await response.json();
-    
+
     if (!isDiscordResponse(rawData)) {
       throw new Error('Invalid response format');
     }
@@ -67,7 +73,7 @@ describe('Register command handler', () => {
 
     const response = handleRegisterCommand(invalidInteraction, mockEnv);
     const rawData = await response.json();
-    
+
     if (!isDiscordResponse(rawData)) {
       throw new Error('Invalid response format');
     }
@@ -91,7 +97,7 @@ describe('Register command handler', () => {
 
     const response = handleRegisterCommand(noUserInteraction, mockEnv);
     const rawData = await response.json();
-    
+
     if (!isDiscordResponse(rawData)) {
       throw new Error('Invalid response format');
     }
@@ -106,7 +112,7 @@ describe('Register command handler', () => {
 
     const response = handleRegisterCommand(noOptionsInteraction, mockEnv);
     const rawData = await response.json();
-    
+
     if (!isDiscordResponse(rawData)) {
       throw new Error('Invalid response format');
     }

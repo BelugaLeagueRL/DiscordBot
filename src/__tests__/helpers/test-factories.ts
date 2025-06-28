@@ -61,18 +61,20 @@ export const EnvFactory = {
 /**
  * Factory for creating mock audit log entries
  */
-export function createMockAuditEntry(overrides: {
-  timestamp?: string;
-  requestId?: string;
-  eventType?: string;
-  clientIP?: string;
-  userAgent?: string;
-  success?: boolean;
-  commandName?: string;
-  responseTime?: number;
-  error?: string;
-  metadata?: Record<string, unknown>;
-} = {}) {
+export function createMockAuditEntry(
+  overrides: {
+    timestamp?: string;
+    requestId?: string;
+    eventType?: string;
+    clientIP?: string;
+    userAgent?: string;
+    success?: boolean;
+    commandName?: string;
+    responseTime?: number;
+    error?: string;
+    metadata?: Record<string, unknown>;
+  } = {}
+) {
   return {
     timestamp: new Date().toISOString(),
     requestId: faker.string.uuid(),
@@ -270,14 +272,16 @@ export interface TestScenario {
   rateLimit?: { count: number; resetTime: number };
 }
 
-export function createTestScenario(config: {
-  user?: { id: string; username?: string };
-  commandName?: string;
-  commandOptions?: unknown[];
-  securityContext?: SecurityContext;
-  environment?: Env;
-  rateLimit?: { count: number; resetTime: number };
-} = {}): TestScenario {
+export function createTestScenario(
+  config: {
+    user?: { id: string; username?: string };
+    commandName?: string;
+    commandOptions?: unknown[];
+    securityContext?: SecurityContext;
+    environment?: Env;
+    rateLimit?: { count: number; resetTime: number };
+  } = {}
+): TestScenario {
   const scenario: TestScenario = {};
 
   if (config.user) {

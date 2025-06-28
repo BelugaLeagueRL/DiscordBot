@@ -10,29 +10,31 @@ import workerModule from '../index';
 import type { Env } from '../index';
 
 // Type guard for Discord response data - handles both PONG and message responses
-function isDiscordResponse(data: unknown): data is { type: number; data?: { content: string; flags?: number } } {
+function isDiscordResponse(
+  data: unknown
+): data is { type: number; data?: { content: string; flags?: number } } {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
-  
+
   const obj = data as Record<string, unknown>;
-  
+
   if (typeof obj['type'] !== 'number') {
     return false;
   }
-  
+
   // PONG responses (type: 1) don't have data property
   if (obj['type'] === 1) {
     return true;
   }
-  
+
   // Message responses should have data with content
   if (typeof obj['data'] !== 'object' || obj['data'] === null) {
     return false;
   }
-  
+
   const dataObj = obj['data'] as Record<string, unknown>;
-  
+
   return typeof dataObj['content'] === 'string';
 }
 
@@ -60,7 +62,9 @@ describe('Main Index Handler', () => {
   let env: Env;
   beforeEach(() => {
     env = EnvFactory.create();
-    vi.spyOn(console, 'error').mockImplementation(() => { /* Mock console.error for tests */ });
+    vi.spyOn(console, 'error').mockImplementation(() => {
+      /* Mock console.error for tests */
+    });
     vi.clearAllMocks();
   });
 

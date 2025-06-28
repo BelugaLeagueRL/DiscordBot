@@ -132,13 +132,14 @@ const VALID_INTERACTION_RESPONSE_TYPES = {
   UPDATE_MESSAGE: 7,
 } as const;
 
-type ValidInteractionResponseType = typeof VALID_INTERACTION_RESPONSE_TYPES[keyof typeof VALID_INTERACTION_RESPONSE_TYPES];
+type ValidInteractionResponseType =
+  (typeof VALID_INTERACTION_RESPONSE_TYPES)[keyof typeof VALID_INTERACTION_RESPONSE_TYPES];
 
 function isValidInteractionResponseType(type: unknown): type is ValidInteractionResponseType {
   if (typeof type !== 'number') {
     return false;
   }
-  
+
   return Object.values(VALID_INTERACTION_RESPONSE_TYPES).includes(
     type as ValidInteractionResponseType
   );
@@ -148,7 +149,7 @@ function isValidInteractionResponseBody(body: unknown): body is DiscordInteracti
   if (typeof body !== 'object' || body === null) {
     return false;
   }
-  
+
   const obj = body as Record<string, unknown>;
   return typeof obj['type'] === 'number' && isValidInteractionResponseType(obj['type']);
 }
@@ -233,7 +234,9 @@ export function createMockDiscordMessage(overrides: Partial<DiscordMessage> = {}
   return { ...baseMessage, ...overrides };
 }
 
-export function createMockDiscordApplication(overrides: Partial<DiscordApplication> = {}): DiscordApplication {
+export function createMockDiscordApplication(
+  overrides: Partial<DiscordApplication> = {}
+): DiscordApplication {
   const baseApplication = {
     id: faker.string.numeric(18),
     name: 'Beluga League Bot',
@@ -294,12 +297,12 @@ export const discordApiHandlers = [
 
   // Create application command
   http.post(`${DISCORD_API_BASE}/applications/:appId/commands`, async ({ request, params }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const appId = params['appId'];
     if (typeof appId !== 'string') {
       return new HttpResponse(null, { status: 400 });
     }
-    
+
     const command = createMockDiscordCommand({
       application_id: appId,
       ...body,
@@ -308,22 +311,25 @@ export const discordApiHandlers = [
   }),
 
   // Update application command
-  http.patch(`${DISCORD_API_BASE}/applications/:appId/commands/:commandId`, async ({ request, params }) => {
-    const body = await request.json() as Record<string, unknown>;
-    const appId = params['appId'];
-    const commandId = params['commandId'];
-    
-    if (typeof appId !== 'string' || typeof commandId !== 'string') {
-      return new HttpResponse(null, { status: 400 });
+  http.patch(
+    `${DISCORD_API_BASE}/applications/:appId/commands/:commandId`,
+    async ({ request, params }) => {
+      const body = (await request.json()) as Record<string, unknown>;
+      const appId = params['appId'];
+      const commandId = params['commandId'];
+
+      if (typeof appId !== 'string' || typeof commandId !== 'string') {
+        return new HttpResponse(null, { status: 400 });
+      }
+
+      const command = createMockDiscordCommand({
+        id: commandId,
+        application_id: appId,
+        ...body,
+      });
+      return HttpResponse.json(command);
     }
-    
-    const command = createMockDiscordCommand({
-      id: commandId,
-      application_id: appId,
-      ...body,
-    });
-    return HttpResponse.json(command);
-  }),
+  ),
 
   // Delete application command
   http.delete(`${DISCORD_API_BASE}/applications/:appId/commands/:commandId`, () => {
@@ -342,7 +348,7 @@ export const discordApiHandlers = [
     if (typeof guildId !== 'string') {
       return new HttpResponse(null, { status: 400 });
     }
-    
+
     const guild = createMockDiscordGuild({ id: guildId });
     return HttpResponse.json(guild);
   }),
@@ -353,20 +359,20 @@ export const discordApiHandlers = [
     if (typeof channelId !== 'string') {
       return new HttpResponse(null, { status: 400 });
     }
-    
+
     const channel = createMockDiscordChannel({ id: channelId });
     return HttpResponse.json(channel);
   }),
 
   // Send message to channel
   http.post(`${DISCORD_API_BASE}/channels/:channelId/messages`, async ({ request, params }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const channelId = params['channelId'];
-    
+
     if (typeof channelId !== 'string') {
       return new HttpResponse(null, { status: 400 });
     }
-    
+
     const message = createMockDiscordMessage({
       content: typeof body['content'] === 'string' ? body['content'] : '',
       channel_id: channelId,
@@ -380,7 +386,7 @@ export const discordApiHandlers = [
   http.post(
     `${DISCORD_API_BASE}/interactions/:interactionId/:interactionToken/callback`,
     async ({ request }) => {
-      const body = await request.json() as unknown;
+      const body = (await request.json()) as unknown;
 
       // Validate interaction response structure
       if (!isValidInteractionResponseBody(body)) {
@@ -395,13 +401,13 @@ export const discordApiHandlers = [
   http.patch(
     `${DISCORD_API_BASE}/webhooks/:appId/:interactionToken/messages/@original`,
     async ({ request, params }) => {
-      const body = await request.json() as Record<string, unknown>;
+      const body = (await request.json()) as Record<string, unknown>;
       const appId = params['appId'];
-      
+
       if (typeof appId !== 'string') {
         return new HttpResponse(null, { status: 400 });
       }
-      
+
       const message = createMockDiscordMessage({
         content: typeof body['content'] === 'string' ? body['content'] : '',
         author: createMockDiscordUser({ id: appId }),
@@ -471,7 +477,11 @@ export function useNormalHandlers() {
 /**
  * Helper to mock specific Discord API responses with proper typing
  */
-export function mockDiscordResponse(endpoint: string, response: Record<string, unknown>, status = 200): void {
+export function mockDiscordResponse(
+  endpoint: string,
+  response: Record<string, unknown>,
+  status = 200
+): void {
   discordApiServer.use(
     http.post(`${DISCORD_API_BASE}${endpoint}`, () => {
       return HttpResponse.json(response, { status });

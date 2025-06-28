@@ -11,23 +11,25 @@ import { EnvFactory } from '../helpers/test-factories';
 import type { Env } from '../../index';
 
 // Type guard for Discord response data
-function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags?: number } } {
+function isDiscordResponse(
+  data: unknown
+): data is { type: number; data: { content: string; flags?: number } } {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
-  
+
   const obj = data as Record<string, unknown>;
-  
+
   if (typeof obj['type'] !== 'number') {
     return false;
   }
-  
+
   if (typeof obj['data'] !== 'object' || obj['data'] === null) {
     return false;
   }
-  
+
   const dataObj = obj['data'] as Record<string, unknown>;
-  
+
   return typeof dataObj['content'] === 'string';
 }
 
@@ -104,7 +106,7 @@ describe('Performance and Load Testing', () => {
       const responseTime = endTime - startTime;
 
       expect(response.status).toBe(200);
-      
+
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
@@ -123,15 +125,19 @@ describe('Performance and Load Testing', () => {
       const requests = Array.from({ length: concurrentRequests }, (_, i) => {
         // Use deterministic known Steam ID for predictable testing
         const knownSteamId = '76561198123456789';
-        const interaction = createMockCommandInteraction('register', [
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+            },
+          ],
           {
-            name: 'tracker1',
-            type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-          },
-        ], {
-          id: `concurrent_${String(i)}`,
-        });
+            id: `concurrent_${String(i)}`,
+          }
+        );
         return handleRegisterCommand(interaction, mockEnv);
       });
 
@@ -148,7 +154,9 @@ describe('Performance and Load Testing', () => {
       const avgResponseTime = totalTime / concurrentRequests;
       expect(avgResponseTime).toBeLessThan(50);
 
-      console.log(`Concurrent test: ${String(concurrentRequests)} requests in ${totalTime.toFixed(2)}ms`);
+      console.log(
+        `Concurrent test: ${String(concurrentRequests)} requests in ${totalTime.toFixed(2)}ms`
+      );
       console.log(`Average response time: ${avgResponseTime.toFixed(2)}ms`);
     });
 
@@ -158,21 +166,31 @@ describe('Performance and Load Testing', () => {
 
       // Mix of valid and invalid requests
       const requests = Array.from({ length: concurrentRequests }, (_, i) => {
-        const interaction = i % 2 === 0
-          ? createMockCommandInteraction('register', [
-              {
-                name: 'tracker1',
-                type: 3,
-                value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
-              },
-            ], { id: `valid_${String(i)}` })
-          : createMockCommandInteraction('register', [
-              {
-                name: 'tracker1',
-                type: 3,
-                value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-              },
-            ], { id: `invalid_${String(i)}` });
+        const interaction =
+          i % 2 === 0
+            ? createMockCommandInteraction(
+                'register',
+                [
+                  {
+                    name: 'tracker1',
+                    type: 3,
+                    value:
+                      'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+                  },
+                ],
+                { id: `valid_${String(i)}` }
+              )
+            : createMockCommandInteraction(
+                'register',
+                [
+                  {
+                    name: 'tracker1',
+                    type: 3,
+                    value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+                  },
+                ],
+                { id: `invalid_${String(i)}` }
+              );
         return handleRegisterCommand(interaction, mockEnv);
       });
 
@@ -201,30 +219,34 @@ describe('Performance and Load Testing', () => {
       const knownEpicUser = 'TestEpicUser';
       const knownPsnUser = 'TestPsnUser';
       const knownXblUser = 'TestXblUser';
-      const largeInteraction = createMockCommandInteraction('register', [
+      const largeInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
-        },
-        {
-          name: 'tracker3',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
-        },
-        {
-          name: 'tracker4',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
-        },
-      ], {
-        token: 'very_long_interaction_token_string_'.repeat(10),
-      });
+          token: 'very_long_interaction_token_string_'.repeat(10),
+        }
+      );
 
       const startTime = performance.now();
 
@@ -254,15 +276,19 @@ describe('Performance and Load Testing', () => {
 
         // Use deterministic known Steam ID for predictable testing
         const knownSteamId = '76561198123456789';
-        const interaction = createMockCommandInteraction('register', [
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+            },
+          ],
           {
-            name: 'tracker1',
-            type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-          },
-        ], {
-          id: `sequential_${String(i)}`,
-        });
+            id: `sequential_${String(i)}`,
+          }
+        );
         const response = handleRegisterCommand(interaction, mockEnv);
 
         const endTime = performance.now();
@@ -296,15 +322,20 @@ describe('Performance and Load Testing', () => {
       const invalidInteractions = [
         // Missing user info - create base interaction then remove member
         (() => {
-          const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', [
+          const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction(
+            'register',
+            [
+              {
+                name: 'tracker1',
+                type: 3,
+                value:
+                  'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+              },
+            ],
             {
-              name: 'tracker1',
-              type: 3,
-              value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
-            },
-          ], {
-            id: 'missing_user',
-          });
+              id: 'missing_user',
+            }
+          );
           return interactionWithoutMember;
         })(),
         // No options
@@ -312,15 +343,19 @@ describe('Performance and Load Testing', () => {
           id: 'no_options',
         }),
         // Invalid URL
-        createMockCommandInteraction('register', [
+        createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+            },
+          ],
           {
-            name: 'tracker1',
-            type: 3,
-            value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-          },
-        ], {
-          id: 'invalid_url',
-        }),
+            id: 'invalid_url',
+          }
+        ),
       ];
 
       const startTime = performance.now();
@@ -358,15 +393,19 @@ describe('Performance and Load Testing', () => {
 
         // Use deterministic known Steam ID for predictable testing
         const knownSteamId = '76561198123456789';
-        const interaction = createMockCommandInteraction('register', [
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+            },
+          ],
           {
-            name: 'tracker1',
-            type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-          },
-        ], {
-          id: `benchmark_${String(i)}`,
-        });
+            id: `benchmark_${String(i)}`,
+          }
+        );
         const response = handleRegisterCommand(interaction, mockEnv);
 
         const endTime = performance.now();

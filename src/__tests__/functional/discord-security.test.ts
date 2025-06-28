@@ -13,7 +13,14 @@ vi.mock('discord-interactions', () => ({
 }));
 
 describe('Discord Signature Verification Functional Tests', () => {
-  let mockVerifyKey: MockedFunction<(rawBody: string | ArrayBuffer | Uint8Array | Buffer, signature: string | ArrayBuffer | Uint8Array | Buffer, timestamp: string | ArrayBuffer | Uint8Array | Buffer, clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer) => boolean>;
+  let mockVerifyKey: MockedFunction<
+    (
+      rawBody: string | ArrayBuffer | Uint8Array | Buffer,
+      signature: string | ArrayBuffer | Uint8Array | Buffer,
+      timestamp: string | ArrayBuffer | Uint8Array | Buffer,
+      clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer
+    ) => boolean
+  >;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {

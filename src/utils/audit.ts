@@ -166,9 +166,7 @@ export class AuditLogger {
     }>
   ): void {
     this.log(
-      commandExecutionData.success
-        ? AuditEventType.CommandExecuted
-        : AuditEventType.CommandFailed,
+      commandExecutionData.success ? AuditEventType.CommandExecuted : AuditEventType.CommandFailed,
       context,
       {
         interaction: commandExecutionData.interaction,

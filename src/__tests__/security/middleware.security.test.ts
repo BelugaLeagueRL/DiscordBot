@@ -21,10 +21,7 @@ import {
 } from '../../middleware/security';
 import { SecurityContextFactory } from '../helpers/test-factories';
 import { createMockRequest, createTestEnvironment, cleanupMocks } from '../helpers/mock-contexts';
-import {
-  createMockDiscordRequest,
-  createMaliciousRequest,
-} from '../helpers/discord-helpers';
+import { createMockDiscordRequest, createMaliciousRequest } from '../helpers/discord-helpers';
 import { mockInteractions } from '../mocks/interactions';
 
 describe('Security Middleware', () => {
@@ -434,7 +431,11 @@ describe('Security Middleware', () => {
     it('should reject promise that exceeds timeout', async () => {
       vi.useFakeTimers();
 
-      const slowPromise = new Promise(resolve => setTimeout(() => { resolve('late'); }, 2000));
+      const slowPromise = new Promise(resolve =>
+        setTimeout(() => {
+          resolve('late');
+        }, 2000)
+      );
       const timeoutPromise = withTimeout(slowPromise, 1000);
 
       // Advance time past the timeout
@@ -448,7 +449,11 @@ describe('Security Middleware', () => {
     it('should use default timeout when not specified', async () => {
       vi.useFakeTimers();
 
-      const slowPromise = new Promise(resolve => setTimeout(() => { resolve('late'); }, 15000));
+      const slowPromise = new Promise(resolve =>
+        setTimeout(() => {
+          resolve('late');
+        }, 15000)
+      );
       const timeoutPromise = withTimeout(slowPromise);
 
       // Advance time past the default timeout (10 seconds)

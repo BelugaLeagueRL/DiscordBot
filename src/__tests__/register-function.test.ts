@@ -154,7 +154,10 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log registration success with command details', async () => {
     // RED: Test logging functionality
-    const mockConsoleLog = vi.mocked((globalThis as unknown as { console: { log: MockedFunction<typeof console.log> } }).console.log);
+    const mockConsoleLog = vi.mocked(
+      (globalThis as unknown as { console: { log: MockedFunction<typeof console.log> } }).console
+        .log
+    );
     const mockFetch = vi.mocked(globalThis.fetch);
 
     const apiResponse = [
@@ -179,7 +182,10 @@ describe('registerCommands function with valid environment', () => {
 
   it('should log error details when API call fails', async () => {
     // RED: Test error logging functionality
-    const mockConsoleError = vi.mocked((globalThis as unknown as { console: { error: MockedFunction<typeof console.error> } }).console.error);
+    const mockConsoleError = vi.mocked(
+      (globalThis as unknown as { console: { error: MockedFunction<typeof console.error> } })
+        .console.error
+    );
     const mockFetch = vi.mocked(globalThis.fetch);
 
     const errorResponse = 'Invalid command structure';

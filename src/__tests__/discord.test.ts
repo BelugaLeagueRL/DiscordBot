@@ -11,8 +11,14 @@ import {
 } from '../utils/discord';
 
 // Type guard for Discord response data
-function isDiscordResponseData(data: unknown): data is { type: number; data?: { content?: string; flags?: number } } {
-  return typeof data === 'object' && data !== null && typeof (data as { type: unknown }).type === 'number';
+function isDiscordResponseData(
+  data: unknown
+): data is { type: number; data?: { content?: string; flags?: number } } {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as { type: unknown }).type === 'number'
+  );
 }
 
 // Mock discord-interactions module
@@ -21,12 +27,19 @@ vi.mock('discord-interactions', () => ({
 }));
 
 describe('Discord utilities', () => {
-  let mockVerifyKey: MockedFunction<(rawBody: string | ArrayBuffer | Uint8Array | Buffer, signature: string | ArrayBuffer | Uint8Array | Buffer, timestamp: string | ArrayBuffer | Uint8Array | Buffer, clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer) => boolean>;
+  let mockVerifyKey: MockedFunction<
+    (
+      rawBody: string | ArrayBuffer | Uint8Array | Buffer,
+      signature: string | ArrayBuffer | Uint8Array | Buffer,
+      timestamp: string | ArrayBuffer | Uint8Array | Buffer,
+      clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer
+    ) => boolean
+  >;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
+
     // Setup properly typed mocks
     mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {

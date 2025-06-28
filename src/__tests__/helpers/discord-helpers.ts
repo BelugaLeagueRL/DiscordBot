@@ -9,9 +9,11 @@ import type { DiscordInteraction } from '../../types/discord';
 /**
  * Factory for creating valid tracker URLs for different platforms
  */
-export function createValidTrackerUrl(platform: 'steam' | 'epic' | 'psn' | 'xbl' | 'switch' = 'steam'): string {
+export function createValidTrackerUrl(
+  platform: 'steam' | 'epic' | 'psn' | 'xbl' | 'switch' = 'steam'
+): string {
   const baseUrl = 'https://rocketleague.tracker.network/rocket-league/profile';
-  
+
   switch (platform) {
     case 'steam':
       // Steam ID64 format: must start with 7656119 followed by 10 digits
@@ -38,31 +40,40 @@ export function createInvalidTrackerUrl(): string {
     'https://rocketleague.tracker.network/wrong/path/format',
     'https://another-invalid.com/profile/epic/testuser/overview',
   ];
-  
+
   return faker.helpers.arrayElement(invalidDomains);
 }
 
 /**
  * Factory for creating tracker options for command interactions
  */
-export function createTrackerOptions(count: number = 1, validCount?: number): ReadonlyArray<{ readonly name: string; readonly value: string; readonly type: number }> {
+export function createTrackerOptions(
+  count: number = 1,
+  validCount?: number
+): ReadonlyArray<{ readonly name: string; readonly value: string; readonly type: number }> {
   const actualValidCount = validCount ?? count;
   const invalidCount = count - actualValidCount;
-  
+
   const options = [];
-  
+
   // Add valid URLs
   for (let i = 0; i < actualValidCount; i++) {
-    const platforms: Array<'steam' | 'epic' | 'psn' | 'xbl' | 'switch'> = ['steam', 'epic', 'psn', 'xbl', 'switch'];
+    const platforms: Array<'steam' | 'epic' | 'psn' | 'xbl' | 'switch'> = [
+      'steam',
+      'epic',
+      'psn',
+      'xbl',
+      'switch',
+    ];
     const platform = faker.helpers.arrayElement(platforms);
-    
+
     options.push({
       name: `tracker${String(i + 1)}`,
       type: 3,
       value: createValidTrackerUrl(platform),
     });
   }
-  
+
   // Add invalid URLs
   for (let i = 0; i < invalidCount; i++) {
     options.push({
@@ -71,7 +82,7 @@ export function createTrackerOptions(count: number = 1, validCount?: number): Re
       value: createInvalidTrackerUrl(),
     });
   }
-  
+
   return options;
 }
 
@@ -189,7 +200,11 @@ export function createMockPingInteraction(): DiscordInteraction {
  */
 export function createMockCommandInteraction(
   commandName: string,
-  options: ReadonlyArray<{ readonly name: string; readonly value: string; readonly type: number }> = [],
+  options: ReadonlyArray<{
+    readonly name: string;
+    readonly value: string;
+    readonly type: number;
+  }> = [],
   overrides: Partial<DiscordInteraction> = {}
 ): DiscordInteraction {
   const baseInteraction: DiscordInteraction = {
