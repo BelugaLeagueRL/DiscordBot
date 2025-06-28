@@ -7,7 +7,6 @@ import { AuditLogger, AuditEventType } from '../../utils/audit';
 import { SecurityContextFactory } from '../helpers/test-factories';
 import { mockInteractions } from '../mocks/interactions';
 import type { SecurityContext } from '../../middleware/security';
-import type { DiscordInteraction } from '../../types/discord';
 
 describe('AuditLogger', () => {
   let logger: AuditLogger;
