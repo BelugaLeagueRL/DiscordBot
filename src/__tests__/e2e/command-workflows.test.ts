@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from '../../utils/discord';
 import { handleRegisterCommand } from '../../handlers/register';
+import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
 
 // Type guard for Discord response data
@@ -57,39 +58,18 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Complete Command Processing Workflows', () => {
     it('should process successful /register command with valid tracker URLs', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3, // STRING
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/epic/test-player/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
         },
-        guild_id: '123456789012345678',
-        channel_id: '987654321098765432',
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-            discriminator: '1234',
-          },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/rocket-league/profile/epic/test-player/overview',
         },
-        token: 'interaction_token_string',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -107,34 +87,18 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should process /register command with invalid tracker URLs', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value: 'https://rocketleague.tracker.network/wrong/path/format',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/wrong/path/format',
         },
-        token: 'interaction_token_string',
-        version: 1,
-      };
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -151,41 +115,23 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should process /register command with mixed valid/invalid URLs', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/psn/validuser123/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-            },
-            {
-              name: 'tracker3',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/xbl/ValidGamer/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/rocket-league/profile/psn/validuser123/overview',
         },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
         },
-        token: 'interaction_token_string',
-        version: 1,
-      };
+        {
+          name: 'tracker3',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/rocket-league/profile/xbl/ValidGamer/overview',
+        },
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -204,23 +150,7 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle /register command with no tracker URLs provided', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [], // No tracker URLs
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'interaction_token_string',
-        version: 1,
-      };
+      const interaction = createMockCommandInteraction('register', []);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -236,25 +166,13 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle missing user information gracefully', async () => {
-      const interaction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
         },
-        // Missing member/user information
-        token: 'interaction_token_string',
-        version: 1,
-      };
+      ], { member: undefined });
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -274,6 +192,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate Steam platform URLs correctly', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -309,6 +228,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate Epic platform URLs correctly', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -344,6 +264,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate PSN platform URLs correctly', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -379,6 +300,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate Xbox platform URLs correctly', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -414,6 +336,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate Switch platform URLs correctly', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -483,6 +406,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should handle all invalid URLs scenario', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -525,6 +449,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should process commands efficiently', () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
@@ -560,6 +485,7 @@ describe('Discord Command Workflows E2E', () => {
     it('should handle multiple tracker URLs efficiently', async () => {
       const interaction = {
         id: '123456789012345678',
+        application_id: '987654321098765432',
         type: InteractionType.APPLICATION_COMMAND,
         data: {
           name: 'register',
