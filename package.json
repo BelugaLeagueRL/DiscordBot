@@ -6,10 +6,15 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --env development --port 8787",
+    "dev:tunnel": "wrangler dev --env development --remote",
+    "dev:local": "wrangler dev --env development --local",
+    "deploy": "wrangler deploy --env production",
+    "deploy:dev": "wrangler deploy --env development",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
+    "test:register": "vitest run src/__tests__/register",
     "lint": "eslint src --ext .ts,.js --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.js --fix --max-warnings 0",
     "format": "prettier --write src/**/*.{ts,js,json}",
@@ -18,8 +23,12 @@
     "type-coverage": "type-coverage --at-least 95 --strict --ignore-files '**/__tests__/**'",
     "build": "tsc && wrangler deploy --dry-run",
     "register": "node --loader ts-node/esm src/register.ts",
+    "register:dev": "DISCORD_ENV=development node --loader ts-node/esm src/register.ts && echo 'Commands registered for development'",
+    "register:prod": "DISCORD_ENV=production node --loader ts-node/esm src/register.ts && echo 'Commands registered for production'",
+    "setup:dev": "cp .dev.vars.example .dev.vars && echo 'Please edit .dev.vars with your Discord credentials'",
     "prepare": "husky",
-    "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage"
+    "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage",
+    "dev:full": "npm run setup:dev && npm run register:dev && npm run dev"
   },
   "keywords": [
     "discord",
