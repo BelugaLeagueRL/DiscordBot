@@ -25,6 +25,25 @@ export function validateEnvironmentVariables(): { token: string; applicationId: 
 }
 
 /**
+ * Determine registration environment and configuration
+ */
+export function determineRegistrationEnvironment(): {
+  readonly environment: 'development' | 'production';
+  readonly applicationId: string;
+  readonly endpoint: string;
+} {
+  const { applicationId } = validateEnvironmentVariables();
+  const environment = (process.env['DISCORD_ENV'] as 'development' | 'production') ?? 'development';
+  const endpoint = `https://discord.com/api/v10/applications/${applicationId}/commands`;
+
+  return {
+    environment,
+    applicationId,
+    endpoint,
+  } as const;
+}
+
+/**
  * Register all commands with Discord
  */
 export async function registerCommands(): Promise<void> {

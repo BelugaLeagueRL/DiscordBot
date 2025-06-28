@@ -100,10 +100,11 @@ describe('TDD Register Coverage', () => {
       const devResult = determineRegistrationEnvironment();
 
       process.env['DISCORD_ENV'] = 'production';
+      process.env['DISCORD_APPLICATION_ID'] = 'prod_app_id';
       const prodResult = determineRegistrationEnvironment();
 
       expect(devResult.endpoint).toBe('https://discord.com/api/v10/applications/dev_app_id/commands');
-      expect(prodResult.endpoint).toBe('https://discord.com/api/v10/applications/default_app_id/commands');
+      expect(prodResult.endpoint).toBe('https://discord.com/api/v10/applications/prod_app_id/commands');
     });
   });
 });
