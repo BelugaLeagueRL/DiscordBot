@@ -16,6 +16,9 @@ describe('Command Definitions', () => {
 
     it('should have tracker1 as required option', () => {
       const tracker1 = REGISTER_COMMAND.options[0];
+      if (!tracker1) {
+        throw new Error('tracker1 option not found');
+      }
 
       expect(tracker1.name).toBe('tracker1');
       expect(tracker1.description).toBe('First Rocket League tracker URL');
@@ -25,6 +28,9 @@ describe('Command Definitions', () => {
 
     it('should have tracker2 as optional option', () => {
       const tracker2 = REGISTER_COMMAND.options[1];
+      if (!tracker2) {
+        throw new Error('tracker2 option not found');
+      }
 
       expect(tracker2.name).toBe('tracker2');
       expect(tracker2.description).toBe('Second Rocket League tracker URL (optional)');
@@ -34,6 +40,9 @@ describe('Command Definitions', () => {
 
     it('should have tracker3 as optional option', () => {
       const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
 
       expect(tracker3.name).toBe('tracker3');
       expect(tracker3.description).toBe('Third Rocket League tracker URL (optional)');
@@ -43,6 +52,9 @@ describe('Command Definitions', () => {
 
     it('should have tracker4 as optional option', () => {
       const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
 
       expect(tracker4.name).toBe('tracker4');
       expect(tracker4.description).toBe('Fourth Rocket League tracker URL (optional)');
@@ -222,11 +234,19 @@ describe('Command Definitions', () => {
       expect(optionalOptions).toHaveLength(3);
 
       // First option should be required
-      expect(REGISTER_COMMAND.options[0].required).toBe(true);
+      const firstOption = REGISTER_COMMAND.options[0];
+      if (!firstOption) {
+        throw new Error('First option not found');
+      }
+      expect(firstOption.required).toBe(true);
 
       // Rest should be optional
       for (let i = 1; i < REGISTER_COMMAND.options.length; i++) {
-        expect(REGISTER_COMMAND.options[i].required).toBe(false);
+        const option = REGISTER_COMMAND.options[i];
+        if (!option) {
+          throw new Error(`Option at index ${String(i)} not found`);
+        }
+        expect(option.required).toBe(false);
       }
     });
   });
@@ -244,7 +264,11 @@ describe('Command Definitions', () => {
 
     it('should handle options array immutability', () => {
       const originalLength = REGISTER_COMMAND.options.length;
-      const originalFirst = REGISTER_COMMAND.options[0].name;
+      const firstOption = REGISTER_COMMAND.options[0];
+      if (!firstOption) {
+        throw new Error('First option not found');
+      }
+      const originalFirst = firstOption.name;
 
       // Create modified copy
       const modifiedOptions = [
@@ -258,7 +282,11 @@ describe('Command Definitions', () => {
       ];
 
       expect(REGISTER_COMMAND.options.length).toBe(originalLength);
-      expect(REGISTER_COMMAND.options[0].name).toBe(originalFirst);
+      const firstOptionAfter = REGISTER_COMMAND.options[0];
+      if (!firstOptionAfter) {
+        throw new Error('First option not found after modification');
+      }
+      expect(firstOptionAfter.name).toBe(originalFirst);
       expect(modifiedOptions.length).toBe(originalLength + 1);
     });
 
