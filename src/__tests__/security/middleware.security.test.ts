@@ -3,6 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// Mock discord-interactions module before importing
+vi.mock('discord-interactions', () => ({
+  verifyKey: vi.fn().mockResolvedValue(true),
+}));
 import {
   extractSecurityContext,
   validateRateLimit,
@@ -11,11 +16,16 @@ import {
   createSecurityHeaders,
   sanitizeInput,
   cleanupRateLimits,
+  clearRateLimits,
   withTimeout,
 } from '../../middleware/security';
 import { SecurityContextFactory, EnvFactory } from '../helpers/test-factories';
 import { createMockRequest, createTestEnvironment, cleanupMocks } from '../helpers/mock-contexts';
-import { createMockDiscordRequest, createMaliciousRequest, createTimeoutRequest } from '../helpers/discord-helpers';
+import {
+  createMockDiscordRequest,
+  createMaliciousRequest,
+  createTimeoutRequest,
+} from '../helpers/discord-helpers';
 import { mockInteractions } from '../mocks/interactions';
 
 describe('Security Middleware', () => {
@@ -51,7 +61,12 @@ describe('Security Middleware', () => {
     });
 
     it('should handle missing headers gracefully', () => {
-      const request = createMockRequest({ headers: {} });
+      // Create request with truly empty headers, overriding defaults
+      const request = new Request('https://example.com/', {
+        method: 'POST',
+        headers: {},
+        body: '{}',
+      });
 
       const context = extractSecurityContext(request);
 
@@ -91,8 +106,8 @@ describe('Security Middleware', () => {
 
   describe('validateRateLimit', () => {
     beforeEach(() => {
-      // Clean up any existing rate limit data
-      cleanupRateLimits();
+      // Clear all rate limit data between tests
+      clearRateLimits();
     });
 
     it('should allow requests within rate limit', () => {
@@ -260,10 +275,9 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction, { validSignature: true });
       const context = SecurityContextFactory.create();
 
-      // Mock verifyKey to return true
-      vi.doMock('discord-interactions', () => ({
-        verifyKey: vi.fn().mockResolvedValue(true),
-      }));
+      // Mock the verifyKey function properly using vi.mock
+      const { verifyKey } = await import('discord-interactions');
+      vi.mocked(verifyKey).mockResolvedValue(true);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -276,10 +290,9 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction, { validSignature: false });
       const context = SecurityContextFactory.create();
 
-      // Mock verifyKey to return false
-      vi.doMock('discord-interactions', () => ({
-        verifyKey: vi.fn().mockResolvedValue(false),
-      }));
+      // Mock the verifyKey function to return false
+      const { verifyKey } = await import('discord-interactions');
+      vi.mocked(verifyKey).mockResolvedValue(false);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -304,8 +317,18 @@ describe('Security Middleware', () => {
     });
 
     it('should reject request with payload too large', async () => {
-      const largeInteraction = mockInteractions.largePayload();
-      const request = createMockDiscordRequest(largeInteraction);
+      // Create a request with a payload larger than 1MB
+      const largePayload = 'x'.repeat(1024 * 1024 + 1);
+      const request = new Request('https://example.com/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature-Ed25519': 'valid_signature_hex',
+          'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
+          'User-Agent': 'Discord-Interactions/1.0',
+        },
+        body: largePayload,
+      });
       const context = SecurityContextFactory.create();
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
@@ -320,9 +343,8 @@ describe('Security Middleware', () => {
       const context = SecurityContextFactory.create();
 
       // Mock verifyKey to throw error
-      vi.doMock('discord-interactions', () => ({
-        verifyKey: vi.fn().mockRejectedValue(new Error('Verification failed')),
-      }));
+      const { verifyKey } = await import('discord-interactions');
+      vi.mocked(verifyKey).mockRejectedValue(new Error('Verification failed'));
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -370,7 +392,7 @@ describe('Security Middleware', () => {
       const sanitized = sanitizeInput(unsafeInput);
 
       // Should only contain safe characters
-      expect(sanitized).toMatch(/^[w\s\-_.]*$/);
+      expect(sanitized).toMatch(/^[\w\s\-_.]*$/);
     });
 
     it('should trim whitespace', () => {
@@ -411,15 +433,31 @@ describe('Security Middleware', () => {
     });
 
     it('should reject promise that exceeds timeout', async () => {
-      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 2000));
+      vi.useFakeTimers();
 
-      await expect(withTimeout(slowPromise, 1000)).rejects.toThrow('Request timeout');
+      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 2000));
+      const timeoutPromise = withTimeout(slowPromise, 1000);
+
+      // Advance time past the timeout
+      vi.advanceTimersByTime(1001);
+
+      await expect(timeoutPromise).rejects.toThrow('Request timeout');
+
+      vi.useRealTimers();
     });
 
     it('should use default timeout when not specified', async () => {
-      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 15000));
+      vi.useFakeTimers();
 
-      await expect(withTimeout(slowPromise)).rejects.toThrow('Request timeout');
+      const slowPromise = new Promise(resolve => setTimeout(() => resolve('late'), 15000));
+      const timeoutPromise = withTimeout(slowPromise);
+
+      // Advance time past the default timeout (10 seconds)
+      vi.advanceTimersByTime(10001);
+
+      await expect(timeoutPromise).rejects.toThrow('Request timeout');
+
+      vi.useRealTimers();
     });
 
     it('should handle promise rejection within timeout', async () => {
@@ -430,16 +468,28 @@ describe('Security Middleware', () => {
   });
 
   describe('cleanupRateLimits', () => {
+    beforeEach(() => {
+      // Clear all rate limit data between tests
+      clearRateLimits();
+    });
     it('should remove expired rate limit entries', () => {
       const clientIP = '192.168.1.1';
+
+      // Use fake timers
+      vi.useFakeTimers();
+      const startTime = 1000000000000; // Fixed timestamp
+      vi.setSystemTime(startTime);
 
       // Create rate limit entry
       validateRateLimit(clientIP);
 
-      // Advance time to expire the entry
-      vi.setSystemTime(Date.now() + 65 * 1000); // 65 seconds later
+      // Advance time to expire the entry (60 seconds + buffer)
+      vi.setSystemTime(startTime + 65 * 1000);
 
       cleanupRateLimits();
+
+      // Reset timer to ensure clean state for validation
+      vi.setSystemTime(startTime + 66 * 1000);
 
       // Should be able to make full 100 requests again
       for (let i = 0; i < 100; i++) {
@@ -451,6 +501,11 @@ describe('Security Middleware', () => {
 
     it('should preserve non-expired rate limit entries', () => {
       const clientIP = '192.168.1.1';
+
+      // Use fake timers to ensure consistent timing
+      vi.useFakeTimers();
+      const startTime = 1000000000000; // Fixed timestamp
+      vi.setSystemTime(startTime);
 
       // Make 50 requests
       for (let i = 0; i < 50; i++) {
@@ -466,6 +521,8 @@ describe('Security Middleware', () => {
 
       // 101st request should be blocked
       expect(validateRateLimit(clientIP)).toBe(false);
+
+      vi.useRealTimers();
     });
   });
 

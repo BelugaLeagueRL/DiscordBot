@@ -153,7 +153,7 @@ export const discordApiHandlers = [
     return HttpResponse.json({
       id: faker.string.numeric(18),
       type: 0,
-      content: (body as any).content || '',
+      content: (body as any).content ?? '',
       channel_id: request.params.channelId,
       author: {
         id: faker.string.numeric(18),
@@ -163,7 +163,7 @@ export const discordApiHandlers = [
         bot: true,
       },
       attachments: [],
-      embeds: (body as any).embeds || [],
+      embeds: (body as any).embeds ?? [],
       mentions: [],
       mention_roles: [],
       pinned: false,
@@ -172,51 +172,57 @@ export const discordApiHandlers = [
       timestamp: new Date().toISOString(),
       edited_timestamp: null,
       flags: 0,
-      components: (body as any).components || [],
+      components: (body as any).components ?? [],
     });
   }),
 
   // Handle interaction responses (webhook)
-  http.post(`${DISCORD_API_BASE}/interactions/:interactionId/:interactionToken/callback`, async ({ request }) => {
-    const body = await request.json();
-    
-    // Validate interaction response structure
-    const responseType = (body as any).type;
-    if (![1, 4, 5, 6, 7].includes(responseType)) {
-      return new HttpResponse(null, { status: 400 });
-    }
+  http.post(
+    `${DISCORD_API_BASE}/interactions/:interactionId/:interactionToken/callback`,
+    async ({ request }) => {
+      const body = await request.json();
 
-    return new HttpResponse(null, { status: 204 });
-  }),
+      // Validate interaction response structure
+      const responseType = (body as any).type;
+      if (![1, 4, 5, 6, 7].includes(responseType)) {
+        return new HttpResponse(null, { status: 400 });
+      }
+
+      return new HttpResponse(null, { status: 204 });
+    }
+  ),
 
   // Edit original interaction response
-  http.patch(`${DISCORD_API_BASE}/webhooks/:appId/:interactionToken/messages/@original`, async ({ request }) => {
-    const body = await request.json();
-    return HttpResponse.json({
-      id: faker.string.numeric(18),
-      type: 0,
-      content: (body as any).content || '',
-      channel_id: faker.string.numeric(18),
-      author: {
-        id: request.params.appId,
-        username: 'BelugaBot',
-        discriminator: '0',
-        avatar: faker.string.alphanumeric(32),
-        bot: true,
-      },
-      attachments: [],
-      embeds: (body as any).embeds || [],
-      mentions: [],
-      mention_roles: [],
-      pinned: false,
-      mention_everyone: false,
-      tts: false,
-      timestamp: new Date().toISOString(),
-      edited_timestamp: new Date().toISOString(),
-      flags: 64, // EPHEMERAL
-      components: (body as any).components || [],
-    });
-  }),
+  http.patch(
+    `${DISCORD_API_BASE}/webhooks/:appId/:interactionToken/messages/@original`,
+    async ({ request }) => {
+      const body = await request.json();
+      return HttpResponse.json({
+        id: faker.string.numeric(18),
+        type: 0,
+        content: (body as any).content ?? '',
+        channel_id: faker.string.numeric(18),
+        author: {
+          id: request.params.appId,
+          username: 'BelugaBot',
+          discriminator: '0',
+          avatar: faker.string.alphanumeric(32),
+          bot: true,
+        },
+        attachments: [],
+        embeds: (body as any).embeds ?? [],
+        mentions: [],
+        mention_roles: [],
+        pinned: false,
+        mention_everyone: false,
+        tts: false,
+        timestamp: new Date().toISOString(),
+        edited_timestamp: new Date().toISOString(),
+        flags: 64, // EPHEMERAL
+        components: (body as any).components ?? [],
+      });
+    }
+  ),
 
   // Get application
   http.get(`${DISCORD_API_BASE}/applications/@me`, () => {
@@ -247,7 +253,7 @@ export const discordApiHandlers = [
 export const discordApiErrorHandlers = [
   // Rate limited response
   http.post(`${DISCORD_API_BASE}/interactions/:interactionId/:interactionToken/callback`, () => {
-    return new HttpResponse(null, { 
+    return new HttpResponse(null, {
       status: 429,
       headers: {
         'X-RateLimit-Limit': '5',
@@ -260,18 +266,12 @@ export const discordApiErrorHandlers = [
 
   // Unauthorized response
   http.get(`${DISCORD_API_BASE}/users/@me`, () => {
-    return HttpResponse.json(
-      { message: 'Unauthorized', code: 0 },
-      { status: 401 }
-    );
+    return HttpResponse.json({ message: 'Unauthorized', code: 0 }, { status: 401 });
   }),
 
   // Internal server error
   http.post(`${DISCORD_API_BASE}/applications/:appId/commands`, () => {
-    return HttpResponse.json(
-      { message: 'Internal Server Error', code: 0 },
-      { status: 500 }
-    );
+    return HttpResponse.json({ message: 'Internal Server Error', code: 0 }, { status: 500 });
   }),
 ];
 
@@ -310,11 +310,17 @@ export function mockDiscordResponse(endpoint: string, response: any, status = 20
  */
 export function setupDiscordApiMocks() {
   // Start the server before all tests
-  beforeAll(() => discordApiServer.listen({ onUnhandledRequest: 'error' }));
-  
+  beforeAll(() => {
+    discordApiServer.listen({ onUnhandledRequest: 'error' });
+  });
+
   // Reset handlers after each test
-  afterEach(() => discordApiServer.resetHandlers());
-  
+  afterEach(() => {
+    discordApiServer.resetHandlers();
+  });
+
   // Clean up after all tests
-  afterAll(() => discordApiServer.close());
+  afterAll(() => {
+    discordApiServer.close();
+  });
 }

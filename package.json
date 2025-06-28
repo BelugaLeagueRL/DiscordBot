@@ -10,13 +10,16 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "lint": "eslint src --ext .ts,.js",
-    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "lint": "eslint src --ext .ts,.js --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.js --fix --max-warnings 0",
     "format": "prettier --write src/**/*.{ts,js,json}",
     "format:check": "prettier --check src/**/*.{ts,js,json}",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --strict",
+    "type-coverage": "type-coverage --at-least 95 --strict --ignore-files '**/__tests__/**'",
     "build": "tsc && wrangler deploy --dry-run",
-    "register": "node --loader ts-node/esm src/register.ts"
+    "register": "node --loader ts-node/esm src/register.ts",
+    "prepare": "husky",
+    "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage"
   },
   "keywords": [
     "discord",
@@ -36,6 +39,7 @@
     "@types/node": "^24.0.6",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
+    "@vitest/coverage-istanbul": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "discord-api-types": "^0.38.13",
@@ -48,6 +52,7 @@
     "msw": "^2.10.2",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
+    "type-coverage": "^2.29.7",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.2",
     "vitest": "^3.2.4",
@@ -60,11 +65,10 @@
     "node": ">=18"
   },
   "lint-staged": {
-    "*.{ts,js}": [
-      "eslint --fix",
-      "prettier --write"
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0"
     ],
-    "*.{json,md}": [
+    "*.{ts,tsx,js,json,md}": [
       "prettier --write"
     ]
   }

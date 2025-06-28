@@ -11,7 +11,7 @@ import { SecurityContextFactory, EnvFactory } from './test-factories';
  * Mock implementation of fetch for testing
  */
 export function createMockFetch() {
-  return vi.fn().mockImplementation((url: string | Request, init?: RequestInit) => {
+  return vi.fn().mockImplementation((_url: string | Request, _init?: RequestInit) => {
     // Default successful response
     return Promise.resolve(
       new Response(JSON.stringify({ success: true }), {
@@ -38,7 +38,9 @@ export function createMockConsole() {
 /**
  * Mock security context with spies for validation testing
  */
-export function createMockSecurityContext(overrides: Partial<SecurityContext> = {}): SecurityContext {
+export function createMockSecurityContext(
+  overrides: Partial<SecurityContext> = {}
+): SecurityContext {
   return SecurityContextFactory.create(overrides);
 }
 
@@ -61,7 +63,9 @@ export function createMockRateLimitStorage() {
       storage.set(key, value);
     }),
     delete: vi.fn((key: string) => storage.delete(key)),
-    clear: vi.fn(() => storage.clear()),
+    clear: vi.fn(() => {
+      storage.clear();
+    }),
     size: () => storage.size,
     keys: () => Array.from(storage.keys()),
     has: (key: string) => storage.has(key),
@@ -108,18 +112,15 @@ export function createMockExecutionContext() {
 /**
  * Mock request object with customizable properties
  */
-export function createMockRequest(options: {
-  method?: string;
-  url?: string;
-  headers?: Record<string, string>;
-  body?: string;
-} = {}): Request {
-  const {
-    method = 'POST',
-    url = 'https://example.com/',
-    headers = {},
-    body = '{}',
-  } = options;
+export function createMockRequest(
+  options: {
+    method?: string;
+    url?: string;
+    headers?: Record<string, string>;
+    body?: string;
+  } = {}
+): Request {
+  const { method = 'POST', url = 'https://example.com/', headers = {}, body = '{}' } = options;
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -138,18 +139,15 @@ export function createMockRequest(options: {
 /**
  * Mock Response class for testing
  */
-export function createMockResponse(options: {
-  status?: number;
-  statusText?: string;
-  headers?: Record<string, string>;
-  body?: any;
-} = {}): Response {
-  const {
-    status = 200,
-    statusText = 'OK',
-    headers = {},
-    body = null,
-  } = options;
+export function createMockResponse(
+  options: {
+    status?: number;
+    statusText?: string;
+    headers?: Record<string, string>;
+    body?: any;
+  } = {}
+): Response {
+  const { status = 200, statusText = 'OK', headers = {}, body = null } = options;
 
   const responseBody = body ? JSON.stringify(body) : null;
   const responseHeaders = {
@@ -170,7 +168,7 @@ export function createMockResponse(options: {
 export function createMockCrypto() {
   return {
     randomUUID: vi.fn(() => '123e4567-e89b-12d3-a456-426614174000'),
-    getRandomValues: vi.fn((array) => {
+    getRandomValues: vi.fn(array => {
       for (let i = 0; i < array.length; i++) {
         array[i] = Math.floor(Math.random() * 256);
       }

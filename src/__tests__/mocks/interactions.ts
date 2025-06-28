@@ -51,12 +51,14 @@ export const mockInteractions = {
         {
           name: 'tracker1',
           type: 3, // STRING
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
         },
         {
           name: 'tracker2',
           type: 3, // STRING
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/epic/TestPlayer123/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/epic/TestPlayer123/overview',
         },
       ],
     },
@@ -119,22 +121,26 @@ export const mockInteractions = {
         {
           name: 'tracker1',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
         },
         {
           name: 'tracker2',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/epic/TestPlayer123/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/epic/TestPlayer123/overview',
         },
         {
           name: 'tracker3',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/psn/PSNPlayer456/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/psn/PSNPlayer456/overview',
         },
         {
           name: 'tracker4',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/xbox/XboxGamer789/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/xbox/XboxGamer789/overview',
         },
       ],
     },
@@ -264,7 +270,7 @@ export const mockInteractions = {
         {
           name: 'tracker1',
           type: 3,
-          value: 'https://rocketleague.tracker.network/' + 'x'.repeat(10000), // Very long URL
+          value: `https://rocketleague.tracker.network/${'x'.repeat(10000)}`, // Very long URL
         },
       ],
     },
@@ -293,12 +299,14 @@ export const mockInteractions = {
         {
           name: 'tracker1',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/Player%20With%20Spaces/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/steam/Player%20With%20Spaces/overview',
         },
         {
           name: 'tracker2',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/epic/プレイヤー名/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/epic/プレイヤー名/overview',
         },
       ],
     },
@@ -343,7 +351,9 @@ export function generateInteractionBatch(count: number = 10): DiscordInteraction
 /**
  * Create interaction with custom data
  */
-export function createCustomInteraction(overrides: Partial<DiscordInteraction>): DiscordInteraction {
+export function createCustomInteraction(
+  overrides: Partial<DiscordInteraction>
+): DiscordInteraction {
   const baseInteraction = mockInteractions.registerValid();
   return {
     ...baseInteraction,
@@ -377,7 +387,8 @@ export const edgeCaseInteractions = {
         {
           name: 'tracker1',
           type: 3,
-          value: 'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+          value:
+            'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
         },
       ],
     },

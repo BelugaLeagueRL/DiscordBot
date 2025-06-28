@@ -9,8 +9,8 @@ import type { Env } from '../../index';
 /**
  * Factory for creating mock security contexts
  */
-export class SecurityContextFactory {
-  static create(overrides: Partial<SecurityContext> = {}): SecurityContext {
+export const SecurityContextFactory = {
+  create(overrides: Partial<SecurityContext> = {}): SecurityContext {
     return {
       clientIP: faker.internet.ip(),
       userAgent: 'Discord-Interactions/1.0 (+https://discord.com)',
@@ -18,45 +18,45 @@ export class SecurityContextFactory {
       requestId: faker.string.uuid(),
       ...overrides,
     };
-  }
+  },
 
-  static withIP(ip: string): SecurityContext {
+  withIP(ip: string): SecurityContext {
     return this.create({ clientIP: ip });
-  }
+  },
 
-  static withUserAgent(userAgent: string): SecurityContext {
+  withUserAgent(userAgent: string): SecurityContext {
     return this.create({ userAgent });
-  }
-}
+  },
+} as const;
 
 /**
  * Factory for creating mock environment configurations
  */
-export class EnvFactory {
-  static create(overrides: Partial<Env> = {}): Env {
+export const EnvFactory = {
+  create(overrides: Partial<Env> = {}): Env {
     return {
-      DISCORD_TOKEN: 'mock_discord_token_' + faker.string.alphanumeric(64),
-      DISCORD_PUBLIC_KEY: 'mock_public_key_' + faker.string.alphanumeric(64),
+      DISCORD_TOKEN: `mock_discord_token_${faker.string.alphanumeric(64)}`,
+      DISCORD_PUBLIC_KEY: `mock_public_key_${faker.string.alphanumeric(64)}`,
       DISCORD_APPLICATION_ID: faker.string.numeric(18),
       DATABASE_URL: 'sqlite://test.db',
-      GOOGLE_SHEETS_API_KEY: 'mock_sheets_key_' + faker.string.alphanumeric(32),
+      GOOGLE_SHEETS_API_KEY: `mock_sheets_key_${faker.string.alphanumeric(32)}`,
       ENVIRONMENT: 'test',
       ...overrides,
     };
-  }
+  },
 
-  static development(): Env {
+  development(): Env {
     return this.create({ ENVIRONMENT: 'development' });
-  }
+  },
 
-  static production(): Env {
+  production(): Env {
     return this.create({ ENVIRONMENT: 'production' });
-  }
+  },
 
-  static test(): Env {
+  test(): Env {
     return this.create({ ENVIRONMENT: 'test' });
-  }
-}
+  },
+} as const;
 
 /**
  * Factory for creating mock audit log entries
@@ -83,7 +83,11 @@ export class AuditLogFactory {
     });
   }
 
-  static commandExecution(commandName: string, success: boolean = true, responseTime: number = 100) {
+  static commandExecution(
+    commandName: string,
+    success: boolean = true,
+    responseTime: number = 100
+  ) {
     return this.createEntry({
       eventType: success ? 'command_executed' : 'command_failed',
       commandName,
@@ -125,7 +129,7 @@ export class TrackerUrlFactory {
   private static readonly BASE_URL = 'https://rocketleague.tracker.network/rocket-league/profile';
 
   static valid(platform?: string): string {
-    const selectedPlatform = platform || faker.helpers.arrayElement(this.VALID_PLATFORMS);
+    const selectedPlatform = platform ?? faker.helpers.arrayElement(this.VALID_PLATFORMS);
     const playerId = this.generatePlayerId(selectedPlatform);
     return `${this.BASE_URL}/${selectedPlatform}/${playerId}/overview`;
   }
@@ -167,7 +171,7 @@ export class TrackerUrlFactory {
   private static generatePlayerId(platform: string): string {
     switch (platform) {
       case 'steam':
-        return '7656119' + faker.string.numeric(10); // Steam ID64 format
+        return `7656119${faker.string.numeric(10)}`; // Steam ID64 format
       case 'epic':
         return faker.internet.username();
       case 'psn':
@@ -216,7 +220,7 @@ export class PerformanceFactory {
   static createMemoryTestData(sizeMB: number = 10): any[] {
     const itemSize = 1024; // 1KB per item
     const itemCount = (sizeMB * 1024 * 1024) / itemSize;
-    
+
     return Array.from({ length: itemCount }, (_, index) => ({
       id: index,
       data: faker.string.alphanumeric(itemSize - 100), // Leave room for other properties
@@ -235,10 +239,17 @@ export class PerformanceFactory {
   }
 
   static createConcurrentRequests(count: number = 10): Promise<any>[] {
-    return Array.from({ length: count }, () => 
-      new Promise(resolve => 
-        setTimeout(() => resolve(faker.string.uuid()), faker.number.int({ min: 50, max: 200 }))
-      )
+    return Array.from(
+      { length: count },
+      () =>
+        new Promise(resolve =>
+          setTimeout(
+            () => {
+              resolve(faker.string.uuid());
+            },
+            faker.number.int({ min: 50, max: 200 })
+          )
+        )
     );
   }
 }

@@ -28,13 +28,16 @@ export enum InteractionResponseType {
 /**
  * Verify Discord request signature
  */
-export async function verifyDiscordRequest(request: Request, publicKey: string): Promise<boolean> {
+export async function verifyDiscordRequest(
+  request: Readonly<Request>,
+  publicKey: string
+): Promise<boolean> {
   try {
     const signature = request.headers.get('X-Signature-Ed25519');
     const timestamp = request.headers.get('X-Signature-Timestamp');
     const body = await request.clone().arrayBuffer();
 
-    if (!signature || !timestamp) {
+    if (signature === null || timestamp === null || signature === '' || timestamp === '') {
       console.error('Missing signature headers');
       return false;
     }
@@ -85,8 +88,6 @@ export function createPublicResponse(content: string): Response {
 /**
  * Create an error response
  */
-export function createErrorResponse(
-  message: string = 'An error occurred. Please try again.'
-): Response {
+export function createErrorResponse(message = 'An error occurred. Please try again.'): Response {
   return createEphemeralResponse(`❌ ${message}`);
 }

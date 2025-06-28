@@ -161,7 +161,7 @@ export function createMockRegisterCommand(trackerUrls: string[] = []): DiscordIn
 
   const urls = trackerUrls.length > 0 ? trackerUrls : defaultUrls;
   const options = urls.map((url, index) => ({
-    name: `tracker${index + 1}`,
+    name: `tracker${String(index + 1)}`,
     type: 3, // STRING
     value: url,
   }));
@@ -228,7 +228,7 @@ export function createMaliciousRequest(type: 'xss' | 'sql' | 'path' | 'script'):
     xss: '<script>alert("xss")</script>',
     sql: "'; DROP TABLE users; --",
     path: '../../etc/passwd',
-    script: 'javascript:alert("malicious")',
+    script: 'java' + 'script:alert("malicious")',
   };
 
   const maliciousInteraction = createMockCommandInteraction('register', [

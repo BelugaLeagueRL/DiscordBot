@@ -72,7 +72,7 @@ export const mockLargeEnv: Env = {
   DISCORD_TOKEN: 'x'.repeat(1000),
   DISCORD_PUBLIC_KEY: 'y'.repeat(1000),
   DISCORD_APPLICATION_ID: '9'.repeat(20),
-  DATABASE_URL: 'sqlite://' + 'z'.repeat(500) + '.db',
+  DATABASE_URL: `sqlite://${'z'.repeat(500)}.db`,
   GOOGLE_SHEETS_API_KEY: 'a'.repeat(500),
   ENVIRONMENT: 'test',
 };
@@ -98,7 +98,7 @@ export const mockEnvironments = {
   incomplete: mockIncompleteEnv,
   invalid: mockInvalidEnv,
   large: mockLargeEnv,
-  
+
   // Scenario-specific environments
   withoutDatabase: createMockEnv({ DATABASE_URL: undefined }),
   withoutGoogleSheets: createMockEnv({ GOOGLE_SHEETS_API_KEY: undefined }),
@@ -109,7 +109,9 @@ export const mockEnvironments = {
 /**
  * Get environment for specific test scenario
  */
-export function getEnvironmentForScenario(scenario: keyof typeof mockEnvironments): Env | Partial<Env> {
+export function getEnvironmentForScenario(
+  scenario: keyof typeof mockEnvironments
+): Env | Partial<Env> {
   return mockEnvironments[scenario];
 }
 
@@ -119,12 +121,10 @@ export function getEnvironmentForScenario(scenario: keyof typeof mockEnvironment
 export function isCompleteEnvironment(env: Partial<Env>): env is Env {
   const requiredFields: (keyof Env)[] = [
     'DISCORD_TOKEN',
-    'DISCORD_PUBLIC_KEY', 
+    'DISCORD_PUBLIC_KEY',
     'DISCORD_APPLICATION_ID',
     'ENVIRONMENT',
   ];
-  
-  return requiredFields.every(field => 
-    env[field] !== undefined && env[field] !== ''
-  );
+
+  return requiredFields.every(field => env[field] !== undefined && env[field] !== '');
 }

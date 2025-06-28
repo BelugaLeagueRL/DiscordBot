@@ -3,28 +3,28 @@
  */
 
 export interface DiscordInteraction {
-  type: number;
-  data?: {
-    name: string;
-    options?: Array<{
-      name: string;
-      value: string;
+  readonly type: number;
+  readonly data?: {
+    readonly name: string;
+    readonly options?: ReadonlyArray<{
+      readonly name: string;
+      readonly value: string;
     }>;
   };
-  member?: {
-    user?: {
-      id: string;
+  readonly member?: {
+    readonly user?: {
+      readonly id: string;
     };
   };
-  user?: {
-    id: string;
+  readonly user?: {
+    readonly id: string;
   };
 }
 
 export interface InteractionResponse {
-  type: number;
-  data?: {
-    content: string;
-    flags?: number;
+  readonly type: number;
+  readonly data?: {
+    readonly content: string;
+    readonly flags?: number;
   };
 }
