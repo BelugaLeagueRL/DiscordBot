@@ -26,6 +26,9 @@
     "register:dev": "DISCORD_ENV=development node --env-file=.dev.vars --import tsx src/register.ts && echo 'Commands registered for development'",
     "register:prod": "DISCORD_ENV=production node --env-file=.dev.vars --import tsx src/register.ts && echo 'Commands registered for production'",
     "setup:dev": "cp .dev.vars.example .dev.vars && echo 'Please edit .dev.vars with your Discord credentials'",
+    "setup:tunnel": "./scripts/setup-tunnel.sh",
+    "save:tunnel": "node scripts/capture-tunnel.js",
+    "ngrok": "node scripts/ngrok-with-capture.js",
     "prepare": "husky",
     "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage",
     "dev:full": "npm run setup:dev && npm run register:dev && npm run dev"
@@ -59,6 +62,7 @@
     "lint-staged": "^16.1.2",
     "miniflare": "^4.20250617.4",
     "msw": "^2.10.2",
+    "ngrok": "^5.0.0-beta.2",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",

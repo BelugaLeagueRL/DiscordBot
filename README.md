@@ -90,6 +90,8 @@ npm run dev
 | `npm run register:dev` | Development command registration | Registers commands to development Discord app |
 | `npm run register:prod` | Production command registration | Registers commands to production Discord app |
 | `npm run setup:dev` | Development environment setup | Copies .dev.vars.example to .dev.vars |
+| `npm run setup:tunnel` | Automated tunnel setup | Starts tunnel and captures URL automatically |
+| `npm run save:tunnel <url>` | Manual tunnel URL capture | Saves tunnel URL to .dev.vars with instructions |
 | `npm run test:register` | Register command testing | Runs tests specifically for register functionality |
 | `npm run dev:full` | Complete development workflow | Runs setup → register → dev in sequence |
 
@@ -186,18 +188,30 @@ npm run dev:full
 
 #### 3. Testing with Discord Webhook
 
-For testing Discord interactions locally:
+For testing Discord interactions locally, we've automated the tunnel URL capture process:
 
-**Option A: Cloudflare Tunnel (Recommended)**
+**Option A: Automated Tunnel Setup (Recommended)**
 ```bash
-npm run dev:tunnel
-# Uses Cloudflare's built-in tunneling
-# URL will be provided in console output
+npm run setup:tunnel
+# Automatically starts tunnel and captures URL to .dev.vars
+# Provides copy-paste instructions for Discord Developer Portal
 ```
 
-**Option B: ngrok (Alternative)**
+**Option B: Manual Tunnel with URL Capture**
 ```bash
-# Install ngrok globally
+# Start your preferred tunnel method
+npm run dev:tunnel    # Cloudflare tunnel
+# OR
+npm run dev:local     # Local server (then use ngrok separately)
+
+# When you get the tunnel URL, save it automatically:
+npm run save:tunnel https://your-tunnel-url.ngrok.io
+# This saves the URL to .dev.vars and shows Discord setup instructions
+```
+
+**Option C: Traditional Manual Setup**
+```bash
+# Install ngrok globally if not using Cloudflare tunnel
 npm install -g ngrok
 
 # In one terminal, start local server
@@ -208,6 +222,13 @@ ngrok http 8787
 
 # Copy the ngrok HTTPS URL and update Discord app's Interactions Endpoint URL
 ```
+
+**Discord Developer Portal Configuration**:
+After capturing your tunnel URL, copy it to Discord:
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications/1388232360633569491)
+2. Navigate to General Information
+3. Set "Interactions Endpoint URL" to your tunnel URL
+4. Save changes
 
 #### 4. TDD Development Cycle
 
