@@ -5,9 +5,31 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { InteractionType } from '../../utils/discord';
 import { handleRegisterCommand } from '../../handlers/register';
+import { createMockCommandInteraction, createTrackerOptions } from '../helpers/discord-helpers';
+import { EnvFactory } from '../helpers/test-factories';
 import type { Env } from '../../index';
+
+// Type guard for Discord response data
+function isDiscordResponse(data: unknown): data is { type: number; data: { content: string; flags?: number } } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  if (typeof obj['type'] !== 'number') {
+    return false;
+  }
+  
+  if (typeof obj['data'] !== 'object' || obj['data'] === null) {
+    return false;
+  }
+  
+  const dataObj = obj['data'] as Record<string, unknown>;
+  
+  return typeof dataObj['content'] === 'string';
+}
 
 // Mock discord-interactions for performance tests
 vi.mock('discord-interactions', () => ({
@@ -19,43 +41,12 @@ describe('Performance and Load Testing', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Mock environment for testing
-    mockEnv = {
-      DISCORD_PUBLIC_KEY: 'test_public_key',
-      DISCORD_TOKEN: 'test_token',
-      DISCORD_APPLICATION_ID: 'test_app_id',
-      DATABASE_URL: 'test_db_url',
-      GOOGLE_SHEETS_API_KEY: 'test_sheets_key',
-      ENVIRONMENT: 'test',
-    } as Env;
+    mockEnv = EnvFactory.create();
   });
 
   describe('Response Time Performance', () => {
     it('should handle register command within 100ms', async () => {
-      const registerInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      const registerInteraction = createMockCommandInteraction('register', createTrackerOptions(1));
 
       const startTime = performance.now();
 
@@ -69,47 +60,7 @@ describe('Performance and Load Testing', () => {
     });
 
     it('should handle multiple tracker URLs within 150ms', async () => {
-      const registerInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-            {
-              name: 'tracker2',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/epic/epicuser/overview',
-            },
-            {
-              name: 'tracker3',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/psn/psnuser/overview',
-            },
-            {
-              name: 'tracker4',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/xbl/xboxuser/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
+      const registerInteraction = createMockCommandInteraction('register', createTrackerOptions(4));
 
       const startTime = performance.now();
 
@@ -119,51 +70,28 @@ describe('Performance and Load Testing', () => {
       const responseTime = endTime - startTime;
 
       expect(response.status).toBe(200);
-      expect(responseTime).toBeLessThan(150); // Multiple URLs should still be fast
-
-      const responseData = await response.json();
+      
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.data.content).toContain('Successfully registered 4 tracker URL(s)');
+      expect(responseTime).toBeLessThan(150);
     });
   });
 
   describe('Concurrent Processing Performance', () => {
     it('should handle 10 concurrent register commands efficiently', async () => {
-      const baseInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
-
       const concurrentRequests = 10;
       const startTime = performance.now();
 
-      const requests = Array.from({ length: concurrentRequests }, (_, i) =>
-        handleRegisterCommand(
-          {
-            ...baseInteraction,
-            id: `${baseInteraction.id}_${i}`, // Unique interaction IDs
-          },
-          mockEnv
-        )
-      );
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        const interaction = createMockCommandInteraction('register', createTrackerOptions(1), {
+          id: `concurrent_${i}`,
+        });
+        return handleRegisterCommand(interaction, mockEnv);
+      });
 
       const responses = await Promise.all(requests);
       const endTime = performance.now();
@@ -183,56 +111,16 @@ describe('Performance and Load Testing', () => {
     });
 
     it('should handle mixed valid/invalid URLs concurrently', async () => {
-      const validInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
-
-      const invalidInteraction = {
-        ...validInteraction,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-            },
-          ],
-        },
-      };
-
       const concurrentRequests = 20;
       const startTime = performance.now();
 
       // Mix of valid and invalid requests
-      const requests = Array.from({ length: concurrentRequests }, (_, i) =>
-        handleRegisterCommand(
-          i % 2 === 0
-            ? { ...validInteraction, id: `valid_${i}` }
-            : { ...invalidInteraction, id: `invalid_${i}` },
-          mockEnv
-        )
-      );
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        const interaction = i % 2 === 0
+          ? createMockCommandInteraction('register', createTrackerOptions(1), { id: `valid_${i}` })
+          : createMockCommandInteraction('register', createTrackerOptions(1, 0), { id: `invalid_${i}` });
+        return handleRegisterCommand(interaction, mockEnv);
+      });
 
       const responses = await Promise.all(requests);
       const endTime = performance.now();
@@ -254,29 +142,9 @@ describe('Performance and Load Testing', () => {
 
   describe('Memory and Resource Usage', () => {
     it('should handle large payloads efficiently', async () => {
-      // Create a large but valid register payload (within Discord's limits)
-      const largeOptions = Array.from({ length: 50 }, (_, i) => ({
-        name: `tracker${i}`,
-        type: 3,
-        value: `https://rocketleague.tracker.network/rocket-league/profile/steam/76561198${(144145650 + i).toString().padStart(9, '0')}/overview`,
-      }));
-
-      const largeInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: largeOptions,
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
+      const largeInteraction = createMockCommandInteraction('register', createTrackerOptions(4), {
         token: 'very_long_interaction_token_string_'.repeat(10),
-        version: 1,
-      };
+      });
 
       const startTime = performance.now();
 
@@ -286,37 +154,17 @@ describe('Performance and Load Testing', () => {
       const responseTime = endTime - startTime;
 
       expect(response.status).toBe(200);
-      expect(responseTime).toBeLessThan(500); // Should handle large payloads within reasonable time
+      expect(responseTime).toBeLessThan(500);
 
-      const responseData = await response.json();
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
       expect(responseData.data.content).toContain('Successfully registered');
     });
 
     it('should handle rapid sequential requests without degradation', async () => {
-      const baseInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
-
       const sequentialRequests = 50;
       const responses: Response[] = [];
       const responseTimes: number[] = [];
@@ -324,13 +172,10 @@ describe('Performance and Load Testing', () => {
       for (let i = 0; i < sequentialRequests; i++) {
         const startTime = performance.now();
 
-        const response = await handleRegisterCommand(
-          {
-            ...baseInteraction,
-            id: `${baseInteraction.id}_${i}`,
-          },
-          mockEnv
-        );
+        const interaction = createMockCommandInteraction('register', createTrackerOptions(1), {
+          id: `sequential_${i}`,
+        });
+        const response = await handleRegisterCommand(interaction, mockEnv);
 
         const endTime = performance.now();
         responseTimes.push(endTime - startTime);
@@ -361,72 +206,30 @@ describe('Performance and Load Testing', () => {
   describe('Error Handling Performance', () => {
     it('should handle validation errors efficiently', async () => {
       const invalidInteractions = [
-        {
-          // Missing user info
-          id: '123456789012345678',
-          type: InteractionType.APPLICATION_COMMAND,
-          data: {
-            name: 'register',
-            options: [
-              {
-                name: 'tracker1',
-                type: 3,
-                value:
-                  'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-              },
-            ],
-          },
-          token: 'test_token',
-          version: 1,
-        },
-        {
-          // No options
-          id: '123456789012345678',
-          type: InteractionType.APPLICATION_COMMAND,
-          data: {
-            name: 'register',
-            options: [],
-          },
-          member: {
-            user: {
-              id: '555666777888999000',
-              username: 'testuser',
-            },
-          },
-          token: 'test_token',
-          version: 1,
-        },
-        {
-          // Invalid URL
-          id: '123456789012345678',
-          type: InteractionType.APPLICATION_COMMAND,
-          data: {
-            name: 'register',
-            options: [
-              {
-                name: 'tracker1',
-                type: 3,
-                value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-              },
-            ],
-          },
-          member: {
-            user: {
-              id: '555666777888999000',
-              username: 'testuser',
-            },
-          },
-          token: 'test_token',
-          version: 1,
-        },
+        // Missing user info - create base interaction then remove member
+        (() => {
+          const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', createTrackerOptions(1), {
+            id: 'missing_user',
+          });
+          return interactionWithoutMember;
+        })(),
+        // No options
+        createMockCommandInteraction('register', [], {
+          id: 'no_options',
+        }),
+        // Invalid URL (using createTrackerOptions with 0 valid to get invalid URLs)
+        createMockCommandInteraction('register', createTrackerOptions(1, 0), {
+          id: 'invalid_url',
+        }),
       ];
 
       const startTime = performance.now();
 
       const responses = await Promise.all(
-        invalidInteractions.map((interaction, i) =>
-          handleRegisterCommand({ ...interaction, id: `invalid_${i}` }, mockEnv)
-        )
+        invalidInteractions.map((interaction, i) => {
+          const modifiedInteraction = { ...interaction, id: `invalid_${i}` };
+          return handleRegisterCommand(modifiedInteraction, mockEnv);
+        })
       );
 
       const endTime = performance.now();
@@ -447,43 +250,16 @@ describe('Performance and Load Testing', () => {
 
   describe('Performance Benchmarking', () => {
     it('should establish performance baselines', async () => {
-      const baseInteraction = {
-        id: '123456789012345678',
-        type: InteractionType.APPLICATION_COMMAND,
-        data: {
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              type: 3,
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-          },
-        },
-        token: 'test_token',
-        version: 1,
-      };
-
       const benchmarkRuns = 10;
       const responseTimes: number[] = [];
 
       for (let i = 0; i < benchmarkRuns; i++) {
         const startTime = performance.now();
 
-        const response = await handleRegisterCommand(
-          {
-            ...baseInteraction,
-            id: `benchmark_${i}`,
-          },
-          mockEnv
-        );
+        const interaction = createMockCommandInteraction('register', createTrackerOptions(1), {
+          id: `benchmark_${i}`,
+        });
+        const response = await handleRegisterCommand(interaction, mockEnv);
 
         const endTime = performance.now();
         responseTimes.push(endTime - startTime);
@@ -506,9 +282,12 @@ describe('Performance and Load Testing', () => {
       // Log baseline for future reference
       console.log(`\n📊 Performance Baseline Metrics:`);
       console.log(`   Average Response Time: ${avgTime.toFixed(2)}ms`);
-      console.log(
-        `   95th Percentile: ${responseTimes.sort()[Math.floor(benchmarkRuns * 0.95)].toFixed(2)}ms`
-      );
+      const sortedTimes = [...responseTimes].sort((a, b) => a - b);
+      const percentile95Index = Math.floor(benchmarkRuns * 0.95);
+      const percentile95 = sortedTimes[percentile95Index];
+      if (percentile95 !== undefined) {
+        console.log(`   95th Percentile: ${percentile95.toFixed(2)}ms`);
+      }
       console.log(`   Memory Footprint: Stable across ${benchmarkRuns} iterations`);
     });
   });
