@@ -115,26 +115,18 @@ export class AuditLogger {
     responseTime: number,
     error?: string
   ): void {
-    this.log(
-      success ? AuditEventType.COMMAND_EXECUTED : AuditEventType.COMMAND_FAILED,
-      context,
-      {
-        interaction,
-        success,
-        responseTime,
-        error: error || undefined,
-      }
-    );
+    this.log(success ? AuditEventType.COMMAND_EXECUTED : AuditEventType.COMMAND_FAILED, context, {
+      interaction,
+      success,
+      responseTime,
+      error: error || undefined,
+    });
   }
 
   /**
    * Log security violation
    */
-  logSecurityViolation(
-    context: SecurityContext,
-    violationType: string,
-    details: string
-  ): void {
+  logSecurityViolation(context: SecurityContext, violationType: string, details: string): void {
     this.log(AuditEventType.SECURITY_VIOLATION, context, {
       success: false,
       error: `${violationType}: ${details}`,
@@ -176,7 +168,7 @@ export class AuditLogger {
   private logToConsole(entry: AuditLogEntry): void {
     const logLevel = entry.success ? 'INFO' : 'WARN';
     const message = `[${logLevel}] ${entry.eventType} - ${entry.requestId}`;
-    
+
     if (entry.success) {
       console.log(message, entry);
     } else {
@@ -193,7 +185,7 @@ export class AuditLogger {
     // - External logging service (DataDog, LogRocket, etc.)
     // - Database for audit trail
     // - Security monitoring system
-    
+
     // For now, just console log in production
     console.log('[AUDIT]', JSON.stringify(entry));
   }

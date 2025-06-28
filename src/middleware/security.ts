@@ -30,9 +30,8 @@ export interface SecurityValidationResult {
  * Extract security context from request
  */
 export function extractSecurityContext(request: Request): SecurityContext {
-  const clientIP = request.headers.get('CF-Connecting-IP') || 
-                   request.headers.get('X-Forwarded-For') || 
-                   'unknown';
+  const clientIP =
+    request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
   const userAgent = request.headers.get('User-Agent') || 'unknown';
   const timestamp = Date.now();
   const requestId = crypto.randomUUID();
@@ -96,7 +95,8 @@ export function validateDiscordHeaders(request: Request): { isValid: boolean; er
   const now = Date.now() / 1000;
   const timeDiff = Math.abs(now - timestampNum);
 
-  if (timeDiff > 300) { // 5 minutes
+  if (timeDiff > 300) {
+    // 5 minutes
     return { isValid: false, error: 'Request timestamp too old or too far in future' };
   }
 
@@ -146,7 +146,7 @@ export async function verifyDiscordRequestSecure(
     }
 
     const isValidSignature = await verifyKey(body, signature, timestamp, publicKey);
-    
+
     if (!isValidSignature) {
       return {
         isValid: false,
@@ -209,12 +209,12 @@ export function cleanupRateLimits(): void {
  * Timeout wrapper for request processing
  */
 export function withTimeout<T>(
-  promise: Promise<T>, 
+  promise: Promise<T>,
   timeoutMs: number = REQUEST_TIMEOUT
 ): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<never>((_, reject) => 
+    new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
     ),
   ]);
