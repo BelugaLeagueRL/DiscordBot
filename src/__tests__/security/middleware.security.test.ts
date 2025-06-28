@@ -19,20 +19,17 @@ import {
   clearRateLimits,
   withTimeout,
 } from '../../middleware/security';
-import { SecurityContextFactory, EnvFactory } from '../helpers/test-factories';
+import { SecurityContextFactory } from '../helpers/test-factories';
 import { createMockRequest, createTestEnvironment, cleanupMocks } from '../helpers/mock-contexts';
 import {
   createMockDiscordRequest,
   createMaliciousRequest,
-  createTimeoutRequest,
 } from '../helpers/discord-helpers';
 import { mockInteractions } from '../mocks/interactions';
 
 describe('Security Middleware', () => {
-  let testEnv: ReturnType<typeof createTestEnvironment>;
-
   beforeEach(() => {
-    testEnv = createTestEnvironment();
+    createTestEnvironment();
     vi.clearAllMocks();
   });
 
