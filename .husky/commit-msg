@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check for Claude mentions in commit message
+if grep -iq "claude" "$1"; then
+  echo "❌ Error: Commit message contains 'Claude' references"
+  echo "Please remove any mentions of Claude from your commit message"
+  exit 1
+fi
+
+echo "✅ Commit message validation passed"

@@ -59,7 +59,21 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Complete Command Processing Workflows', () => {
     it('should process successful /register command with valid tracker URLs', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(2));
+      // Use deterministic known values for predictable testing
+      const knownSteamId = '76561198144145654';
+      const knownEpicUser = 'test-player';
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+        },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+        },
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -71,13 +85,25 @@ describe('Discord Command Workflows E2E', () => {
       const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
-      expect(responseData.data.content).toContain('STEAM: 76561198144145654');
-      expect(responseData.data.content).toContain('EPIC: test-player');
+      expect(responseData.data.content).toContain(`STEAM: ${knownSteamId}`);
+      expect(responseData.data.content).toContain(`EPIC: ${knownEpicUser}`);
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
     });
 
     it('should process /register command with invalid tracker URLs', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(2, 0)); // 2 total, 0 valid
+      // Use deterministic invalid URLs for predictable testing
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+        },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: 'https://rocketleague.tracker.network/wrong/path/format',
+        },
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -94,7 +120,26 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should process /register command with mixed valid/invalid URLs', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(3, 2)); // 3 total, 2 valid
+      // Use deterministic known values for predictable testing
+      const knownPsnUser = 'validuser123';
+      const knownXblUser = 'ValidGamer';
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+        },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+        },
+        {
+          name: 'tracker3',
+          type: 3,
+          value: 'https://invalid-domain.com/profile/steam/testuser/overview', // Invalid URL
+        },
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       expect(response.status).toBe(200);
@@ -106,8 +151,8 @@ describe('Discord Command Workflows E2E', () => {
       const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
-      expect(responseData.data.content).toContain('PSN: validuser123');
-      expect(responseData.data.content).toContain('XBL: ValidGamer');
+      expect(responseData.data.content).toContain(`PSN: ${knownPsnUser}`);
+      expect(responseData.data.content).toContain(`XBL: ${knownXblUser}`);
       expect(responseData.data.content).toContain('Some URLs were invalid:');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
     });
@@ -129,7 +174,15 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle missing user information gracefully', async () => {
-      const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', createTrackerOptions(1));
+      // Use deterministic known tracker URL for predictable testing
+      const knownSteamId = '76561198999999999';
+      const { member: _member, ...interactionWithoutMember } = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+        },
+      ]);
       const interaction = interactionWithoutMember as DiscordInteraction;
 
       const response = handleRegisterCommand(interaction, mockEnv);
@@ -148,11 +201,13 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('URL Validation Workflow Integration', () => {
     it('should validate Steam platform URLs correctly', async () => {
+      // Use deterministic known Steam ID for predictable testing
+      const knownSteamId = '76561198144145654';
       const interaction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: createValidTrackerUrl('steam'),
+          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
         },
       ]);
 
@@ -163,15 +218,17 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain('STEAM: 76561198144145654');
+      expect(responseData.data.content).toContain(`STEAM: ${knownSteamId}`);
     });
 
     it('should validate Epic platform URLs correctly', async () => {
+      // Use deterministic known Epic user for predictable testing
+      const knownEpicUser = 'test-epic-user';
       const interaction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: createValidTrackerUrl('epic'),
+          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
         },
       ]);
 
@@ -182,15 +239,17 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain('EPIC: test-epic-user');
+      expect(responseData.data.content).toContain(`EPIC: ${knownEpicUser}`);
     });
 
     it('should validate PSN platform URLs correctly', async () => {
+      // Use deterministic known PSN user for predictable testing
+      const knownPsnUser = 'testpsnuser';
       const interaction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: createValidTrackerUrl('psn'),
+          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
         },
       ]);
 
@@ -201,15 +260,17 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain('PSN: testpsnuser');
+      expect(responseData.data.content).toContain(`PSN: ${knownPsnUser}`);
     });
 
     it('should validate Xbox platform URLs correctly', async () => {
+      // Use deterministic known Xbox user for predictable testing
+      const knownXblUser = 'TestGamer';
       const interaction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: createValidTrackerUrl('xbl'),
+          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
         },
       ]);
 
@@ -220,15 +281,17 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain('XBL: TestGamer');
+      expect(responseData.data.content).toContain(`XBL: ${knownXblUser}`);
     });
 
     it('should validate Switch platform URLs correctly', async () => {
+      // Use deterministic known Switch user for predictable testing
+      const knownSwitchUser = 'test-switch-user';
       const interaction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: createValidTrackerUrl('switch'),
+          value: `https://rocketleague.tracker.network/rocket-league/profile/switch/${knownSwitchUser}/overview`,
         },
       ]);
 
@@ -239,7 +302,7 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain('SWITCH: test-switch-user');
+      expect(responseData.data.content).toContain(`SWITCH: ${knownSwitchUser}`);
     });
   });
 
@@ -267,7 +330,19 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle all invalid URLs scenario', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(2, 0));
+      // Use deterministic invalid URLs for predictable testing
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+        },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: 'https://another-invalid.com/profile/epic/testuser/overview',
+        },
+      ]);
 
       const response = handleRegisterCommand(interaction, mockEnv);
       const rawResponseData = await response.json();
@@ -283,7 +358,15 @@ describe('Discord Command Workflows E2E', () => {
 
   describe('Performance Validation in E2E Context', () => {
     it('should process commands efficiently', () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(1));
+      // Use deterministic known tracker URL for predictable testing
+      const knownSteamId = '76561198123456789';
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+        },
+      ]);
 
       const startTime = performance.now();
       const response = handleRegisterCommand(interaction, mockEnv);
@@ -296,7 +379,33 @@ describe('Discord Command Workflows E2E', () => {
     });
 
     it('should handle multiple tracker URLs efficiently', async () => {
-      const interaction = createMockCommandInteraction('register', createTrackerOptions(4));
+      // Use deterministic known tracker URLs for predictable testing
+      const knownSteamId = '76561198123456789';
+      const knownEpicUser = 'test-epic-user';
+      const knownPsnUser = 'test-psn-user';
+      const knownXblUser = 'TestXblUser';
+      const interaction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+        },
+        {
+          name: 'tracker2',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+        },
+        {
+          name: 'tracker3',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+        },
+        {
+          name: 'tracker4',
+          type: 3,
+          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+        },
+      ]);
 
       const startTime = performance.now();
       const response = handleRegisterCommand(interaction, mockEnv);
