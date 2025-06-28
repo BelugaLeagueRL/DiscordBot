@@ -5,10 +5,32 @@
 
 import { commands } from './commands';
 
+// Branded types for better type safety (Effective TypeScript Item 37)
+type DiscordToken = string & { readonly __brand: 'DiscordToken' };
+type ApplicationId = string & { readonly __brand: 'ApplicationId' };
+type Environment = 'development' | 'production';
+
+/**
+ * Validated environment configuration
+ */
+interface EnvironmentConfig {
+  readonly token: DiscordToken;
+  readonly applicationId: ApplicationId;
+}
+
+/**
+ * Registration environment details
+ */
+interface RegistrationEnvironment {
+  readonly environment: Environment;
+  readonly applicationId: ApplicationId;
+  readonly endpoint: string;
+}
+
 /**
  * Validate required environment variables
  */
-export function validateEnvironmentVariables(): { token: string; applicationId: string } {
+export function validateEnvironmentVariables(): EnvironmentConfig {
   const DISCORD_TOKEN = process.env['DISCORD_TOKEN'];
   const DISCORD_APPLICATION_ID = process.env['DISCORD_APPLICATION_ID'];
 
@@ -19,21 +41,18 @@ export function validateEnvironmentVariables(): { token: string; applicationId: 
   }
 
   return {
-    token: DISCORD_TOKEN,
-    applicationId: DISCORD_APPLICATION_ID,
+    token: DISCORD_TOKEN as DiscordToken,
+    applicationId: DISCORD_APPLICATION_ID as ApplicationId,
   };
 }
 
 /**
  * Determine registration environment and configuration
  */
-export function determineRegistrationEnvironment(): {
-  readonly environment: 'development' | 'production';
-  readonly applicationId: string;
-  readonly endpoint: string;
-} {
+export function determineRegistrationEnvironment(): RegistrationEnvironment {
   const { applicationId } = validateEnvironmentVariables();
-  const environment = (process.env['DISCORD_ENV'] as 'development' | 'production') ?? 'development';
+  const envValue = process.env['DISCORD_ENV'];
+  const environment: Environment = envValue === 'production' ? 'production' : 'development';
   const endpoint = `https://discord.com/api/v10/applications/${applicationId}/commands`;
 
   return {
@@ -47,13 +66,13 @@ export function determineRegistrationEnvironment(): {
  * Register all commands with Discord
  */
 export async function registerCommands(): Promise<void> {
-  const { token, applicationId } = validateEnvironmentVariables();
-  const url = `https://discord.com/api/v10/applications/${applicationId}/commands`;
+  const { token } = validateEnvironmentVariables();
+  const { environment, endpoint } = determineRegistrationEnvironment();
 
   try {
-    console.log('Registering commands...');
+    console.log(`Registering commands for ${environment} environment...`);
 
-    const response = await fetch(url, {
+    const response = await fetch(endpoint, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +90,9 @@ export async function registerCommands(): Promise<void> {
 
     const responseData = await response.json();
     const data = responseData as unknown[];
-    console.log('Successfully registered', data.length, 'commands');
+    console.log(
+      `Successfully registered ${String(data.length)} commands for ${environment} environment`
+    );
 
     // Log registered commands
     for (const command of data) {
