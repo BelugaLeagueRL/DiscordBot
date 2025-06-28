@@ -30,11 +30,15 @@ const mockEnv: Env = EnvFactory.create();
 
 describe('Register command handler', () => {
   it('should validate tracker URLs correctly', async () => {
+    // Use a specific known Steam ID for deterministic testing
+    const knownSteamId = '76561198144145654';
+    const knownTrackerUrl = `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`;
+    
     const validInteraction = createMockCommandInteraction('register', [
       {
         name: 'tracker1',
         type: 3,
-        value: createValidTrackerUrl('steam'),
+        value: knownTrackerUrl,
       },
     ]);
 
@@ -49,7 +53,7 @@ describe('Register command handler', () => {
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
     expect(data.data.content).toContain('✅ Successfully registered');
-    expect(data.data.content).toContain('STEAM: 76561198144145654');
+    expect(data.data.content).toContain(`STEAM: ${knownSteamId}`);
   });
 
   it('should reject invalid tracker URLs', async () => {

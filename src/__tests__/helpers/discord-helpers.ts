@@ -14,7 +14,8 @@ export function createValidTrackerUrl(platform: 'steam' | 'epic' | 'psn' | 'xbl'
   
   switch (platform) {
     case 'steam':
-      return `${baseUrl}/steam/${faker.string.numeric(17)}/overview`;
+      // Steam ID64 format: must start with 7656119 followed by 10 digits
+      return `${baseUrl}/steam/7656119${faker.string.numeric(10)}/overview`;
     case 'epic':
       return `${baseUrl}/epic/${faker.internet.username()}/overview`;
     case 'psn':
