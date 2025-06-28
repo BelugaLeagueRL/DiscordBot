@@ -5,9 +5,7 @@
  * ESLint rules are relaxed for necessary global mocking
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+// Mock context helpers - using any types for test infrastructure global mocking
 
 import { vi } from 'vitest';
 import type { SecurityContext } from '../../middleware/security';
