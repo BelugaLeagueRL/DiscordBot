@@ -3,8 +3,19 @@ main = "src/index.ts"
 compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
 
+# Default configuration (development)
 [vars]
 ENVIRONMENT = "development"
+
+# Development environment
+[env.development]
+name = "beluga-discord-bot-dev"
+vars = { ENVIRONMENT = "development" }
+
+# Production environment  
+[env.production]
+name = "beluga-discord-bot"
+vars = { ENVIRONMENT = "production" }
 
 # Production secrets (set via wrangler secret put)
 # DISCORD_TOKEN = "..."

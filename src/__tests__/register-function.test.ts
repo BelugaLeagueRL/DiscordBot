@@ -173,8 +173,12 @@ describe('registerCommands function with valid environment', () => {
     await registerCommands();
 
     // Verify logging messages
-    expect(mockConsoleLog).toHaveBeenCalledWith('Registering commands for development environment...');
-    expect(mockConsoleLog).toHaveBeenCalledWith('Successfully registered 1 commands for development environment');
+    expect(mockConsoleLog).toHaveBeenCalledWith(
+      'Registering commands for development environment...'
+    );
+    expect(mockConsoleLog).toHaveBeenCalledWith(
+      'Successfully registered 1 commands for development environment'
+    );
     expect(mockConsoleLog).toHaveBeenCalledWith(
       '  - register: Register your Rocket League tracker URLs'
     );
