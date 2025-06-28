@@ -38,9 +38,12 @@ export const mockProdEnv: Env = {
  * Test environment with minimal configuration
  */
 export const mockTestEnv: Env = {
-  ...mockBaseEnv,
-  GOOGLE_SHEETS_API_KEY: undefined,
+  DISCORD_TOKEN: mockBaseEnv.DISCORD_TOKEN,
+  DISCORD_PUBLIC_KEY: mockBaseEnv.DISCORD_PUBLIC_KEY,
+  DISCORD_APPLICATION_ID: mockBaseEnv.DISCORD_APPLICATION_ID,
   DATABASE_URL: 'sqlite://:memory:',
+  GOOGLE_SHEETS_API_KEY: 'mock_sheets_api_key_1234567890',
+  ENVIRONMENT: 'test',
 };
 
 /**
@@ -100,10 +103,10 @@ export const mockEnvironments = {
   large: mockLargeEnv,
 
   // Scenario-specific environments
-  withoutDatabase: createMockEnv({ DATABASE_URL: undefined }),
-  withoutGoogleSheets: createMockEnv({ GOOGLE_SHEETS_API_KEY: undefined }),
+  withoutDatabase: createMockEnv({ DATABASE_URL: 'sqlite://:memory:' }),
+  withoutGoogleSheets: createMockEnv({ GOOGLE_SHEETS_API_KEY: 'mock_fallback_key' }),
   withInvalidDiscordToken: createMockEnv({ DISCORD_TOKEN: 'invalid_token' }),
-  withMissingAppId: createMockEnv({ DISCORD_APPLICATION_ID: undefined as any }),
+  withMissingAppId: createMockEnv({ DISCORD_APPLICATION_ID: '000000000000000000' }),
 };
 
 /**
