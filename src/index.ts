@@ -5,7 +5,7 @@
  */
 
 import { InteractionType, InteractionResponseType, createErrorResponse } from './utils/discord';
-import { handleRegisterCommand } from './handlers/register';
+import { handleRegisterCommand } from './application_commands/register';
 import {
   extractSecurityContext,
   verifyDiscordRequestSecure,
@@ -25,6 +25,8 @@ export interface Env {
   readonly DATABASE_URL?: string;
   readonly GOOGLE_SHEETS_API_KEY?: string;
   readonly ENVIRONMENT: string;
+  readonly REGISTER_COMMAND_REQUEST_CHANNEL_ID?: string;
+  readonly REGISTER_COMMAND_RESPONSE_CHANNEL_ID?: string;
 }
 
 /**
@@ -150,11 +152,15 @@ function handlePingInteraction(
  * Handle application command
  */
 async function handleApplicationCommand(
-  interaction: Readonly<DiscordInteraction>,
-  env: Readonly<Env>,
-  audit: Readonly<AuditLogger>,
-  context: Readonly<SecurityContext>
+  params: Readonly<{
+    readonly interaction: DiscordInteraction;
+    readonly env: Env;
+    readonly audit: AuditLogger;
+    readonly context: SecurityContext;
+    readonly ctx: ExecutionContext;
+  }>
 ): Promise<Response> {
+  const { interaction, env, audit, context, ctx } = params;
   const { name } = interaction.data ?? { name: '' };
   const commandStartTime = Date.now();
 
@@ -163,7 +169,7 @@ async function handleApplicationCommand(
 
     switch (name) {
       case 'register':
-        response = await withTimeout(Promise.resolve(handleRegisterCommand(interaction, env)));
+        response = await withTimeout(Promise.resolve(handleRegisterCommand(interaction, env, ctx)));
         break;
 
       default:
@@ -292,9 +298,10 @@ async function processDiscordInteraction(
     readonly audit: AuditLogger;
     readonly context: SecurityContext;
     readonly startTime: number;
+    readonly ctx: ExecutionContext;
   }>
 ): Promise<Response> {
-  const { request, env, audit, context, startTime } = requestData;
+  const { request, env, audit, context, startTime, ctx } = requestData;
   // Enhanced Discord request verification with security checks
   const validationResult = await withTimeout(
     verifyDiscordRequestSecure(request, env.DISCORD_PUBLIC_KEY, context)
@@ -329,7 +336,7 @@ async function processDiscordInteraction(
 
   // Handle application commands
   if (interaction.type === (InteractionType.ApplicationCommand as number)) {
-    return await handleApplicationCommand(interaction, env, audit, context);
+    return await handleApplicationCommand({ interaction, env, audit, context, ctx });
   }
 
   // Handle unknown interaction types
@@ -337,7 +344,11 @@ async function processDiscordInteraction(
 }
 
 export default {
-  async fetch(request: Readonly<Request>, env: Readonly<Env>): Promise<Response> {
+  async fetch(
+    request: Readonly<Request>,
+    env: Readonly<Env>,
+    ctx: ExecutionContext
+  ): Promise<Response> {
     const startTime = Date.now();
     let context: SecurityContext | undefined;
     let audit: AuditLogger | undefined;
@@ -355,7 +366,7 @@ export default {
       }
 
       // Process Discord interaction
-      return await processDiscordInteraction({ request, env, audit, context, startTime });
+      return await processDiscordInteraction({ request, env, audit, context, startTime, ctx });
     } catch (error: unknown) {
       // Global error handler
       const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';

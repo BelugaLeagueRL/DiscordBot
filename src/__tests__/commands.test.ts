@@ -9,7 +9,7 @@ describe('Command Definitions', () => {
   describe('REGISTER_COMMAND', () => {
     it('should have correct basic properties', () => {
       expect(REGISTER_COMMAND.name).toBe('register');
-      expect(REGISTER_COMMAND.description).toBe('Register your Rocket League tracker URLs');
+      expect(REGISTER_COMMAND.description).toBe('Register with the league');
       expect(REGISTER_COMMAND.options).toBeInstanceOf(Array);
       expect(REGISTER_COMMAND.options).toHaveLength(4);
     });
@@ -209,9 +209,8 @@ describe('Command Definitions', () => {
     });
 
     it('should have helpful command description', () => {
-      expect(REGISTER_COMMAND.description).toContain('Rocket League');
-      expect(REGISTER_COMMAND.description).toContain('tracker');
-      expect(REGISTER_COMMAND.description).toContain('URL');
+      expect(REGISTER_COMMAND.description).toContain('Register');
+      expect(REGISTER_COMMAND.description).toContain('league');
     });
 
     it('should have clear option descriptions', () => {

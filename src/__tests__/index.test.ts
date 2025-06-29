@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMockDiscordRequest } from './helpers/discord-helpers';
 import { mockInteractions } from './mocks/interactions';
-import { EnvFactory } from './helpers/test-factories';
+import { EnvFactory, ExecutionContextFactory } from './helpers/test-factories';
 import workerModule from '../index';
 import type { Env } from '../index';
 
@@ -49,7 +49,7 @@ vi.mock('../middleware/security', async () => {
 });
 
 // Mock the register handler
-vi.mock('../handlers/register', () => ({
+vi.mock('../application_commands/register/handler', () => ({
   handleRegisterCommand: vi.fn().mockResolvedValue(
     new Response(JSON.stringify({ type: 4, data: { content: 'Success!' } }), {
       status: 200,
@@ -76,7 +76,8 @@ describe('Main Index Handler', () => {
     it('should handle OPTIONS request with CORS headers', async () => {
       const request = new Request('https://example.com/', { method: 'OPTIONS' });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
@@ -89,7 +90,8 @@ describe('Main Index Handler', () => {
     it('should handle GET request with enhanced health check response', async () => {
       const request = new Request('https://example.com/', { method: 'GET' });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/json');
@@ -112,7 +114,8 @@ describe('Main Index Handler', () => {
     it('should reject non-POST/GET/OPTIONS methods', async () => {
       const request = new Request('https://example.com/', { method: 'PUT' });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(405);
       expect(await response.text()).toBe('Method not allowed');
@@ -122,7 +125,8 @@ describe('Main Index Handler', () => {
     it('should reject DELETE method', async () => {
       const request = new Request('https://example.com/', { method: 'DELETE' });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(405);
     });
@@ -133,7 +137,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -154,7 +159,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(401);
       expect(await response.text()).toBe('Unauthorized');
@@ -170,7 +176,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(401);
     });
@@ -185,7 +192,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(401);
     });
@@ -203,7 +211,8 @@ describe('Main Index Handler', () => {
         body: 'invalid json {',
       });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -226,7 +235,8 @@ describe('Main Index Handler', () => {
         body: '',
       });
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -243,7 +253,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -259,7 +270,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.registerValid();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -275,7 +287,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.unknownCommand();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -288,13 +301,14 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle command execution error', async () => {
-      const { handleRegisterCommand } = await import('../handlers/register');
+      const { handleRegisterCommand } = await import('../application_commands/register/handler');
       vi.mocked(handleRegisterCommand).mockRejectedValueOnce(new Error('Database error'));
 
       const interaction = mockInteractions.registerValid();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
       const rawResponseData = await response.json();
@@ -313,7 +327,8 @@ describe('Main Index Handler', () => {
       };
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(400);
       expect(await response.text()).toBe('Bad request');
@@ -325,7 +340,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
@@ -339,7 +355,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       // Check that security headers are added
       expect(response.status).toBe(200);
@@ -359,7 +376,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      await workerModule.fetch(request, env, mockCtx);
 
       expect(cleanupRateLimits).toHaveBeenCalled();
 
@@ -375,7 +393,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      await workerModule.fetch(request, env, mockCtx);
 
       expect(cleanupRateLimits).not.toHaveBeenCalled();
 
@@ -391,7 +410,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(500);
       expect(await response.text()).toBe('Internal server error');
@@ -411,7 +431,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, badEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, badEnv, mockCtx);
 
       expect(response.status).toBe(500);
       expect(await response.text()).toBe('Internal server error');
@@ -425,7 +446,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, env);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(500);
     });
@@ -438,7 +460,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, testEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, testEnv, mockCtx);
 
       expect(response.status).toBe(200);
     });
@@ -449,7 +472,8 @@ describe('Main Index Handler', () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
-      const response = await workerModule.fetch(request, testEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, testEnv, mockCtx);
 
       // Should still process but verification might fail
       expect(response.status).toBeGreaterThanOrEqual(200);

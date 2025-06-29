@@ -6,7 +6,7 @@
 // Define the /register command
 export const REGISTER_COMMAND = {
   name: 'register',
-  description: 'Register your Rocket League tracker URLs',
+  description: 'Register with the league',
   options: [
     {
       name: 'tracker1',

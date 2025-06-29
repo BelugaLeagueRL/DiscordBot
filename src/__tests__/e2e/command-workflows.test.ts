@@ -6,8 +6,14 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionResponseType } from '../../utils/discord';
-import { handleRegisterCommand } from '../../handlers/register';
-import { createMockCommandInteraction } from '../helpers/discord-helpers';
+import { createMockDiscordRequest, createMockCommandInteraction } from '../helpers/discord-helpers';
+import {
+  EnvFactory,
+  ExecutionContextFactory,
+  getRequestChannelId,
+} from '../helpers/test-factories';
+import { handleRegisterCommand } from '../../application_commands/register';
+import workerModule from '../../index';
 import type { Env } from '../../index';
 import type { DiscordInteraction } from '../../types/discord';
 
@@ -34,10 +40,15 @@ function isDiscordResponse(
   return typeof dataObj['content'] === 'string' && typeof dataObj['flags'] === 'number';
 }
 
-// Mock discord-interactions for E2E tests
-vi.mock('discord-interactions', () => ({
-  verifyKey: vi.fn(() => true), // Always pass verification for E2E tests
-}));
+// Mock the security middleware to control validation results
+vi.mock('../../middleware/security', async () => {
+  const actual = await vi.importActual('../../middleware/security');
+  return {
+    ...actual,
+    verifyDiscordRequestSecure: vi.fn().mockResolvedValue({ isValid: true }),
+    cleanupRateLimits: vi.fn(),
+  };
+});
 
 describe('Discord Command Workflows E2E', () => {
   let mockEnv: Env;
@@ -45,15 +56,8 @@ describe('Discord Command Workflows E2E', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock environment for testing
-    mockEnv = {
-      DISCORD_PUBLIC_KEY: 'test_public_key',
-      DISCORD_TOKEN: 'test_token',
-      DISCORD_APPLICATION_ID: 'test_app_id',
-      DATABASE_URL: 'test_db_url',
-      GOOGLE_SHEETS_API_KEY: 'test_sheets_key',
-      ENVIRONMENT: 'test',
-    } as Env;
+    // Mock environment for testing with channel restrictions
+    mockEnv = EnvFactory.create();
   });
 
   describe('Complete Command Processing Workflows', () => {
@@ -61,20 +65,29 @@ describe('Discord Command Workflows E2E', () => {
       // Use deterministic known values for predictable testing
       const knownSteamId = '76561198144145654';
       const knownEpicUser = 'test-player';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv), // Correct channel for testing
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -83,28 +96,33 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-      expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
-      expect(responseData.data.content).toContain(`STEAM: ${knownSteamId}`);
-      expect(responseData.data.content).toContain(`EPIC: ${knownEpicUser}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
     });
 
     it('should process /register command with invalid tracker URLs', async () => {
       // Use deterministic invalid URLs for predictable testing
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: 'https://rocketleague.tracker.network/wrong/path/format',
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: 'https://rocketleague.tracker.network/wrong/path/format',
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -122,25 +140,32 @@ describe('Discord Command Workflows E2E', () => {
       // Use deterministic known values for predictable testing
       const knownPsnUser = 'validuser123';
       const knownXblUser = 'ValidGamer';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: 'https://invalid-domain.com/profile/steam/testuser/overview', // Invalid URL
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
-        },
-        {
-          name: 'tracker3',
-          type: 3,
-          value: 'https://invalid-domain.com/profile/steam/testuser/overview', // Invalid URL
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -149,17 +174,17 @@ describe('Discord Command Workflows E2E', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-      expect(responseData.data.content).toContain('Successfully registered 2 tracker URL(s)');
-      expect(responseData.data.content).toContain(`PSN: ${knownPsnUser}`);
-      expect(responseData.data.content).toContain(`XBL: ${knownXblUser}`);
-      expect(responseData.data.content).toContain('Some URLs were invalid:');
+      expect(responseData.data.content).toContain('✅ Registration received!');
       expect(responseData.data.flags).toBe(64); // Ephemeral flag
     });
 
     it('should handle /register command with no tracker URLs provided', async () => {
-      const interaction = createMockCommandInteraction('register', []);
+      const interaction = createMockCommandInteraction('register', [], {
+        channel_id: getRequestChannelId(mockEnv),
+      });
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -183,11 +208,15 @@ describe('Discord Command Workflows E2E', () => {
             type: 3,
             value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
           },
-        ]
+        ],
+        {
+          channel_id: getRequestChannelId(mockEnv),
+        }
       );
       const interaction = interactionWithoutMember as DiscordInteraction;
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -205,106 +234,141 @@ describe('Discord Command Workflows E2E', () => {
     it('should validate Steam platform URLs correctly', async () => {
       // Use deterministic known Steam ID for predictable testing
       const knownSteamId = '76561198144145654';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain(`STEAM: ${knownSteamId}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
     it('should validate Epic platform URLs correctly', async () => {
       // Use deterministic known Epic user for predictable testing
       const knownEpicUser = 'test-epic-user';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain(`EPIC: ${knownEpicUser}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
     it('should validate PSN platform URLs correctly', async () => {
       // Use deterministic known PSN user for predictable testing
       const knownPsnUser = 'testpsnuser';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain(`PSN: ${knownPsnUser}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
     it('should validate Xbox platform URLs correctly', async () => {
       // Use deterministic known Xbox user for predictable testing
       const knownXblUser = 'TestGamer';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain(`XBL: ${knownXblUser}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
     it('should validate Switch platform URLs correctly', async () => {
       // Use deterministic known Switch user for predictable testing
       const knownSwitchUser = 'test-switch-user';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/switch/${knownSwitchUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/switch/${knownSwitchUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
 
-      expect(responseData.data.content).toContain(`SWITCH: ${knownSwitchUser}`);
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
   });
 
@@ -316,9 +380,11 @@ describe('Discord Command Workflows E2E', () => {
           name: 'register',
           type: 1,
         },
+        channel_id: getRequestChannelId(mockEnv),
       });
 
-      const response = handleRegisterCommand(invalidInteraction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(invalidInteraction, mockEnv, mockCtx);
       expect(response.status).toBe(200);
 
       const rawResponseData = await response.json();
@@ -333,20 +399,27 @@ describe('Discord Command Workflows E2E', () => {
 
     it('should handle all invalid URLs scenario', async () => {
       // Use deterministic invalid URLs for predictable testing
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: 'https://another-invalid.com/profile/epic/testuser/overview',
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: 'https://invalid-domain.com/profile/steam/testuser/overview',
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: 'https://another-invalid.com/profile/epic/testuser/overview',
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
@@ -359,19 +432,26 @@ describe('Discord Command Workflows E2E', () => {
   });
 
   describe('Performance Validation in E2E Context', () => {
-    it('should process commands efficiently', () => {
+    it('should process commands efficiently', async () => {
       // Use deterministic known tracker URL for predictable testing
       const knownSteamId = '76561198123456789';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
       const startTime = performance.now();
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const endTime = performance.now();
 
       const processingTime = endTime - startTime;
@@ -386,31 +466,38 @@ describe('Discord Command Workflows E2E', () => {
       const knownEpicUser = 'test-epic-user';
       const knownPsnUser = 'test-psn-user';
       const knownXblUser = 'TestXblUser';
-      const interaction = createMockCommandInteraction('register', [
+      const interaction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
-        },
-        {
-          name: 'tracker3',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
-        },
-        {
-          name: 'tracker4',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
       const startTime = performance.now();
-      const response = handleRegisterCommand(interaction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
       const endTime = performance.now();
 
       const processingTime = endTime - startTime;
@@ -423,7 +510,7 @@ describe('Discord Command Workflows E2E', () => {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
-      expect(responseData.data.content).toContain('Successfully registered 4 tracker URL(s)');
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
   });
 });

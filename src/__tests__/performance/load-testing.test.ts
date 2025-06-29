@@ -5,9 +5,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { handleRegisterCommand } from '../../handlers/register';
+import { handleRegisterCommand } from '../../application_commands/register/handler';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
-import { EnvFactory } from '../helpers/test-factories';
+import {
+  EnvFactory,
+  ExecutionContextFactory,
+  getRequestChannelId,
+} from '../helpers/test-factories';
 import type { Env } from '../../index';
 
 // Type guard for Discord response data
@@ -47,7 +51,7 @@ describe('Performance and Load Testing', () => {
   });
 
   describe('Response Time Performance', () => {
-    it('should handle register command within 100ms', () => {
+    it('should handle register command within 100ms', async () => {
       // Use deterministic known Steam ID for predictable testing
       const knownSteamId = '76561198123456789';
       const registerInteraction = createMockCommandInteraction('register', [
@@ -60,7 +64,8 @@ describe('Performance and Load Testing', () => {
 
       const startTime = performance.now();
 
-      const response = handleRegisterCommand(registerInteraction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
 
       const endTime = performance.now();
       const responseTime = endTime - startTime;
@@ -75,32 +80,39 @@ describe('Performance and Load Testing', () => {
       const knownEpicUser = 'TestEpicUser';
       const knownPsnUser = 'TestPsnUser';
       const knownXblUser = 'TestXblUser';
-      const registerInteraction = createMockCommandInteraction('register', [
+      const registerInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+          },
+        ],
         {
-          name: 'tracker1',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
-        },
-        {
-          name: 'tracker2',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
-        },
-        {
-          name: 'tracker3',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
-        },
-        {
-          name: 'tracker4',
-          type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
-        },
-      ]);
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
 
       const startTime = performance.now();
 
-      const response = handleRegisterCommand(registerInteraction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
 
       const endTime = performance.now();
       const responseTime = endTime - startTime;
@@ -112,7 +124,7 @@ describe('Performance and Load Testing', () => {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
-      expect(responseData.data.content).toContain('Successfully registered 4 tracker URL(s)');
+      expect(responseData.data.content).toContain('✅ Registration received!');
       expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
     });
   });
@@ -138,7 +150,8 @@ describe('Performance and Load Testing', () => {
             id: `concurrent_${String(i)}`,
           }
         );
-        return handleRegisterCommand(interaction, mockEnv);
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
       });
 
       const responses = await Promise.all(requests);
@@ -191,7 +204,8 @@ describe('Performance and Load Testing', () => {
                 ],
                 { id: `invalid_${String(i)}` }
               );
-        return handleRegisterCommand(interaction, mockEnv);
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
       });
 
       const responses = await Promise.all(requests);
@@ -245,12 +259,14 @@ describe('Performance and Load Testing', () => {
         ],
         {
           token: 'very_long_interaction_token_string_'.repeat(10),
+          channel_id: getRequestChannelId(mockEnv),
         }
       );
 
       const startTime = performance.now();
 
-      const response = handleRegisterCommand(largeInteraction, mockEnv);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(largeInteraction, mockEnv, mockCtx);
 
       const endTime = performance.now();
       const responseTime = endTime - startTime;
@@ -263,10 +279,10 @@ describe('Performance and Load Testing', () => {
         throw new Error('Invalid response format');
       }
       const responseData = rawResponseData;
-      expect(responseData.data.content).toContain('Successfully registered');
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
-    it('should handle rapid sequential requests without degradation', () => {
+    it('should handle rapid sequential requests without degradation', async () => {
       const sequentialRequests = 50;
       const responses: Response[] = [];
       const responseTimes: number[] = [];
@@ -289,7 +305,8 @@ describe('Performance and Load Testing', () => {
             id: `sequential_${String(i)}`,
           }
         );
-        const response = handleRegisterCommand(interaction, mockEnv);
+        const mockCtx = ExecutionContextFactory.create();
+        const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
 
         const endTime = performance.now();
         responseTimes.push(endTime - startTime);
@@ -363,7 +380,8 @@ describe('Performance and Load Testing', () => {
       const responses = await Promise.all(
         invalidInteractions.map((interaction, i) => {
           const modifiedInteraction = { ...interaction, id: `invalid_${String(i)}` };
-          return handleRegisterCommand(modifiedInteraction, mockEnv);
+          const mockCtx = ExecutionContextFactory.create();
+          return handleRegisterCommand(modifiedInteraction, mockEnv, mockCtx);
         })
       );
 
@@ -384,7 +402,7 @@ describe('Performance and Load Testing', () => {
   });
 
   describe('Performance Benchmarking', () => {
-    it('should establish performance baselines', () => {
+    it('should establish performance baselines', async () => {
       const benchmarkRuns = 10;
       const responseTimes: number[] = [];
 
@@ -406,7 +424,8 @@ describe('Performance and Load Testing', () => {
             id: `benchmark_${String(i)}`,
           }
         );
-        const response = handleRegisterCommand(interaction, mockEnv);
+        const mockCtx = ExecutionContextFactory.create();
+        const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
 
         const endTime = performance.now();
         responseTimes.push(endTime - startTime);

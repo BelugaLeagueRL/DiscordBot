@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { handleRegisterCommand } from '../handlers/register';
+import { handleRegisterCommand } from '../application_commands/register/handler';
 import {
   createMockCommandInteraction,
   createValidTrackerUrl,
   createInvalidTrackerUrl,
 } from './helpers/discord-helpers';
-import { EnvFactory } from './helpers/test-factories';
+import { EnvFactory, ExecutionContextFactory, getRequestChannelId } from './helpers/test-factories';
 import type { Env } from '../index';
 
 // Type guard for Discord response data
@@ -40,15 +40,22 @@ describe('Register command handler', () => {
     const knownSteamId = '76561198144145654';
     const knownTrackerUrl = `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`;
 
-    const validInteraction = createMockCommandInteraction('register', [
+    const validInteraction = createMockCommandInteraction(
+      'register',
+      [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: knownTrackerUrl,
+        },
+      ],
       {
-        name: 'tracker1',
-        type: 3,
-        value: knownTrackerUrl,
-      },
-    ]);
+        channel_id: getRequestChannelId(mockEnv),
+      }
+    );
 
-    const response = handleRegisterCommand(validInteraction, mockEnv);
+    const mockCtx = ExecutionContextFactory.create();
+    const response = await handleRegisterCommand(validInteraction, mockEnv, mockCtx);
     const rawData = await response.json();
 
     if (!isDiscordResponse(rawData)) {
@@ -58,20 +65,26 @@ describe('Register command handler', () => {
 
     expect(response.status).toBe(200);
     expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
-    expect(data.data.content).toContain('✅ Successfully registered');
-    expect(data.data.content).toContain(`STEAM: ${knownSteamId}`);
+    expect(data.data.content).toContain('✅ Registration received!');
   });
 
   it('should reject invalid tracker URLs', async () => {
-    const invalidInteraction = createMockCommandInteraction('register', [
+    const invalidInteraction = createMockCommandInteraction(
+      'register',
+      [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createInvalidTrackerUrl(),
+        },
+      ],
       {
-        name: 'tracker1',
-        type: 3,
-        value: createInvalidTrackerUrl(),
-      },
-    ]);
+        channel_id: getRequestChannelId(mockEnv),
+      }
+    );
 
-    const response = handleRegisterCommand(invalidInteraction, mockEnv);
+    const mockCtx = ExecutionContextFactory.create();
+    const response = await handleRegisterCommand(invalidInteraction, mockEnv, mockCtx);
     const rawData = await response.json();
 
     if (!isDiscordResponse(rawData)) {
@@ -87,15 +100,22 @@ describe('Register command handler', () => {
 
   it('should handle missing user ID', async () => {
     // Create interaction without member info
-    const { member: _member, ...noUserInteraction } = createMockCommandInteraction('register', [
+    const { member: _member, ...noUserInteraction } = createMockCommandInteraction(
+      'register',
+      [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: createValidTrackerUrl('steam'),
+        },
+      ],
       {
-        name: 'tracker1',
-        type: 3,
-        value: createValidTrackerUrl('steam'),
-      },
-    ]);
+        channel_id: getRequestChannelId(mockEnv),
+      }
+    );
 
-    const response = handleRegisterCommand(noUserInteraction, mockEnv);
+    const mockCtx = ExecutionContextFactory.create();
+    const response = await handleRegisterCommand(noUserInteraction, mockEnv, mockCtx);
     const rawData = await response.json();
 
     if (!isDiscordResponse(rawData)) {
@@ -108,9 +128,12 @@ describe('Register command handler', () => {
   });
 
   it('should handle missing tracker URLs', async () => {
-    const noOptionsInteraction = createMockCommandInteraction('register', []);
+    const noOptionsInteraction = createMockCommandInteraction('register', [], {
+      channel_id: getRequestChannelId(mockEnv),
+    });
 
-    const response = handleRegisterCommand(noOptionsInteraction, mockEnv);
+    const mockCtx = ExecutionContextFactory.create();
+    const response = await handleRegisterCommand(noOptionsInteraction, mockEnv, mockCtx);
     const rawData = await response.json();
 
     if (!isDiscordResponse(rawData)) {

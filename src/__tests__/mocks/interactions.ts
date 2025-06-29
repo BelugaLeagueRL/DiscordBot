@@ -21,6 +21,32 @@ const ApplicationCommandType = {
 } as const;
 import { createMockUser, createMockGuildMember } from '../helpers/discord-helpers';
 
+// Helper function to convert API types to our stricter Discord types
+function toDiscordUser(
+  apiUser: ReturnType<typeof createMockUser>
+): NonNullable<DiscordInteraction['user']> {
+  const result: Record<string, string> = {
+    id: apiUser.id,
+  };
+
+  if (apiUser.username) result['username'] = apiUser.username;
+  if (apiUser.discriminator) result['discriminator'] = apiUser.discriminator;
+  if (apiUser.global_name) result['global_name'] = apiUser.global_name;
+
+  return result as NonNullable<DiscordInteraction['user']>;
+}
+
+function toDiscordMember(
+  apiMember: ReturnType<typeof createMockGuildMember>
+): NonNullable<DiscordInteraction['member']> {
+  const result: Record<string, unknown> = {};
+
+  if (apiMember.nick) result['nick'] = apiMember.nick;
+  if (apiMember.user) result['user'] = toDiscordUser(apiMember.user);
+
+  return result as NonNullable<DiscordInteraction['member']>;
+}
+
 /**
  * Collection of pre-built interaction mocks for common scenarios
  */
@@ -64,7 +90,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -98,7 +124,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -146,7 +172,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -169,7 +195,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -192,7 +218,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -214,7 +240,7 @@ export const mockInteractions = {
       options: [],
     },
     channel_id: faker.string.numeric(18),
-    user: createMockUser(), // DM interactions have user instead of member
+    user: toDiscordUser(createMockUser()), // DM interactions have user instead of member
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -247,7 +273,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -276,7 +302,7 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
+    member: toDiscordMember(createMockGuildMember()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',
@@ -312,12 +338,14 @@ export const mockInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember({
-      user: createMockUser({
-        username: 'ユーザー名',
-        global_name: 'User with émojis 🎮',
-      }),
-    }),
+    member: toDiscordMember(
+      createMockGuildMember({
+        user: createMockUser({
+          username: 'ユーザー名',
+          global_name: 'User with émojis 🎮',
+        }),
+      })
+    ),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'ja',
@@ -394,8 +422,8 @@ export const edgeCaseInteractions = {
     },
     guild_id: faker.string.numeric(18),
     channel_id: faker.string.numeric(18),
-    member: createMockGuildMember(),
-    user: createMockUser(),
+    member: toDiscordMember(createMockGuildMember()),
+    user: toDiscordUser(createMockUser()),
     token: faker.string.alphanumeric(84),
     version: 1,
     locale: 'en-US',

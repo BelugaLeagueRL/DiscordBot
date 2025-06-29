@@ -3,7 +3,7 @@
  * Following Discord sample app pattern from register.js
  */
 
-import { commands } from './commands.js';
+import { commands } from '../commands.js';
 
 // Branded types for better type safety (Effective TypeScript Item 37)
 type DiscordToken = string & { readonly __brand: 'DiscordToken' };

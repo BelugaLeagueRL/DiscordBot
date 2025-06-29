@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateTrackerUrl } from '../../handlers/register';
+import { validateTrackerUrl } from '../../application_commands/register/handler';
 
 describe('Current URL Validation Implementation', () => {
   describe('Basic URL Structure Validation', () => {
