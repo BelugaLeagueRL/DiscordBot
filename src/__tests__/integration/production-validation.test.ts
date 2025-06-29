@@ -13,14 +13,27 @@ describe('Production Validation Integration Tests', () => {
   
   beforeAll(() => {
     // Use real environment variables if available
-    realEnv = {
-      DISCORD_TOKEN: process.env.DISCORD_TOKEN,
-      DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY,
-      DISCORD_APPLICATION_ID: process.env.DISCORD_APPLICATION_ID,
-      DATABASE_URL: process.env.DATABASE_URL,
-      GOOGLE_SHEETS_API_KEY: process.env.GOOGLE_SHEETS_API_KEY,
-      ENVIRONMENT: process.env.ENVIRONMENT ?? 'test',
-    };
+    const envVars: Record<string, string | undefined> = {};
+    
+    if (process.env['DISCORD_TOKEN']) {
+      envVars['DISCORD_TOKEN'] = process.env['DISCORD_TOKEN'];
+    }
+    if (process.env['DISCORD_PUBLIC_KEY']) {
+      envVars['DISCORD_PUBLIC_KEY'] = process.env['DISCORD_PUBLIC_KEY'];
+    }
+    if (process.env['DISCORD_APPLICATION_ID']) {
+      envVars['DISCORD_APPLICATION_ID'] = process.env['DISCORD_APPLICATION_ID'];
+    }
+    if (process.env['DATABASE_URL']) {
+      envVars['DATABASE_URL'] = process.env['DATABASE_URL'];
+    }
+    if (process.env['GOOGLE_SHEETS_API_KEY']) {
+      envVars['GOOGLE_SHEETS_API_KEY'] = process.env['GOOGLE_SHEETS_API_KEY'];
+    }
+    
+    envVars['ENVIRONMENT'] = process.env['ENVIRONMENT'] ?? 'test';
+    
+    realEnv = envVars as Partial<Env>;
   });
 
   describe('Real Secret Validation', () => {
