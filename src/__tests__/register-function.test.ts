@@ -96,9 +96,7 @@ describe('registerCommands function with valid environment', () => {
     const mockFetch = vi.mocked(global.fetch);
     const mockJson = vi
       .fn()
-      .mockResolvedValue([
-        { name: 'register', description: 'Register your Rocket League tracker URLs' },
-      ]);
+      .mockResolvedValue([{ name: 'register', description: 'Register with the league' }]);
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: mockJson,
@@ -119,7 +117,7 @@ describe('registerCommands function with valid environment', () => {
         body: JSON.stringify([
           {
             name: 'register',
-            description: 'Register your Rocket League tracker URLs',
+            description: 'Register with the league',
             options: [
               {
                 name: 'tracker1',
@@ -160,9 +158,7 @@ describe('registerCommands function with valid environment', () => {
     );
     const mockFetch = vi.mocked(globalThis.fetch);
 
-    const apiResponse = [
-      { name: 'register', description: 'Register your Rocket League tracker URLs' },
-    ];
+    const apiResponse = [{ name: 'register', description: 'Register with the league' }];
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -179,9 +175,7 @@ describe('registerCommands function with valid environment', () => {
     expect(mockConsoleLog).toHaveBeenCalledWith(
       'Successfully registered 1 commands for development environment'
     );
-    expect(mockConsoleLog).toHaveBeenCalledWith(
-      '  - register: Register your Rocket League tracker URLs'
-    );
+    expect(mockConsoleLog).toHaveBeenCalledWith('  - register: Register with the league');
   });
 
   it('should log error details when API call fails', async () => {
