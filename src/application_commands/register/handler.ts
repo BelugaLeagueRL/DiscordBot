@@ -6,6 +6,8 @@
 import { createEphemeralResponse, createErrorResponse } from '../../utils/discord';
 import type { Env } from '../../index';
 import type { DiscordInteraction } from '../../types/discord';
+import { validateChannelRestriction } from '../shared';
+import { routeResponseToChannel } from './response-router';
 
 interface TrackerValidationResult {
   isValid: boolean;
@@ -314,32 +316,76 @@ function createSuccessMessage(
     readonly platform: string;
     readonly platformId: string;
   }[],
-  userId: string,
+  interaction: Readonly<DiscordInteraction>,
   errors: readonly string[]
 ): string {
+  const userId = extractUserId(interaction);
+
   const successMessage = [
-    `✅ Successfully registered ${String(validTrackers.length)} tracker URL(s) for <@${userId}>:`,
+    `<@${userId ?? 'Unknown'}> has registered the following trackers:`,
     '',
-    ...validTrackers.map(tracker => `• ${tracker.platform.toUpperCase()}: ${tracker.platformId}`),
+    `**User ID:**`,
+    `\`\`\``,
+    userId ?? 'Unknown',
+    `\`\`\``,
+    ...validTrackers.map(tracker => `• ${tracker.url}`),
   ];
 
   if (errors.length > 0) {
     successMessage.push('', '⚠️ Some URLs were invalid:', ...errors);
   }
 
+  // Add footer
+  successMessage.push('*React under this post to take this one.*');
+
   return successMessage.join('\n');
+}
+
+/**
+ * Process tracker URLs and route response
+ */
+async function processTrackersAndRoute(
+  validTrackers: ReadonlyArray<{
+    readonly url: string;
+    readonly platform: string;
+    readonly platformId: string;
+  }>,
+  interaction: Readonly<DiscordInteraction>,
+  errors: readonly string[],
+  env: Readonly<Env>
+): Promise<void> {
+  const successMessage = createSuccessMessage(validTrackers, interaction, errors);
+
+  try {
+    const routingResult = await routeResponseToChannel(successMessage, env);
+    if (!routingResult.success) {
+      console.error('Failed to route response:', routingResult.error);
+    }
+  } catch (error) {
+    console.error('Error routing response:', error);
+  }
 }
 
 /**
  * Handle the /register command
  */
-export function handleRegisterCommand(
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function handleRegisterCommand(
   interaction: Readonly<DiscordInteraction>,
-  _env: Readonly<Env>
-): Response {
+  env: Readonly<Env>,
+  ctx: ExecutionContext
+): Promise<Response> {
+  console.log('🚀 handleRegisterCommand called');
   try {
-    const userId = extractUserId(interaction);
+    // Check channel restrictions first
+    const channelValidation = validateChannelRestriction(interaction, env);
+    if (!channelValidation.isAllowed) {
+      return createEphemeralResponse(
+        channelValidation.error ?? 'Command not allowed in this channel.'
+      );
+    }
 
+    const userId = extractUserId(interaction);
     if (userId === undefined) {
       return createErrorResponse('Could not identify user. Please try again.');
     }
@@ -359,9 +405,12 @@ export function handleRegisterCommand(
     }
 
     // TODO: Store user registration in database
-    // For now, just return success message
-    const successMessage = createSuccessMessage(validTrackers, userId, errors);
-    return createEphemeralResponse(successMessage);
+
+    // Use ctx.waitUntil to ensure Discord API call completes in background
+    ctx.waitUntil(processTrackersAndRoute(validTrackers, interaction, errors, env));
+
+    // Return immediate ephemeral confirmation (required within 3 seconds)
+    return createEphemeralResponse('✅ Registration received!');
   } catch (error: unknown) {
     console.error('Error handling register command:', error);
     return createErrorResponse('An error occurred while processing your registration.');

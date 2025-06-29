@@ -19,7 +19,7 @@ export function validateChannelRestriction(
   env: Readonly<Env>
 ): ChannelValidationResult {
   // Check if channel restriction is configured
-  if (env.SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE === undefined) {
+  if (env.REGISTER_COMMAND_REQUEST_CHANNEL_ID === undefined) {
     return {
       isAllowed: false,
       error: 'Channel restriction not configured.',
@@ -35,7 +35,7 @@ export function validateChannelRestriction(
   }
 
   // Check if channel matches configured restriction
-  if (interaction.channel_id !== env.SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE) {
+  if (interaction.channel_id !== env.REGISTER_COMMAND_REQUEST_CHANNEL_ID) {
     return {
       isAllowed: false,
       error: 'This command can only be used in the designated register channel.',
