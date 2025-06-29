@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import type { MockedFunction } from 'vitest';
-import { registerCommands } from '../register';
+import { registerCommands } from '../utils/command-registration';
 
 describe('registerCommands function with valid environment', () => {
   let originalEnv: typeof process.env;

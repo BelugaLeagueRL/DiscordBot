@@ -3,9 +3,9 @@
  * Collects and validates Rocket League tracker URLs
  */
 
-import { createEphemeralResponse, createErrorResponse } from '../utils/discord';
-import type { Env } from '../index';
-import type { DiscordInteraction } from '../types/discord';
+import { createEphemeralResponse, createErrorResponse } from '../../utils/discord';
+import type { Env } from '../../index';
+import type { DiscordInteraction } from '../../types/discord';
 
 interface TrackerValidationResult {
   isValid: boolean;

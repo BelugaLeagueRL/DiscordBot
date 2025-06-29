@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionResponseType } from '../../utils/discord';
-import { handleRegisterCommand } from '../../handlers/register';
+import { handleRegisterCommand } from '../../application_commands/register/handler';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
 import type { DiscordInteraction } from '../../types/discord';

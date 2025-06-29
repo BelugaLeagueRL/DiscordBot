@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { validateChannelRestriction } from '../../application-commands/channel-validator';
+import { validateChannelRestriction } from '../../application_commands/shared/channel-validator';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
 

@@ -3,8 +3,8 @@
  * Ensures commands are only used in designated channels
  */
 
-import type { DiscordInteraction } from '../types/discord';
-import type { Env } from '../index';
+import type { DiscordInteraction } from '../../types/discord';
+import type { Env } from '../../index';
 
 export interface ChannelValidationResult {
   readonly isAllowed: boolean;

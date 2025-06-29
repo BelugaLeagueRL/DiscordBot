@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleRegisterCommand } from '../handlers/register';
+import { handleRegisterCommand } from '../application_commands/register/handler';
 import {
   createMockCommandInteraction,
   createValidTrackerUrl,

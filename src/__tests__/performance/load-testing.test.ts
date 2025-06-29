@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { handleRegisterCommand } from '../../handlers/register';
+import { handleRegisterCommand } from '../../application_commands/register/handler';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import { EnvFactory } from '../helpers/test-factories';
 import type { Env } from '../../index';

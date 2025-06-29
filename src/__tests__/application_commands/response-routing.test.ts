@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { routeResponseToChannel } from '../../application-commands/response-router';
+import { routeResponseToChannel } from '../../application_commands/register/response-router';
 import type { Env } from '../../index';
 
 // Mock fetch for Discord API calls

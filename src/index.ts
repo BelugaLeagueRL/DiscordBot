@@ -5,7 +5,7 @@
  */
 
 import { InteractionType, InteractionResponseType, createErrorResponse } from './utils/discord';
-import { handleRegisterCommand } from './handlers/register';
+import { handleRegisterCommand } from './application_commands/register/handler';
 import {
   extractSecurityContext,
   verifyDiscordRequestSecure,

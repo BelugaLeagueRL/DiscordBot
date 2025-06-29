@@ -40,14 +40,14 @@ describe('Development NPM Scripts', () => {
       // RED: Test for development command registration
       expect(packageJson.scripts).toHaveProperty('register:dev');
       expect(packageJson.scripts['register:dev']).toContain('DISCORD_ENV=development');
-      expect(packageJson.scripts['register:dev']).toContain('src/register.ts');
+      expect(packageJson.scripts['register:dev']).toContain('src/utils/command-registration.ts');
     });
 
     it('should have register:prod script for production command registration', () => {
       // RED: Test for production command registration
       expect(packageJson.scripts).toHaveProperty('register:prod');
       expect(packageJson.scripts['register:prod']).toContain('DISCORD_ENV=production');
-      expect(packageJson.scripts['register:prod']).toContain('src/register.ts');
+      expect(packageJson.scripts['register:prod']).toContain('src/utils/command-registration.ts');
     });
 
     it('should have setup:dev script for easy development environment setup', () => {

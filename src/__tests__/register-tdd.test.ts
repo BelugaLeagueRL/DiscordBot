@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { validateEnvironmentVariables, determineRegistrationEnvironment } from '../register';
+import { validateEnvironmentVariables, determineRegistrationEnvironment } from '../utils/command-registration';
 
 describe('TDD Register Coverage', () => {
   let originalEnv: typeof process.env;

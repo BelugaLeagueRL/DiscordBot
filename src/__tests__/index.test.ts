@@ -49,7 +49,7 @@ vi.mock('../middleware/security', async () => {
 });
 
 // Mock the register handler
-vi.mock('../handlers/register', () => ({
+vi.mock('../application_commands/register/handler', () => ({
   handleRegisterCommand: vi.fn().mockResolvedValue(
     new Response(JSON.stringify({ type: 4, data: { content: 'Success!' } }), {
       status: 200,
@@ -288,7 +288,7 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle command execution error', async () => {
-      const { handleRegisterCommand } = await import('../handlers/register');
+      const { handleRegisterCommand } = await import('../application_commands/register/handler');
       vi.mocked(handleRegisterCommand).mockRejectedValueOnce(new Error('Database error'));
 
       const interaction = mockInteractions.registerValid();
