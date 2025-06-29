@@ -3,7 +3,7 @@
  * Following TDD Red-Green-Refactor cycle
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { validateChannelRestriction } from '../../application-commands/channel-validator';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
@@ -44,25 +44,30 @@ describe('Channel Restriction Validation', () => {
       const result = validateChannelRestriction(interaction, mockEnv);
 
       expect(result.isAllowed).toBe(false);
-      expect(result.error).toBe('This command can only be used in the designated register channel.');
+      expect(result.error).toBe(
+        'This command can only be used in the designated register channel.'
+      );
     });
 
     it('should reject commands with missing channel_id', () => {
-      const interaction = createMockCommandInteraction('register', [], {
-        channel_id: undefined,
-      });
+      const interaction = createMockCommandInteraction('register', []);
+      // Remove channel_id to simulate missing channel
+      const interactionWithoutChannel = { ...interaction };
+      delete (interactionWithoutChannel as { channel_id?: unknown }).channel_id;
 
-      const result = validateChannelRestriction(interaction, mockEnv);
+      const result = validateChannelRestriction(interactionWithoutChannel, mockEnv);
 
       expect(result.isAllowed).toBe(false);
       expect(result.error).toBe('Unable to determine channel. Please try again.');
     });
 
     it('should handle missing environment configuration', () => {
-      const envWithoutChannelConfig = {
+      const envWithoutChannelConfig: Env = {
         ...mockEnv,
-        SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE: undefined,
-      } as Env;
+      };
+      // Remove the channel configuration to simulate missing config
+      delete (envWithoutChannelConfig as { SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE?: unknown })
+        .SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE;
 
       const interaction = createMockCommandInteraction('register', [], {
         channel_id: '1388177835331424386',
