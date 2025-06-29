@@ -1,4 +1,4 @@
-name = "beluga-discord-bot"
+name = "belugabot"
 main = "src/index.ts"
 compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
@@ -14,8 +14,13 @@ vars = { ENVIRONMENT = "development" }
 
 # Production environment  
 [env.production]
-name = "beluga-discord-bot"
+name = "belugabot"
 vars = { ENVIRONMENT = "production" }
+
+# Production observability configuration
+[env.production.observability]
+enabled = true
+head_sampling_rate = 1
 
 # Production secrets (set via wrangler secret put)
 # DISCORD_TOKEN = "..."

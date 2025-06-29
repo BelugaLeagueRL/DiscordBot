@@ -66,7 +66,7 @@ describe('Performance and Load Testing', () => {
       const responseTime = endTime - startTime;
 
       expect(response.status).toBe(200);
-      expect(responseTime).toBeLessThan(100); // Discord requires responses within 3 seconds, we aim for <100ms
+      expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
     });
 
     it('should handle multiple tracker URLs within 150ms', async () => {
@@ -113,7 +113,7 @@ describe('Performance and Load Testing', () => {
       }
       const responseData = rawResponseData;
       expect(responseData.data.content).toContain('Successfully registered 4 tracker URL(s)');
-      expect(responseTime).toBeLessThan(150);
+      expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
     });
   });
 
@@ -150,9 +150,9 @@ describe('Performance and Load Testing', () => {
         expect(response.status).toBe(200);
       });
 
-      // Average response time should be reasonable
+      // Average response time should be reasonable for Workers
       const avgResponseTime = totalTime / concurrentRequests;
-      expect(avgResponseTime).toBeLessThan(50);
+      expect(avgResponseTime).toBeLessThan(5); // Well under Workers 10ms limit
 
       console.log(
         `Concurrent test: ${String(concurrentRequests)} requests in ${totalTime.toFixed(2)}ms`
@@ -204,7 +204,7 @@ describe('Performance and Load Testing', () => {
       });
 
       const avgResponseTime = totalTime / concurrentRequests;
-      expect(avgResponseTime).toBeLessThan(30); // Error cases should be even faster
+      expect(avgResponseTime).toBeLessThan(2); // Error cases should be very fast
 
       console.log(
         `Mixed concurrent test: ${String(concurrentRequests)} requests in ${totalTime.toFixed(2)}ms`
@@ -256,7 +256,7 @@ describe('Performance and Load Testing', () => {
       const responseTime = endTime - startTime;
 
       expect(response.status).toBe(200);
-      expect(responseTime).toBeLessThan(500);
+      expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
 
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
@@ -303,12 +303,12 @@ describe('Performance and Load Testing', () => {
       const firstHalfAvg = responseTimes.slice(0, 25).reduce((a, b) => a + b, 0) / 25;
       const secondHalfAvg = responseTimes.slice(25).reduce((a, b) => a + b, 0) / 25;
 
-      // Second half shouldn't be significantly slower than first half (handle zero division)
+      // Second half shouldn't be significantly slower than first half (handle equal times)
       if (firstHalfAvg > 0) {
-        expect(secondHalfAvg).toBeLessThan(firstHalfAvg * 2);
+        expect(secondHalfAvg).toBeLessThanOrEqual(firstHalfAvg * 2);
       } else {
         // If performance is so fast it's essentially 0ms, just verify both are very fast
-        expect(secondHalfAvg).toBeLessThan(1);
+        expect(secondHalfAvg).toBeLessThanOrEqual(1);
       }
 
       console.log(
@@ -371,8 +371,8 @@ describe('Performance and Load Testing', () => {
       const totalTime = endTime - startTime;
       const avgResponseTime = totalTime / invalidInteractions.length;
 
-      // Error handling should be fast
-      expect(avgResponseTime).toBeLessThan(50);
+      // Error handling should be very fast
+      expect(avgResponseTime).toBeLessThan(2);
 
       // All should return 200 with error messages
       responses.forEach(response => {
@@ -418,9 +418,9 @@ describe('Performance and Load Testing', () => {
       const minTime = Math.min(...responseTimes);
       const maxTime = Math.max(...responseTimes);
 
-      // Performance baselines for monitoring
-      expect(avgTime).toBeLessThan(50); // Average should be very fast
-      expect(maxTime).toBeLessThan(100); // Even worst case should be reasonable
+      // Performance baselines for Cloudflare Workers
+      expect(avgTime).toBeLessThan(5); // Average should be very fast
+      expect(maxTime).toBeLessThan(10); // Even worst case under Workers limit
 
       console.log(
         `Performance baseline - Avg: ${avgTime.toFixed(2)}ms, Min: ${minTime.toFixed(2)}ms, Max: ${maxTime.toFixed(2)}ms`
