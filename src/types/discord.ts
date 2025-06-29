@@ -19,16 +19,19 @@ export interface DiscordInteraction {
   readonly guild_id?: string;
   readonly channel_id?: string;
   readonly member?: {
+    readonly nick?: string;
     readonly user?: {
       readonly id: string;
       readonly username?: string;
       readonly discriminator?: string;
+      readonly global_name?: string;
     };
   };
   readonly user?: {
     readonly id: string;
     readonly username?: string;
     readonly discriminator?: string;
+    readonly global_name?: string;
   };
   readonly token: string;
   readonly version: number;
