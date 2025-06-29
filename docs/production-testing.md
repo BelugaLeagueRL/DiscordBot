@@ -82,7 +82,11 @@ The production validation script (`scripts/test-production-deployment.js`) perfo
 Production validation runs automatically after successful deployment:
 
 ```yaml
-- name: Production Validation
+- name: Wrangler Production Validation
+  run: node scripts/wrangler-production-validation.js
+  # Uses CLOUDFLARE_API_TOKEN from deployment context
+  
+- name: HTTP Production Validation  
   run: node scripts/test-production-deployment.js
   env:
     DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
@@ -103,13 +107,16 @@ export DISCORD_APPLICATION_ID="your_real_discord_app_id"
 #### 2. Run Integration Tests
 ```bash
 # Test with real secrets
-npm run test src/__tests__/integration/production-validation.test.ts
+npm run test:integration
 ```
 
-#### 3. Run Production Validation Script
+#### 3. Run Production Validation Scripts
 ```bash
-# Test deployed Worker
-node scripts/test-production-deployment.js https://your-worker.workers.dev
+# Wrangler-based validation (requires CLOUDFLARE_API_TOKEN)
+npm run test:wrangler
+
+# HTTP-based validation
+npm run test:production https://your-worker.workers.dev
 
 # Output example:
 🔍 Testing health check endpoint...

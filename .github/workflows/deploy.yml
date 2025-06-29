@@ -45,14 +45,22 @@ jobs:
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         command: deploy --env production
         
-    - name: Production Validation
+    - name: Wrangler Production Validation
       if: success()
       run: |
-        echo "🔍 Running comprehensive production validation..."
+        echo "🔍 Running Wrangler-based production validation..."
         # Wait for deployment to propagate
         sleep 30
         
-        # Run comprehensive production validation script
+        # Use Wrangler's native monitoring capabilities
+        node scripts/wrangler-production-validation.js
+        
+    - name: HTTP Production Validation  
+      if: success()
+      run: |
+        echo "🔍 Running HTTP-based production validation..."
+        
+        # Run HTTP endpoint validation
         node scripts/test-production-deployment.js "${{ env.WORKER_URL || 'https://beluga-discord-bot.your-subdomain.workers.dev' }}"
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
