@@ -25,6 +25,8 @@ export interface Env {
   readonly DATABASE_URL?: string;
   readonly GOOGLE_SHEETS_API_KEY?: string;
   readonly ENVIRONMENT: string;
+  readonly SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE?: string;
+  readonly SERVER_CHANNEL_ID_TEST_COMMAND_RECEIVE?: string;
 }
 
 /**
