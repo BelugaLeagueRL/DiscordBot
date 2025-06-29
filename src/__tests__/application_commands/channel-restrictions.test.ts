@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { validateChannelRestriction } from '../../application_commands/shared/channel-validator';
+import { validateChannelRestriction } from '../../application_commands/shared';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import type { Env } from '../../index';
 
@@ -19,8 +19,8 @@ describe('Channel Restriction Validation', () => {
       DATABASE_URL: 'sqlite://test.db',
       GOOGLE_SHEETS_API_KEY: 'test-sheets-key',
       ENVIRONMENT: 'test',
-      SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE: '1388177835331424386',
-      SERVER_CHANNEL_ID_TEST_COMMAND_RECEIVE: '1388177835331424386',
+      REGISTER_COMMAND_REQUEST_CHANNEL_ID: '1388177835331424386',
+      REGISTER_COMMAND_RESPONSE_CHANNEL_ID: '1388177835331424386',
     } as const;
   });
 
@@ -64,10 +64,8 @@ describe('Channel Restriction Validation', () => {
     it('should handle missing environment configuration', () => {
       const envWithoutChannelConfig: Env = {
         ...mockEnv,
+        REGISTER_COMMAND_REQUEST_CHANNEL_ID: undefined as unknown as string,
       };
-      // Remove the channel configuration to simulate missing config
-      delete (envWithoutChannelConfig as { SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE?: unknown })
-        .SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE;
 
       const interaction = createMockCommandInteraction('register', [], {
         channel_id: '1388177835331424386',

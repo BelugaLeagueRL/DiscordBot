@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { routeResponseToChannel } from '../../application_commands/register/response-router';
+import { routeResponseToChannel } from '../../application_commands/register';
 import type { Env } from '../../index';
 
 // Mock fetch for Discord API calls
@@ -22,8 +22,8 @@ describe('Response Routing', () => {
       DATABASE_URL: 'sqlite://test.db',
       GOOGLE_SHEETS_API_KEY: 'test-sheets-key',
       ENVIRONMENT: 'test',
-      SERVER_CHANNEL_ID_TEST_COMMAND_ISSUE: '1388177835331424386',
-      SERVER_CHANNEL_ID_TEST_COMMAND_RECEIVE: '1388177835331424386',
+      REGISTER_COMMAND_REQUEST_CHANNEL_ID: '1388177835331424386',
+      REGISTER_COMMAND_RESPONSE_CHANNEL_ID: '1388177835331424386',
     } as const;
 
     mockFetch.mockClear();
@@ -34,7 +34,7 @@ describe('Response Routing', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ id: 'message-123' }),
+        json: async () => await Promise.resolve({ id: 'message-123' }),
       });
 
       const message = 'Test response message';
@@ -46,7 +46,7 @@ describe('Response Routing', () => {
         {
           method: 'POST',
           headers: {
-            'Authorization': 'Bot test-token',
+            Authorization: 'Bot test-token',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -61,7 +61,7 @@ describe('Response Routing', () => {
         ok: false,
         status: 403,
         statusText: 'Forbidden',
-        text: async () => 'Missing permissions',
+        text: async () => await Promise.resolve('Missing permissions'),
       });
 
       const message = 'Test response message';
@@ -74,9 +74,8 @@ describe('Response Routing', () => {
     it('should handle missing response channel configuration', async () => {
       const envWithoutResponseChannel: Env = {
         ...mockEnv,
+        REGISTER_COMMAND_RESPONSE_CHANNEL_ID: undefined as unknown as string,
       };
-      delete (envWithoutResponseChannel as { SERVER_CHANNEL_ID_TEST_COMMAND_RECEIVE?: unknown })
-        .SERVER_CHANNEL_ID_TEST_COMMAND_RECEIVE;
 
       const message = 'Test response message';
       const result = await routeResponseToChannel(message, envWithoutResponseChannel);
