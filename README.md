@@ -146,6 +146,43 @@ wrangler secret list
 wrangler secret delete SECRET_NAME
 ```
 
+### ngrok Setup for Local Discord Development
+
+To expose your local development server for Discord interactions:
+
+1. **Get ngrok auth token**:
+   - Sign up at [ngrok.com](https://ngrok.com)
+   - Go to [Your Authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
+   - Copy your auth token
+
+2. **Configure ngrok**:
+   ```bash
+   ngrok config add-authtoken YOUR_AUTHTOKEN
+   ```
+
+3. **Start tunnel for Discord bot**:
+   ```bash
+   # Start tunnel to port 8787 (Wrangler dev server)
+   ngrok http 8787
+   ```
+
+4. **Copy tunnel URL to Discord**:
+   - Copy the `https://xyz.ngrok.io` URL from ngrok output
+   - Go to [Discord Developer Portal](https://discord.com/developers/applications)
+   - Set **Interactions Endpoint URL** to your ngrok URL
+   - Save changes
+
+5. **Stop tunnel**:
+   ```bash
+   # Press Ctrl+C in ngrok terminal, or:
+   pkill ngrok
+   ```
+
+**Alternative**: Use the automated tunnel scripts:
+```bash
+npm run ngrok     # Starts tunnel and auto-saves URL to .dev.vars
+```
+
 #### Environment-Specific Command Registration
 
 The bot supports separate development and production Discord applications:
