@@ -15,6 +15,8 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:register": "vitest run src/__tests__/register",
+    "test:integration": "vitest run src/__tests__/integration",
+    "test:production": "node scripts/test-production-deployment.js",
     "lint": "eslint src --ext .ts,.js --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.js --fix --max-warnings 0",
     "format": "prettier --write src/**/*.{ts,js,json}",

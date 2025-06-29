@@ -43,16 +43,44 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: deploy
+        command: deploy --env production
         
-    - name: Notify deployment success
+    - name: Production Validation
       if: success()
       run: |
-        echo "✅ Deployment successful!"
-        echo "Bot is now live at production endpoint"
+        echo "🔍 Running comprehensive production validation..."
+        # Wait for deployment to propagate
+        sleep 30
         
-    - name: Notify deployment failure
+        # Run comprehensive production validation script
+        node scripts/test-production-deployment.js "${{ env.WORKER_URL || 'https://beluga-discord-bot.your-subdomain.workers.dev' }}"
+      env:
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+        DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
+        
+    - name: Rollback on Validation Failure
       if: failure()
       run: |
-        echo "❌ Deployment failed!"
-        echo "Check the logs above for details"
+        echo "💥 Production validation failed - considering rollback"
+        echo "🔧 Manual intervention required to assess rollback necessity"
+        echo "📋 Validation failures could indicate:"
+        echo "   - Secrets not properly configured"
+        echo "   - Worker runtime issues"
+        echo "   - Network connectivity problems"
+        echo "   - Breaking changes in deployment"
+
+    - name: Notify Success
+      if: success()
+      run: |
+        echo "🎉 Production deployment successful!"
+        echo "✅ Bot is live and healthy at: ${{ env.HEALTH_CHECK_URL || 'https://beluga-discord-bot.your-subdomain.workers.dev' }}"
+        echo "📊 Monitoring: Check Cloudflare Workers dashboard for metrics"
+        
+    - name: Notify Failure
+      if: failure()
+      run: |
+        echo "💥 Production deployment failed!"
+        echo "❌ Check logs above for details"
+        echo "🔧 Rollback may be required"
+        echo "📞 Alert: Production deployment requires immediate attention"

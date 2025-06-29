@@ -15,6 +15,7 @@ import {
   type SecurityContext,
 } from './middleware/security';
 import { AuditLogger } from './utils/audit';
+import { createProductionHealthCheck } from './utils/health-check';
 import type { DiscordInteraction } from './types/discord';
 
 export interface Env {
@@ -42,15 +43,38 @@ function handleCorsRequest(): Response {
 }
 
 /**
- * Handle health check requests
+ * Handle health check requests with production monitoring
  */
-function handleHealthCheck(): Response {
-  return new Response('Beluga Discord Bot is running!', {
-    headers: {
-      'Content-Type': 'text/plain',
-      ...createSecurityHeaders(),
-    },
-  });
+function handleHealthCheck(env: Env): Response {
+  const healthCheck = createProductionHealthCheck(env);
+  const healthStatus = healthCheck.getStatus();
+  
+  if (healthStatus.status === 'healthy') {
+    return new Response(JSON.stringify({
+      status: 'healthy',
+      message: 'Beluga Discord Bot is running!',
+      timestamp: healthStatus.timestamp,
+      checks: healthStatus.checks,
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...createSecurityHeaders(),
+      },
+    });
+  } else {
+    return new Response(JSON.stringify({
+      status: 'unhealthy',
+      message: 'Beluga Discord Bot has issues',
+      timestamp: healthStatus.timestamp,
+      checks: healthStatus.checks,
+    }), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        ...createSecurityHeaders(),
+      },
+    });
+  }
 }
 
 /**
@@ -227,6 +251,7 @@ function initializeRequest(
  */
 function handleMethodRouting(
   request: Readonly<Request>,
+  env: Readonly<Env>,
   audit: Readonly<AuditLogger>,
   context: Readonly<SecurityContext>
 ): Response | null {
@@ -239,7 +264,7 @@ function handleMethodRouting(
   // Handle GET request for health check
   if (request.method === 'GET') {
     audit.logHealthCheck(context);
-    return handleHealthCheck();
+    return handleHealthCheck(env);
   }
 
   // Only handle POST requests for Discord interactions
@@ -318,7 +343,7 @@ export default {
       audit = init.audit;
 
       // Handle method routing
-      const methodResponse = handleMethodRouting(request, audit, context);
+      const methodResponse = handleMethodRouting(request, env, audit, context);
       if (methodResponse !== null) {
         return methodResponse;
       }

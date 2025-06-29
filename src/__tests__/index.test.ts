@@ -86,14 +86,24 @@ describe('Main Index Handler', () => {
   });
 
   describe('Health check (GET)', () => {
-    it('should handle GET request with health check response', async () => {
+    it('should handle GET request with enhanced health check response', async () => {
       const request = new Request('https://example.com/', { method: 'GET' });
 
       const response = await workerModule.fetch(request, env);
 
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('text/plain');
-      expect(await response.text()).toBe('Beluga Discord Bot is running!');
+      expect(response.headers.get('Content-Type')).toBe('application/json');
+      
+      const healthData = await response.json();
+      
+      expect(healthData).toMatchObject({
+        status: 'healthy',
+        message: 'Beluga Discord Bot is running!',
+        timestamp: expect.any(Number) as number,
+        checks: {
+          secrets: 'pass'
+        }
+      });
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
   });
