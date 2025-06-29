@@ -105,31 +105,57 @@ setup_prod() {
     echo -e "${YELLOW}This will interactively set secrets in Cloudflare Workers${NC}"
     echo "Make sure you have wrangler CLI installed and authenticated"
     echo ""
-    read -p "Continue? (y/N): " confirm
+    
+    # Check wrangler authentication
+    if ! wrangler whoami >/dev/null 2>&1; then
+        echo -e "${RED}Error: Wrangler not authenticated${NC}"
+        echo "Run: wrangler login"
+        exit 1
+    fi
+    
+    echo "Current Wrangler account:"
+    wrangler whoami
+    echo ""
+    
+    read -p "Continue with production secrets setup? (y/N): " confirm
     if [[ $confirm != [yY] ]]; then
         echo "Cancelled"
         return
     fi
     
     echo ""
-    echo "Setting Discord secrets..."
-    wrangler secret put DISCORD_TOKEN
-    wrangler secret put DISCORD_APPLICATION_ID  
-    wrangler secret put DISCORD_PUBLIC_KEY
+    echo -e "${BLUE}Setting Discord secrets for production...${NC}"
+    echo "Get these from: https://discord.com/developers/applications"
+    wrangler secret put DISCORD_TOKEN --env production
+    wrangler secret put DISCORD_APPLICATION_ID --env production
+    wrangler secret put DISCORD_PUBLIC_KEY --env production
     
     echo ""
-    echo "Setting database URL..."
-    wrangler secret put DATABASE_URL
+    echo -e "${BLUE}Setting production database URL...${NC}"
+    echo "Enter production database connection string:"
+    wrangler secret put DATABASE_URL --env production
+    
+    echo ""
+    echo -e "${BLUE}Setting Google Sheets API key (optional)...${NC}"
+    read -p "Set Google Sheets API key now? (y/N): " setup_sheets
+    if [[ $setup_sheets == [yY] ]]; then
+        wrangler secret put GOOGLE_SHEETS_API_KEY --env production
+    fi
     
     echo ""
     echo -e "${GREEN}✓ Production secrets configured${NC}"
     echo ""
     echo -e "${BLUE}Verify with: $0 list-prod${NC}"
+    echo -e "${BLUE}Test deployment with: npm run deploy${NC}"
 }
 
 list_prod() {
     echo -e "${BLUE}Production secrets:${NC}"
-    wrangler secret list
+    wrangler secret list --env production
+    
+    echo ""
+    echo -e "${BLUE}Production worker status:${NC}"
+    wrangler list --env production || echo "No workers deployed yet"
 }
 
 backup_secrets() {
