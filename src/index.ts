@@ -24,9 +24,12 @@ export interface Env {
   readonly DISCORD_APPLICATION_ID: string;
   readonly DATABASE_URL?: string;
   readonly GOOGLE_SHEETS_API_KEY?: string;
+  readonly GOOGLE_SHEET_ID?: string;
   readonly ENVIRONMENT: string;
   readonly REGISTER_COMMAND_REQUEST_CHANNEL_ID?: string;
   readonly REGISTER_COMMAND_RESPONSE_CHANNEL_ID?: string;
+  readonly TEST_CHANNEL_ID?: string;
+  readonly PRIVILEGED_USER_ID?: string;
 }
 
 /**
