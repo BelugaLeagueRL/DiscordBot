@@ -48,32 +48,38 @@ function handleCorsRequest(): Response {
 function handleHealthCheck(env: Env): Response {
   const healthCheck = createProductionHealthCheck(env);
   const healthStatus = healthCheck.getStatus();
-  
+
   if (healthStatus.status === 'healthy') {
-    return new Response(JSON.stringify({
-      status: 'healthy',
-      message: 'Beluga Discord Bot is running!',
-      timestamp: healthStatus.timestamp,
-      checks: healthStatus.checks,
-    }), {
-      headers: {
-        'Content-Type': 'application/json',
-        ...createSecurityHeaders(),
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        status: 'healthy',
+        message: 'Beluga Discord Bot is running!',
+        timestamp: healthStatus.timestamp,
+        checks: healthStatus.checks,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          ...createSecurityHeaders(),
+        },
+      }
+    );
   } else {
-    return new Response(JSON.stringify({
-      status: 'unhealthy',
-      message: 'Beluga Discord Bot has issues',
-      timestamp: healthStatus.timestamp,
-      checks: healthStatus.checks,
-    }), {
-      status: 503,
-      headers: {
-        'Content-Type': 'application/json',
-        ...createSecurityHeaders(),
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        status: 'unhealthy',
+        message: 'Beluga Discord Bot has issues',
+        timestamp: healthStatus.timestamp,
+        checks: healthStatus.checks,
+      }),
+      {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          ...createSecurityHeaders(),
+        },
+      }
+    );
   }
 }
 

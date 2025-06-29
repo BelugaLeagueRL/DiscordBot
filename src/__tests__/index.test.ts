@@ -93,16 +93,16 @@ describe('Main Index Handler', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/json');
-      
+
       const healthData = await response.json();
-      
+
       expect(healthData).toMatchObject({
         status: 'healthy',
         message: 'Beluga Discord Bot is running!',
         timestamp: expect.any(Number) as number,
         checks: {
-          secrets: 'pass'
-        }
+          secrets: 'pass',
+        },
       });
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });

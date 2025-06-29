@@ -10,11 +10,11 @@ import type { Env } from '../../index';
 
 describe('Production Validation Integration Tests', () => {
   let realEnv: Partial<Env>;
-  
+
   beforeAll(() => {
     // Use real environment variables if available
     const envVars: Record<string, string | undefined> = {};
-    
+
     if (process.env['DISCORD_TOKEN']) {
       envVars['DISCORD_TOKEN'] = process.env['DISCORD_TOKEN'];
     }
@@ -30,16 +30,16 @@ describe('Production Validation Integration Tests', () => {
     if (process.env['GOOGLE_SHEETS_API_KEY']) {
       envVars['GOOGLE_SHEETS_API_KEY'] = process.env['GOOGLE_SHEETS_API_KEY'];
     }
-    
+
     envVars['ENVIRONMENT'] = process.env['ENVIRONMENT'] ?? 'test';
-    
+
     realEnv = envVars as Partial<Env>;
   });
 
   describe('Real Secret Validation', () => {
     it('should validate production secrets when they exist', () => {
       const result = validateProductionSecrets(realEnv);
-      
+
       // If we have real secrets, they should be valid
       if (realEnv.DISCORD_TOKEN && realEnv.DISCORD_PUBLIC_KEY && realEnv.DISCORD_APPLICATION_ID) {
         expect(result.isValid).toBe(true);
@@ -54,12 +54,12 @@ describe('Production Validation Integration Tests', () => {
     it('should identify missing production secrets', () => {
       const emptyEnv = {};
       const result = validateProductionSecrets(emptyEnv);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.missingSecrets).toEqual([
         'DISCORD_TOKEN',
-        'DISCORD_PUBLIC_KEY', 
-        'DISCORD_APPLICATION_ID'
+        'DISCORD_PUBLIC_KEY',
+        'DISCORD_APPLICATION_ID',
       ]);
     });
   });
@@ -68,15 +68,15 @@ describe('Production Validation Integration Tests', () => {
     it('should create health check with real environment', () => {
       const healthCheck = createProductionHealthCheck(realEnv);
       const status = healthCheck.getStatus();
-      
+
       expect(status).toMatchObject({
         status: expect.stringMatching(/^(healthy|unhealthy)$/) as string,
         timestamp: expect.any(Number) as number,
         checks: {
-          secrets: expect.stringMatching(/^(pass|fail)$/) as string
-        }
+          secrets: expect.stringMatching(/^(pass|fail)$/) as string,
+        },
       });
-      
+
       // If we have real secrets, health should be healthy
       if (realEnv.DISCORD_TOKEN && realEnv.DISCORD_PUBLIC_KEY && realEnv.DISCORD_APPLICATION_ID) {
         expect(status.status).toBe('healthy');
@@ -115,14 +115,14 @@ describe('Production Validation Integration Tests', () => {
     it.skip('should be able to reach Discord API endpoints', async () => {
       // This test is skipped by default to avoid making real API calls in CI
       // Uncomment and run manually for production validation
-      
+
       if (!realEnv.DISCORD_TOKEN) {
         return; // Skip if no real token
       }
 
       const response = await fetch('https://discord.com/api/v10/applications/@me', {
         headers: {
-          'Authorization': `Bot ${realEnv.DISCORD_TOKEN}`,
+          Authorization: `Bot ${realEnv.DISCORD_TOKEN}`,
           'User-Agent': 'BelugaBot/1.0',
         },
       });
@@ -134,7 +134,7 @@ describe('Production Validation Integration Tests', () => {
 
     it.skip('should be able to reach Google Sheets API if configured', async () => {
       // This test is skipped by default to avoid making real API calls in CI
-      
+
       if (!realEnv.GOOGLE_SHEETS_API_KEY) {
         return; // Skip if no API key
       }

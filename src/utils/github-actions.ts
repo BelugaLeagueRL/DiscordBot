@@ -34,8 +34,7 @@ export function validateGitHubActionsWorkflow(
     // Check for health check step
     const hasHealthCheck = productionJob.steps.some(
       step =>
-        step.name.toLowerCase().includes('health check') ||
-        step.run?.includes('curl') === true
+        step.name.toLowerCase().includes('health check') || step.run?.includes('curl') === true
     );
 
     if (!hasHealthCheck) {
