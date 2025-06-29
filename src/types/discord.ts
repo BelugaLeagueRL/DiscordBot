@@ -20,6 +20,7 @@ export interface DiscordInteraction {
   readonly channel_id?: string;
   readonly member?: {
     readonly nick?: string;
+    readonly roles?: readonly string[];
     readonly user?: {
       readonly id: string;
       readonly username?: string;
