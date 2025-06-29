@@ -3,6 +3,7 @@
  */
 
 import { faker } from '@faker-js/faker';
+import { vi } from 'vitest';
 import type { SecurityContext } from '../../middleware/security';
 import type { Env } from '../../index';
 
@@ -35,12 +36,19 @@ export const SecurityContextFactory = {
 export const EnvFactory = {
   create(overrides: Partial<Env> = {}): Env {
     return {
-      DISCORD_TOKEN: `mock_discord_token_${faker.string.alphanumeric(64)}`,
-      DISCORD_PUBLIC_KEY: `mock_public_key_${faker.string.alphanumeric(64)}`,
-      DISCORD_APPLICATION_ID: faker.string.numeric(18),
-      DATABASE_URL: 'sqlite://test.db',
-      GOOGLE_SHEETS_API_KEY: `mock_sheets_key_${faker.string.alphanumeric(32)}`,
-      ENVIRONMENT: 'test',
+      DISCORD_TOKEN:
+        process.env['DISCORD_TOKEN'] ?? `mock_discord_token_${faker.string.alphanumeric(64)}`,
+      DISCORD_PUBLIC_KEY:
+        process.env['DISCORD_PUBLIC_KEY'] ?? `mock_public_key_${faker.string.alphanumeric(64)}`,
+      DISCORD_APPLICATION_ID: process.env['DISCORD_APPLICATION_ID'] ?? faker.string.numeric(18),
+      DATABASE_URL: process.env['DATABASE_URL'] ?? 'sqlite://test.db',
+      GOOGLE_SHEETS_API_KEY:
+        process.env['GOOGLE_SHEETS_API_KEY'] ?? `mock_sheets_key_${faker.string.alphanumeric(32)}`,
+      ENVIRONMENT: process.env['ENVIRONMENT'] ?? 'test',
+      REGISTER_COMMAND_REQUEST_CHANNEL_ID:
+        process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? '1388177835331424386',
+      REGISTER_COMMAND_RESPONSE_CHANNEL_ID:
+        process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? '1388058893552320655',
       ...overrides,
     };
   },
@@ -120,6 +128,29 @@ export function createMockRateLimitData(requests: number, windowMs: number = 600
 
 export function createNearLimitRateLimit(limit: number = 100) {
   return createMockRateLimitData(limit - 1);
+}
+
+/**
+ * Factory for creating mock ExecutionContext
+ */
+export const ExecutionContextFactory = {
+  create(): ExecutionContext {
+    return {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn(),
+      props: {},
+    };
+  },
+} as const;
+
+/**
+ * Helper function to assert channel ID exists (for type safety)
+ */
+export function getRequestChannelId(env: Env): string {
+  if (!env.REGISTER_COMMAND_REQUEST_CHANNEL_ID) {
+    throw new Error('REGISTER_COMMAND_REQUEST_CHANNEL_ID is not configured in test environment');
+  }
+  return env.REGISTER_COMMAND_REQUEST_CHANNEL_ID;
 }
 
 export function createAtLimitRateLimit(limit: number = 100) {
