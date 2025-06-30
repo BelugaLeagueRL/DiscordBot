@@ -71,7 +71,7 @@ export interface GuildMemberResponse {
  * @param id - ID to validate
  * @returns True if valid Discord ID format
  */
-function isValidDiscordId(id: string): boolean {
+export function isValidDiscordId(id: string): boolean {
   return /^\d{17,19}$/.test(id);
 }
 
