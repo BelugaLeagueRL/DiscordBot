@@ -642,6 +642,43 @@ export function validateOAuthRequestParams(params: unknown): JwtResult<OAuthRequ
 }
 
 /**
+ * Map function for transforming successful Result data
+ */
+export function mapResult<T, U, E>(
+  result: JwtResult<T, E>,
+  transform: (data: T) => U
+): JwtResult<U, E> {
+  if (result.success) {
+    try {
+      return { success: true, data: transform(result.data) };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Transformation failed';
+      return { success: false, error: errorMessage as E };
+    }
+  }
+  return result;
+}
+
+/**
+ * Combine multiple Results into a single Result with array data
+ */
+export function combineResults<T, E>(
+  results: readonly JwtResult<T, E>[]
+): JwtResult<readonly T[], E> {
+  const dataArray: T[] = [];
+
+  for (const result of results) {
+    if (!result.success) {
+      // Return the first error encountered
+      return result;
+    }
+    dataArray.push(result.data);
+  }
+
+  return { success: true, data: dataArray };
+}
+
+/**
  * OAuth token builder for Google Sheets
  */
 export class GoogleOAuthBuilder {
