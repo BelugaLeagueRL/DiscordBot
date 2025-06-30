@@ -157,4 +157,59 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
   });
+
+  describe('buildCredentialsObject', () => {
+    it('should build credentials object from environment variables', async () => {
+      // Arrange
+      const mockEnv = {
+        GOOGLE_SHEETS_CLIENT_EMAIL: 'test@serviceaccount.com',
+        GOOGLE_SHEETS_PRIVATE_KEY:
+          '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB\n-----END PRIVATE KEY-----',
+      };
+
+      const { buildCredentialsObject } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
+      );
+
+      // Act
+      const result = buildCredentialsObject(mockEnv as any);
+
+      // Assert
+      expect(result).toEqual({
+        client_email: 'test@serviceaccount.com',
+        private_key:
+          '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB\n-----END PRIVATE KEY-----',
+      });
+    });
+
+    it('should build credentials object with type assertions for required fields', async () => {
+      // Testing that the function properly extracts and type-asserts environment variables
+
+      // Arrange
+      const mockEnv = {
+        GOOGLE_SHEETS_CLIENT_EMAIL: 'another@serviceaccount.com',
+        GOOGLE_SHEETS_PRIVATE_KEY:
+          '-----BEGIN PRIVATE KEY-----\nAnotherPrivateKeyContent\n-----END PRIVATE KEY-----',
+        GOOGLE_SHEETS_TYPE: 'service_account', // Extra field that might exist
+        GOOGLE_SHEETS_PROJECT_ID: 'test-project', // Extra field that might exist
+      };
+
+      const { buildCredentialsObject } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
+      );
+
+      // Act
+      const result = buildCredentialsObject(mockEnv as any);
+
+      // Assert
+      expect(result).toEqual({
+        client_email: 'another@serviceaccount.com',
+        private_key:
+          '-----BEGIN PRIVATE KEY-----\nAnotherPrivateKeyContent\n-----END PRIVATE KEY-----',
+      });
+
+      // Should only extract the required fields
+      expect(Object.keys(result)).toHaveLength(2);
+    });
+  });
 });

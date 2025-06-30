@@ -481,7 +481,7 @@ function validateRequiredCredentialFields(env: Env): Result<boolean> {
 /**
  * Build credentials object from environment variables
  */
-function buildCredentialsObject(env: Env): GoogleSheetsCredentials {
+export function buildCredentialsObject(env: Env): GoogleSheetsCredentials {
   return {
     client_email: env.GOOGLE_SHEETS_CLIENT_EMAIL as string,
     private_key: env.GOOGLE_SHEETS_PRIVATE_KEY as string,
