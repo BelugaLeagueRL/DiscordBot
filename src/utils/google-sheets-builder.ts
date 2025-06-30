@@ -527,6 +527,121 @@ export function createJWT(
 }
 
 /**
+ * OAuth token response interface
+ */
+export interface OAuthTokenResponse {
+  readonly access_token: string;
+  readonly expires_in: number;
+  readonly token_type: string;
+}
+
+/**
+ * OAuth request parameters interface
+ */
+export interface OAuthRequestParams {
+  readonly grant_type: string;
+  readonly assertion: string;
+}
+
+/**
+ * Validate OAuth token response from Google
+ */
+export function validateOAuthTokenResponse(response: unknown): JwtResult<OAuthTokenResponse> {
+  try {
+    // Check for null/undefined/non-object
+    if (!response || typeof response !== 'object') {
+      return { success: false, error: 'Invalid response format' };
+    }
+
+    const obj = response as Record<string, unknown>;
+
+    // Check for error response
+    if ('error' in obj) {
+      const errorDesc = obj['error_description'] || obj['error'] || 'OAuth error';
+      return { success: false, error: `OAuth error: ${String(errorDesc)}` };
+    }
+
+    // Validate required fields
+    if (typeof obj['access_token'] !== 'string' || (obj['access_token'] as string).length === 0) {
+      return { success: false, error: 'Missing or invalid access_token' };
+    }
+
+    if (typeof obj['expires_in'] !== 'number' || (obj['expires_in'] as number) <= 0) {
+      return { success: false, error: 'Missing or invalid expires_in' };
+    }
+
+    if (typeof obj['token_type'] !== 'string' || (obj['token_type'] as string).length === 0) {
+      return { success: false, error: 'Missing or invalid token_type' };
+    }
+
+    // Validate access token format (basic check)
+    const accessToken = obj['access_token'] as string;
+    if (!accessToken.includes('.') && !accessToken.startsWith('ya29.')) {
+      return { success: false, error: 'Invalid access token format' };
+    }
+
+    return {
+      success: true,
+      data: {
+        access_token: obj['access_token'] as string,
+        expires_in: obj['expires_in'] as number,
+        token_type: obj['token_type'] as string,
+      },
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Token response validation failed';
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Validate OAuth request parameters
+ */
+export function validateOAuthRequestParams(params: unknown): JwtResult<OAuthRequestParams> {
+  try {
+    // Check for null/undefined/non-object
+    if (!params || typeof params !== 'object') {
+      return { success: false, error: 'Invalid parameters format' };
+    }
+
+    const obj = params as Record<string, unknown>;
+
+    // Validate grant_type
+    if (typeof obj['grant_type'] !== 'string' || (obj['grant_type'] as string).length === 0) {
+      return { success: false, error: 'Missing or invalid grant_type' };
+    }
+
+    if (obj['grant_type'] !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
+      return { success: false, error: 'Invalid grant_type - must be jwt-bearer' };
+    }
+
+    // Validate assertion (JWT)
+    if (typeof obj['assertion'] !== 'string' || (obj['assertion'] as string).length === 0) {
+      return { success: false, error: 'Missing or invalid assertion' };
+    }
+
+    // Basic JWT format validation (3 parts separated by dots)
+    const assertion = obj['assertion'] as string;
+    if (assertion.split('.').length !== 3) {
+      return { success: false, error: 'Invalid JWT assertion format' };
+    }
+
+    return {
+      success: true,
+      data: {
+        grant_type: obj['grant_type'] as string,
+        assertion: obj['assertion'] as string,
+      },
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Request parameters validation failed';
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
  * OAuth token builder for Google Sheets
  */
 export class GoogleOAuthBuilder {
