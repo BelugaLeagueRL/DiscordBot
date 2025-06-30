@@ -70,7 +70,7 @@ describe('validateAdminPermissions', () => {
   });
 
   describe('admin role validation', () => {
-    it('should return authorized=true for user with Administrator role', () => {
+    it('should authorize user with Administrator role', () => {
       // Arrange
       const adminRoleId = '8'; // Administrator permission
       const interaction = createInteractionWithMember('regular-user-123', [adminRoleId]);
@@ -80,11 +80,33 @@ describe('validateAdminPermissions', () => {
 
       // Assert
       expect(result.isAuthorized).toBe(true);
+    });
+
+    it('should identify user type as admin_role for Administrator role', () => {
+      // Arrange
+      const adminRoleId = '8'; // Administrator permission
+      const interaction = createInteractionWithMember('regular-user-123', [adminRoleId]);
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.userType).toBe('admin_role');
+    });
+
+    it('should not return error for user with Administrator role', () => {
+      // Arrange
+      const adminRoleId = '8'; // Administrator permission
+      const interaction = createInteractionWithMember('regular-user-123', [adminRoleId]);
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.error).toBeUndefined();
     });
 
-    it('should return authorized=false for user without admin role', () => {
+    it('should deny authorization for user without admin role', () => {
       // Arrange
       const regularRoleId = '123456789';
       const interaction = createInteractionWithMember('regular-user-123', [regularRoleId]);
@@ -94,7 +116,29 @@ describe('validateAdminPermissions', () => {
 
       // Assert
       expect(result.isAuthorized).toBe(false);
+    });
+
+    it('should return access denied error for user without admin role', () => {
+      // Arrange
+      const regularRoleId = '123456789';
+      const interaction = createInteractionWithMember('regular-user-123', [regularRoleId]);
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.error).toBe('Access denied. Admin role or special permissions required.');
+    });
+
+    it('should not set user type for user without admin role', () => {
+      // Arrange
+      const regularRoleId = '123456789';
+      const interaction = createInteractionWithMember('regular-user-123', [regularRoleId]);
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.userType).toBeUndefined();
     });
 
@@ -124,7 +168,7 @@ describe('validateAdminPermissions', () => {
   });
 
   describe('privileged user validation', () => {
-    it('should return authorized=true for PRIVILEGED_USER_ID', () => {
+    it('should authorize PRIVILEGED_USER_ID', () => {
       // Arrange
       const interaction = createInteractionWithMember('354474826192388127');
 
@@ -133,11 +177,31 @@ describe('validateAdminPermissions', () => {
 
       // Assert
       expect(result.isAuthorized).toBe(true);
+    });
+
+    it('should identify user type as privileged_user for PRIVILEGED_USER_ID', () => {
+      // Arrange
+      const interaction = createInteractionWithMember('354474826192388127');
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.userType).toBe('privileged_user');
+    });
+
+    it('should not return error for PRIVILEGED_USER_ID', () => {
+      // Arrange
+      const interaction = createInteractionWithMember('354474826192388127');
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.error).toBeUndefined();
     });
 
-    it('should return authorized=true for PRIVILEGED_USER_ID in direct user interaction', () => {
+    it('should authorize PRIVILEGED_USER_ID in direct user interaction', () => {
       // Arrange
       const interaction = createDirectUserInteraction('354474826192388127');
 
@@ -146,6 +210,16 @@ describe('validateAdminPermissions', () => {
 
       // Assert
       expect(result.isAuthorized).toBe(true);
+    });
+
+    it('should identify user type as privileged_user in direct user interaction', () => {
+      // Arrange
+      const interaction = createDirectUserInteraction('354474826192388127');
+
+      // Act
+      const result = validateAdminPermissions(interaction, mockEnv);
+
+      // Assert
       expect(result.userType).toBe('privileged_user');
     });
 
