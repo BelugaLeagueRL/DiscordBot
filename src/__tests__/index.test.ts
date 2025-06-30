@@ -38,6 +38,26 @@ function isDiscordResponse(
   return typeof dataObj['content'] === 'string';
 }
 
+// Type guard for health check response data
+function isHealthCheckResponse(
+  data: unknown
+): data is { status: string; message: string; timestamp: number; checks: { secrets: string } } {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  return (
+    typeof obj['status'] === 'string' &&
+    typeof obj['message'] === 'string' &&
+    typeof obj['timestamp'] === 'number' &&
+    typeof obj['checks'] === 'object' &&
+    obj['checks'] !== null &&
+    typeof (obj['checks'] as Record<string, unknown>)['secrets'] === 'string'
+  );
+}
+
 // Mock the security middleware to control validation results
 vi.mock('../middleware/security', async () => {
   const actual = await vi.importActual('../middleware/security');
@@ -73,39 +93,124 @@ describe('Main Index Handler', () => {
   });
 
   describe('CORS preflight (OPTIONS)', () => {
-    it('should handle OPTIONS request with CORS headers', async () => {
+    it('should return 200 status for OPTIONS request', async () => {
       const request = new Request('https://example.com/', { method: 'OPTIONS' });
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
+    });
+
+    it('should set CORS allow origin header', async () => {
+      const request = new Request('https://example.com/', { method: 'OPTIONS' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    });
+
+    it('should set CORS allow methods header', async () => {
+      const request = new Request('https://example.com/', { method: 'OPTIONS' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, OPTIONS');
+    });
+
+    it('should include security headers in OPTIONS response', async () => {
+      const request = new Request('https://example.com/', { method: 'OPTIONS' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
   });
 
   describe('Health check (GET)', () => {
-    it('should handle GET request with enhanced health check response', async () => {
+    it('should return 200 status for health check', async () => {
       const request = new Request('https://example.com/', { method: 'GET' });
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
+    });
+
+    it('should return JSON content type for health check', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Content-Type')).toBe('application/json');
+    });
 
-      const healthData = await response.json();
+    it('should return healthy status in response body', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
 
-      expect(healthData).toMatchObject({
-        status: 'healthy',
-        message: 'Beluga Discord Bot is running!',
-        timestamp: expect.any(Number) as number,
-        checks: {
-          secrets: 'pass',
-        },
-      });
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      const rawHealthData = await response.json();
+      if (!isHealthCheckResponse(rawHealthData)) {
+        throw new Error('Invalid health check response format');
+      }
+      const healthData = rawHealthData;
+      expect(healthData.status).toBe('healthy');
+    });
+
+    it('should return descriptive message in response body', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      const rawHealthData = await response.json();
+      if (!isHealthCheckResponse(rawHealthData)) {
+        throw new Error('Invalid health check response format');
+      }
+      const healthData = rawHealthData;
+      expect(healthData.message).toBe('Beluga Discord Bot is running!');
+    });
+
+    it('should include timestamp in response body', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      const rawHealthData = await response.json();
+      if (!isHealthCheckResponse(rawHealthData)) {
+        throw new Error('Invalid health check response format');
+      }
+      const healthData = rawHealthData;
+      expect(healthData.timestamp).toEqual(expect.any(Number));
+    });
+
+    it('should include secrets check in response body', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      const rawHealthData = await response.json();
+      if (!isHealthCheckResponse(rawHealthData)) {
+        throw new Error('Invalid health check response format');
+      }
+      const healthData = rawHealthData;
+      expect(healthData.checks.secrets).toBe('pass');
+    });
+
+    it('should include security headers in health check response', async () => {
+      const request = new Request('https://example.com/', { method: 'GET' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
   });
@@ -336,7 +441,7 @@ describe('Main Index Handler', () => {
   });
 
   describe('Security headers', () => {
-    it('should add security headers to all responses', async () => {
+    it('should add X-Content-Type-Options header', async () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
@@ -344,25 +449,76 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    });
+
+    it('should add X-Frame-Options header', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+    });
+
+    it('should add X-XSS-Protection header', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block');
+    });
+
+    it('should add Referrer-Policy header', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+    });
+
+    it('should add Content-Security-Policy header', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Content-Security-Policy')).toContain('default-src');
+    });
+
+    it('should add Strict-Transport-Security header', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('Strict-Transport-Security')).toContain('max-age=');
     });
 
-    it('should preserve existing response headers', async () => {
+    it('should preserve existing Content-Type header', async () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
-      // Check that security headers are added
-      expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/json');
-      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
-      expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+    });
+
+    it('should return 200 status when adding security headers', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      expect(response.status).toBe(200);
     });
   });
 
