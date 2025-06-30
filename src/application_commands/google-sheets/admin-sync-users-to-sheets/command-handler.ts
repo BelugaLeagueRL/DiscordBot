@@ -42,7 +42,7 @@ interface ExecutionContext {
 /**
  * Validate Google Sheets credentials format
  */
-function validateCredentials(credentials: GoogleSheetsCredentials): { isValid: boolean } {
+export function validateCredentials(credentials: GoogleSheetsCredentials): { isValid: boolean } {
   if (!credentials || typeof credentials !== 'object') {
     return { isValid: false };
   }
