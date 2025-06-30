@@ -35,7 +35,14 @@ export const REGISTER_COMMAND = {
   ],
 };
 
+// Define the /admin_sync_users_to_sheets command
+export const ADMIN_SYNC_USERS_TO_SHEETS_COMMAND = {
+  name: 'admin_sync_users_to_sheets',
+  description: 'Sync Discord server users to Google Sheets (Admin only)',
+  options: [], // No parameters needed - credentials are server-side
+};
+
 /**
  * Array of all commands to be registered
  */
-export const commands = [REGISTER_COMMAND];
+export const commands = [REGISTER_COMMAND, ADMIN_SYNC_USERS_TO_SHEETS_COMMAND];

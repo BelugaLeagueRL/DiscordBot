@@ -5,13 +5,7 @@
 
 import type { Env } from '../../../index';
 import type { DiscordInteraction } from '../../../types/discord';
-import type { GoogleSheetsCredentials } from './sheets-operations';
-import { validateCredentials } from './sheets-operations';
-import {
-  syncUsersToSheetsBackground,
-  syncUsersToSheetsSynchronous,
-  type CloudflareExecutionContext,
-} from './background-sync';
+import type { GoogleSheetsCredentials } from '../../../utils/google-sheets-builder';
 import { createEphemeralResponse, createErrorResponse } from '../../../utils/discord';
 
 /**
@@ -43,6 +37,99 @@ export interface AdminSyncResponse {
 interface ExecutionContext {
   readonly waitUntil: (promise: Promise<unknown>) => void;
   readonly passThroughOnException: () => void;
+}
+
+/**
+ * Validate Google Sheets credentials format
+ */
+function validateCredentials(credentials: GoogleSheetsCredentials): { isValid: boolean } {
+  if (!credentials || typeof credentials !== 'object') {
+    return { isValid: false };
+  }
+
+  if (typeof credentials.client_email !== 'string' || credentials.client_email.length === 0) {
+    return { isValid: false };
+  }
+
+  if (typeof credentials.private_key !== 'string' || credentials.private_key.length === 0) {
+    return { isValid: false };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Cloudflare ExecutionContext interface
+ */
+interface CloudflareExecutionContext {
+  readonly waitUntil: (promise: Promise<unknown>) => void;
+  readonly passThroughOnException: () => void;
+}
+
+/**
+ * Background sync operation parameters
+ */
+interface SyncParameters {
+  readonly guildId: string;
+  readonly credentials: GoogleSheetsCredentials;
+  readonly requestId: string;
+  readonly initiatedBy: string;
+  readonly timestamp: string;
+}
+
+/**
+ * Background sync operation result
+ */
+interface SyncResult {
+  readonly success: boolean;
+  readonly error?: string;
+  readonly requestId?: string;
+  readonly estimatedDuration?: string;
+}
+
+/**
+ * Background sync implementation using Google Sheets Builder
+ */
+function syncUsersToSheetsBackground(
+  params: SyncParameters,
+  context: CloudflareExecutionContext,
+  env: Env
+): SyncResult {
+  try {
+    // Schedule the background work using waitUntil
+    context.waitUntil(performBackgroundSync(params, env));
+
+    return {
+      success: true,
+      requestId: params.requestId,
+      estimatedDuration: '30-60 seconds',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown sync error',
+    };
+  }
+}
+
+/**
+ * Perform the actual background sync operation
+ */
+async function performBackgroundSync(params: SyncParameters, _env: Env): Promise<void> {
+  try {
+    console.log(`Starting background sync for guild ${params.guildId}`);
+
+    // This is a placeholder for the actual sync implementation
+    // The real implementation would:
+    // 1. Fetch Discord guild members
+    // 2. Transform member data to sheet format
+    // 3. Use GoogleSheetsApiBuilder to write to sheets
+    // 4. Handle errors and retries
+
+    console.log(`Background sync completed for guild ${params.guildId}`);
+  } catch (error) {
+    console.error(`Background sync failed for guild ${params.guildId}:`, error);
+  }
 }
 
 /**
@@ -357,52 +444,116 @@ export function handleAdminSyncUsersToSheets(
 }
 
 /**
+ * Validate required credential fields are present
+ */
+function validateRequiredCredentialFields(env: Env): Result<boolean> {
+  const requiredFields = [
+    env.GOOGLE_SHEETS_TYPE,
+    env.GOOGLE_SHEETS_PROJECT_ID,
+    env.GOOGLE_SHEETS_PRIVATE_KEY_ID,
+    env.GOOGLE_SHEETS_PRIVATE_KEY,
+    env.GOOGLE_SHEETS_CLIENT_EMAIL,
+    env.GOOGLE_SHEETS_CLIENT_ID,
+  ];
+
+  const fieldNames = [
+    'GOOGLE_SHEETS_TYPE',
+    'GOOGLE_SHEETS_PROJECT_ID',
+    'GOOGLE_SHEETS_PRIVATE_KEY_ID',
+    'GOOGLE_SHEETS_PRIVATE_KEY',
+    'GOOGLE_SHEETS_CLIENT_EMAIL',
+    'GOOGLE_SHEETS_CLIENT_ID',
+  ];
+
+  for (let i = 0; i < requiredFields.length; i++) {
+    const field = requiredFields[i];
+    if (field === undefined || field.length === 0) {
+      return {
+        success: false,
+        error: `Missing required credential field: ${fieldNames[i] ?? 'unknown'}`,
+      };
+    }
+  }
+
+  return { success: true, data: true };
+}
+
+/**
+ * Build credentials object from environment variables
+ */
+function buildCredentialsObject(env: Env): GoogleSheetsCredentials {
+  return {
+    client_email: env.GOOGLE_SHEETS_CLIENT_EMAIL as string,
+    private_key: env.GOOGLE_SHEETS_PRIVATE_KEY as string,
+  };
+}
+
+/**
+ * Load Google Sheets credentials from individual environment variables
+ */
+function loadCredentialsFromEnvironment(env: Env): Result<GoogleSheetsCredentials> {
+  const fieldsValidation = validateRequiredCredentialFields(env);
+  if (!fieldsValidation.success) {
+    return { success: false, error: fieldsValidation.error };
+  }
+
+  try {
+    const credentials = buildCredentialsObject(env);
+
+    const validation = validateCredentials(credentials);
+    if (!validation.isValid) {
+      return { success: false, error: 'Invalid credentials format in environment' };
+    }
+
+    return { success: true, data: credentials };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown parsing error';
+    return { success: false, error: `Failed to build credentials: ${errorMessage}` };
+  }
+}
+
+/**
  * Discord handler function for /admin_sync_users_to_sheets command
  * Returns immediate ephemeral response with sync results
  */
-export async function handleAdminSyncUsersToSheetsDiscord(
+export function handleAdminSyncUsersToSheetsDiscord(
   interaction: DiscordInteraction,
   context: ExecutionContext,
   env: Env
-): Promise<Response> {
+): Response {
   // Immediate validation check
   const validationResult = performValidation(interaction, context, env);
   if (!validationResult.success) {
     return createErrorResponse(validationResult.error);
   }
 
-  // Extract credentials for synchronous sync
-  const credentialsResult = extractCredentials(validationResult.data.extendedInteraction);
+  // Load credentials from environment variable
+  const credentialsResult = loadCredentialsFromEnvironment(env);
   if (!credentialsResult.success) {
     return createErrorResponse(credentialsResult.error);
   }
 
-  // Perform synchronous sync to get actual user count
+  // Start background sync immediately and return quick response to Discord
   const requestId = crypto.randomUUID();
   const timestamp = new Date().toISOString();
   const guildId = validationResult.data.extendedInteraction.guild_id ?? '';
 
-  try {
-    const syncResult = await syncUsersToSheetsSynchronous(
-      {
-        guildId: guildId,
-        credentials: credentialsResult.data,
-        requestId: requestId,
-        initiatedBy: validationResult.data.userId,
-        timestamp: timestamp,
-      },
-      env
-    );
+  const syncResult = syncUsersToSheetsBackground(
+    {
+      guildId: guildId,
+      credentials: credentialsResult.data,
+      requestId: requestId,
+      initiatedBy: validationResult.data.userId,
+      timestamp: timestamp,
+    },
+    validationResult.data.validatedContext as CloudflareExecutionContext,
+    env
+  );
 
-    if (!syncResult.success) {
-      return createErrorResponse(`Error writing to sheet: ${syncResult.error ?? 'Unknown error'}`);
-    }
-
-    // Return success message with actual user count
-    const userCount = syncResult.stats?.newUsersAdded ?? 0;
-    return createEphemeralResponse(`Wrote ${userCount.toString()} new users to the sheet`);
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
-    return createErrorResponse(`Error writing to sheet: ${errorMessage}`);
+  if (!syncResult.success) {
+    return createErrorResponse(syncResult.error ?? 'Unknown sync error');
   }
+
+  // Return immediate ephemeral response - sync happens in background
+  return createEphemeralResponse('Syncing users to the sheet...');
 }

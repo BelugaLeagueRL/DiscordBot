@@ -454,11 +454,7 @@ describe('Admin Sync Users to Sheets Command Handler', () => {
       });
 
       // Act
-      const response = await handleAdminSyncUsersToSheetsDiscord(
-        validInteraction,
-        mockContext,
-        mockEnv
-      );
+      const response = handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
 
       // Assert
       expect(response).toBeInstanceOf(Response);
@@ -482,11 +478,7 @@ describe('Admin Sync Users to Sheets Command Handler', () => {
       global.fetch = vi.fn().mockRejectedValueOnce(new Error('Discord API error'));
 
       // Act
-      const response = await handleAdminSyncUsersToSheetsDiscord(
-        validInteraction,
-        mockContext,
-        mockEnv
-      );
+      const response = handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
 
       // Assert
       expect(response).toBeInstanceOf(Response);
@@ -513,11 +505,7 @@ describe('Admin Sync Users to Sheets Command Handler', () => {
       });
 
       // Act
-      const response = await handleAdminSyncUsersToSheetsDiscord(
-        validInteraction,
-        mockContext,
-        mockEnv
-      );
+      const response = handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
 
       // Assert
       expect(response).toBeInstanceOf(Response);

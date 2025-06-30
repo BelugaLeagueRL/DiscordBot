@@ -79,7 +79,9 @@
     "wrangler": "^4.22.0"
   },
   "dependencies": {
-    "discord-interactions": "^3.4.0"
+    "@tsndr/cloudflare-worker-jwt": "^3.2.0",
+    "discord-interactions": "^3.4.0",
+    "dotenv": "^17.0.0"
   },
   "engines": {
     "node": ">=18"

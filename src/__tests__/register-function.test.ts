@@ -145,6 +145,11 @@ describe('registerCommands function with valid environment', () => {
               },
             ],
           },
+          {
+            name: 'admin_sync_users_to_sheets',
+            description: 'Sync Discord server users to Google Sheets (Admin only)',
+            options: [],
+          },
         ]),
       })
     );
@@ -173,7 +178,7 @@ describe('registerCommands function with valid environment', () => {
       'Registering commands for development environment...'
     );
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      'Successfully registered 1 commands for development environment'
+      'Successfully registered 2 commands for development environment'
     );
     expect(mockConsoleLog).toHaveBeenCalledWith('  - register: Register with the league');
   });

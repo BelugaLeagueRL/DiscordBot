@@ -9,8 +9,25 @@ DISCORD_APPLICATION_ID="your_discord_application_id_here"
 # Database Configuration (for local development)
 DATABASE_URL="file:./local.db"
 
-# Google Sheets API (when implemented)
-GOOGLE_SHEETS_API_KEY="your_google_sheets_api_key_here"
+# Google Sheets API Configuration
+GOOGLE_SHEET_ID="your_google_sheet_id_here"
+
+# Google Service Account Credentials (for Google Sheets integration)
+GOOGLE_SHEETS_TYPE="service_account"
+GOOGLE_SHEETS_PROJECT_ID="your_project_id_here"
+GOOGLE_SHEETS_PRIVATE_KEY_ID="your_private_key_id_here"
+GOOGLE_SHEETS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----"
+GOOGLE_SHEETS_CLIENT_EMAIL="your_service_account_email@your_project.iam.gserviceaccount.com"
+GOOGLE_SHEETS_CLIENT_ID="your_client_id_here"
+GOOGLE_SHEETS_AUTH_URI="https://accounts.google.com/o/oauth2/auth"
+GOOGLE_SHEETS_TOKEN_URI="https://oauth2.googleapis.com/token"
+GOOGLE_SHEETS_AUTH_PROVIDER_X509_CERT_URL="https://www.googleapis.com/oauth2/v1/certs"
+GOOGLE_SHEETS_CLIENT_X509_CERT_URL="https://www.googleapis.com/robot/v1/metadata/x509/your_service_account_email%40your_project.iam.gserviceaccount.com"
+GOOGLE_SHEETS_UNIVERSE_DOMAIN="googleapis.com"
+
+# Channel and Permission Configuration
+TEST_CHANNEL_ID="your_test_channel_id_here"
+PRIVILEGED_USER_ID="your_discord_user_id_here"
 
 # Environment
 ENVIRONMENT="development"

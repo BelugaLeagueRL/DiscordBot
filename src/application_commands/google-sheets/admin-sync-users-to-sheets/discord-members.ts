@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../../../index';
+import { DiscordApiService } from '../../../services/discord-api';
 
 /**
  * Discord user interface matching API response
@@ -82,34 +83,12 @@ function isValidDiscordId(id: string): boolean {
  */
 export async function fetchGuildMembers(
   guildId: string,
-  env: Env
+  env: Env,
+  fetchFn: typeof fetch = fetch.bind(globalThis)
 ): Promise<GuildMemberFetchResult> {
   try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: env.DISCORD_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      const message =
-        typeof errorData === 'object' && errorData !== null && 'message' in errorData
-          ? String(errorData.message)
-          : 'Unknown error';
-
-      return {
-        success: false,
-        error: `Discord API error (${response.status.toString()}): ${message}`,
-      } satisfies GuildMemberFetchResult;
-    }
-
-    const members = await response.json();
+    const discordApi = new DiscordApiService(env, fetchFn);
+    const members = await discordApi.getGuildMembers(guildId, 1000);
 
     // Validate response format
     if (!Array.isArray(members)) {

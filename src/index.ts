@@ -6,6 +6,7 @@
 
 import { InteractionType, InteractionResponseType, createErrorResponse } from './utils/discord';
 import { handleRegisterCommand } from './application_commands/register';
+import { handleAdminSyncUsersToSheetsDiscord } from './application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
 import {
   extractSecurityContext,
   verifyDiscordRequestSecure,
@@ -25,6 +26,17 @@ export interface Env {
   readonly DATABASE_URL?: string;
   readonly GOOGLE_SHEETS_API_KEY?: string;
   readonly GOOGLE_SHEET_ID?: string;
+  readonly GOOGLE_SHEETS_TYPE?: string;
+  readonly GOOGLE_SHEETS_PROJECT_ID?: string;
+  readonly GOOGLE_SHEETS_PRIVATE_KEY_ID?: string;
+  readonly GOOGLE_SHEETS_PRIVATE_KEY?: string;
+  readonly GOOGLE_SHEETS_CLIENT_EMAIL?: string;
+  readonly GOOGLE_SHEETS_CLIENT_ID?: string;
+  readonly GOOGLE_SHEETS_AUTH_URI?: string;
+  readonly GOOGLE_SHEETS_TOKEN_URI?: string;
+  readonly GOOGLE_SHEETS_AUTH_PROVIDER_X509_CERT_URL?: string;
+  readonly GOOGLE_SHEETS_CLIENT_X509_CERT_URL?: string;
+  readonly GOOGLE_SHEETS_UNIVERSE_DOMAIN?: string;
   readonly ENVIRONMENT: string;
   readonly REGISTER_COMMAND_REQUEST_CHANNEL_ID?: string;
   readonly REGISTER_COMMAND_RESPONSE_CHANNEL_ID?: string;
@@ -83,6 +95,222 @@ function handleHealthCheck(env: Env): Response {
           'Content-Type': 'application/json',
           ...createSecurityHeaders(),
         },
+      }
+    );
+  }
+}
+
+/**
+ * Build Google Sheets credentials from environment variables
+ */
+function buildGoogleSheetsCredentials(env: Readonly<Env>): {
+  client_email: string;
+  private_key: string;
+} {
+  return {
+    client_email: env.GOOGLE_SHEETS_CLIENT_EMAIL!,
+    private_key: env.GOOGLE_SHEETS_PRIVATE_KEY!,
+  };
+}
+
+/**
+ * Handle test read requests for Google Sheets integration
+ */
+async function handleTestSheetsRead(
+  request: Readonly<Request>,
+  env: Readonly<Env>,
+  audit: Readonly<AuditLogger>,
+  context: Readonly<SecurityContext>
+): Promise<Response> {
+  try {
+    audit.logRequestReceived(context, { method: request.method, path: '/test-sheets-read' });
+
+    // Build credentials from environment
+    const credentials = buildGoogleSheetsCredentials(env);
+
+    // Use the builder pattern for cleaner API calls
+    const { GoogleSheetsApiBuilder, GoogleOAuthBuilder } = await import(
+      './utils/google-sheets-builder'
+    );
+
+    // Get OAuth token
+    const accessToken = await GoogleOAuthBuilder.create()
+      .setCredentials(credentials)
+      .getAccessToken();
+
+    // Read from Google Sheets
+    const result = await GoogleSheetsApiBuilder.create()
+      .setSpreadsheetId(env.GOOGLE_SHEET_ID!)
+      .setRange('A:G')
+      .setAccessToken(accessToken)
+      .get();
+
+    if (!result.success) {
+      throw new Error(result.error ?? 'Unknown read error');
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        values: result.values ?? [],
+        totalRows: (result.values ?? []).length,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    audit.logError(context, { error: errorMessage });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
+/**
+ * Handle test delete requests for Google Sheets integration
+ */
+async function handleTestSheetsDelete(
+  request: Readonly<Request>,
+  env: Readonly<Env>,
+  audit: Readonly<AuditLogger>,
+  context: Readonly<SecurityContext>
+): Promise<Response> {
+  try {
+    audit.logRequestReceived(context, { method: request.method, path: '/test-sheets-delete' });
+
+    const { discordId } = (await request.json()) as { discordId: string };
+
+    // Build credentials from environment
+    const credentials = buildGoogleSheetsCredentials(env);
+
+    // Use the builder pattern for cleaner API calls
+    const { GoogleSheetsApiBuilder, GoogleOAuthBuilder } = await import(
+      './utils/google-sheets-builder'
+    );
+
+    // Get OAuth token
+    const accessToken = await GoogleOAuthBuilder.create()
+      .setCredentials(credentials)
+      .getAccessToken();
+
+    // Delete rows by Discord ID
+    const result = await GoogleSheetsApiBuilder.create()
+      .setSpreadsheetId(env.GOOGLE_SHEET_ID!)
+      .setRange('A:G')
+      .setAccessToken(accessToken)
+      .deleteRowsByDiscordId(discordId);
+
+    if (!result.success) {
+      throw new Error(result.error ?? 'Unknown delete error');
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        deletedRowsCount: result.deletedRowsCount ?? 0,
+        discordId,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    audit.logError(context, { error: errorMessage });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
+/**
+ * Handle test requests for Google Sheets integration
+ */
+async function handleTestSheetsWrite(
+  request: Readonly<Request>,
+  env: Readonly<Env>,
+  audit: Readonly<AuditLogger>,
+  context: Readonly<SecurityContext>
+): Promise<Response> {
+  try {
+    audit.logRequestReceived(context, { method: request.method, path: '/test-sheets-write' });
+
+    const { testData } = (await request.json()) as { testData: unknown };
+
+    // Build credentials from environment
+    const credentials = buildGoogleSheetsCredentials(env);
+
+    // Use the builder pattern for cleaner API calls
+    const { GoogleSheetsApiBuilder, GoogleOAuthBuilder, createMemberRow } = await import(
+      './utils/google-sheets-builder'
+    );
+
+    // Get OAuth token
+    const accessToken = await GoogleOAuthBuilder.create()
+      .setCredentials(credentials)
+      .getAccessToken();
+
+    // Create member row
+    const memberRow = createMemberRow({
+      discord_id: testData.discord_id,
+      discord_username_display: testData.discord_username_display,
+      discord_username_actual: testData.discord_username_actual,
+      server_join_date: testData.server_join_date,
+      is_banned: testData.is_banned,
+      is_active: testData.is_active,
+    });
+
+    // Append to Google Sheets
+    const result = await GoogleSheetsApiBuilder.create()
+      .setSpreadsheetId(env.GOOGLE_SHEET_ID!)
+      .setRange('A:G')
+      .setAccessToken(accessToken)
+      .addRow(memberRow)
+      .append();
+
+    if (!result.success) {
+      throw new Error(result.error ?? 'Unknown append error');
+    }
+
+    const writeResult = { data: { totalUpdatedRows: result.updatedRows ?? 0 } };
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        rowsWritten: writeResult.data.totalUpdatedRows,
+        testData: memberRow,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    audit.logError(context, { error: errorMessage });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }
@@ -173,6 +401,10 @@ async function handleApplicationCommand(
     switch (name) {
       case 'register':
         response = await withTimeout(Promise.resolve(handleRegisterCommand(interaction, env, ctx)));
+        break;
+
+      case 'admin_sync_users_to_sheets':
+        response = handleAdminSyncUsersToSheetsDiscord(interaction, ctx, env);
         break;
 
       default:
@@ -280,6 +512,20 @@ function handleMethodRouting(
   if (request.method === 'GET') {
     audit.logHealthCheck(context);
     return handleHealthCheck(env);
+  }
+
+  // Handle POST request for test endpoints
+  if (request.method === 'POST') {
+    const url = new URL(request.url);
+    if (url.pathname === '/test-sheets-write') {
+      return await handleTestSheetsWrite(request, env, audit, context);
+    }
+    if (url.pathname === '/test-sheets-read') {
+      return await handleTestSheetsRead(request, env, audit, context);
+    }
+    if (url.pathname === '/test-sheets-delete') {
+      return await handleTestSheetsDelete(request, env, audit, context);
+    }
   }
 
   // Only handle POST requests for Discord interactions

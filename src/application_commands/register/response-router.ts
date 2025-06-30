@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../../index';
+import { DiscordApiService } from '../../services/discord-api';
 
 export interface ResponseRoutingResult {
   readonly success: boolean;
@@ -15,7 +16,8 @@ export interface ResponseRoutingResult {
  */
 export async function routeResponseToChannel(
   message: string,
-  env: Readonly<Env>
+  env: Readonly<Env>,
+  fetchFn: typeof fetch = fetch.bind(globalThis)
 ): Promise<ResponseRoutingResult> {
   console.log('🚀 routeResponseToChannel called with message length:', message.length);
   console.log('🚀 Channel ID:', env.REGISTER_COMMAND_RESPONSE_CHANNEL_ID);
@@ -33,44 +35,20 @@ export async function routeResponseToChannel(
   try {
     console.log('🚀 Making Discord API call to send message...');
 
-    // Make Discord API call to send message
-    const response = await fetch(
-      `https://discord.com/api/v10/channels/${env.REGISTER_COMMAND_RESPONSE_CHANNEL_ID}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bot ${env.DISCORD_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: message,
-        }),
-      }
-    );
-
-    console.log('🚀 Fetch completed, checking response...');
-    console.log('🚀 Discord API response status:', response.status);
-    console.log('🚀 Discord API response ok:', response.ok);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log('❌ Discord API error:', errorText);
-      return {
-        success: false,
-        error: `Failed to send message: ${String(response.status)} ${response.statusText} - ${errorText}`,
-      };
-    }
+    const discordApi = new DiscordApiService(env, fetchFn);
+    await discordApi.sendMessage(env.REGISTER_COMMAND_RESPONSE_CHANNEL_ID, message);
 
     console.log('✅ Message sent successfully to Discord');
     return {
       success: true,
     };
   } catch (error) {
-    console.log('❌ Network error:', error);
+    console.log('❌ Discord API error:', error);
     console.log('❌ Error details:', JSON.stringify(error, null, 2));
     return {
       success: false,
-      error: 'Network error occurred while sending message.',
+      error:
+        error instanceof Error ? error.message : 'Network error occurred while sending message.',
     };
   }
 }

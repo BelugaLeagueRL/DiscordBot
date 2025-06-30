@@ -14,7 +14,7 @@ import {
 import type { Env } from '../../index';
 
 // Type interface for Discord response body
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 interface _DiscordResponseBody {
   data: {
     content: string;
@@ -139,7 +139,7 @@ describe('Register Command Integration', () => {
       expect(response.status).toBe(200);
 
       // Should return immediate acknowledgment
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
       const responseBody = (await response.json()) as _DiscordResponseBody;
       expect(responseBody.data.content).toContain('✅ Registration received!');
       expect(responseBody.data.content).not.toContain('Check the response channel');
@@ -170,7 +170,7 @@ describe('Register Command Integration', () => {
       expect(mockFetch).not.toHaveBeenCalled();
 
       // Should return error response immediately
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
       const responseBody = (await response.json()) as _DiscordResponseBody;
       expect(responseBody.data.content).toContain('Invalid tracker URLs');
     });
@@ -191,7 +191,7 @@ describe('Register Command Integration', () => {
       const response = await handleRegisterCommand(interaction, envWithoutChannels, mockCtx);
 
       expect(response.status).toBe(200);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
       const responseBody = (await response.json()) as _DiscordResponseBody;
       expect(responseBody.data.content).toContain('Channel restriction not configured');
     });

@@ -36,7 +36,6 @@ function sanitizeMetadata(metadata: Record<string, unknown>): Record<string, unk
   for (const key of Object.keys(sanitized)) {
     const lowerKey = key.toLowerCase();
     if (SENSITIVE_KEYS.some(sensitive => lowerKey.includes(sensitive))) {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete sanitized[key];
     }
   }

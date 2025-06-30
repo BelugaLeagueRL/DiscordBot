@@ -369,7 +369,7 @@ async function processTrackersAndRoute(
 /**
  * Handle the /register command
  */
-// eslint-disable-next-line @typescript-eslint/require-await
+
 export async function handleRegisterCommand(
   interaction: Readonly<DiscordInteraction>,
   env: Readonly<Env>,
