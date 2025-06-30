@@ -216,18 +216,34 @@ describe('Main Index Handler', () => {
   });
 
   describe('Method validation', () => {
-    it('should reject non-POST/GET/OPTIONS methods', async () => {
+    it('should return 405 status for PUT method', async () => {
       const request = new Request('https://example.com/', { method: 'PUT' });
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(405);
+    });
+
+    it('should return method not allowed message for PUT method', async () => {
+      const request = new Request('https://example.com/', { method: 'PUT' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(await response.text()).toBe('Method not allowed');
+    });
+
+    it('should include security headers for rejected PUT method', async () => {
+      const request = new Request('https://example.com/', { method: 'PUT' });
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
 
-    it('should reject DELETE method', async () => {
+    it('should return 405 status for DELETE method', async () => {
       const request = new Request('https://example.com/', { method: 'DELETE' });
 
       const mockCtx = ExecutionContextFactory.create();
@@ -238,7 +254,7 @@ describe('Main Index Handler', () => {
   });
 
   describe('Discord request validation', () => {
-    it('should handle valid Discord request', async () => {
+    it('should return 200 status for valid Discord request', async () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
@@ -246,6 +262,15 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(200);
+    });
+
+    it('should return PONG response type for valid Discord ping', async () => {
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
@@ -254,7 +279,7 @@ describe('Main Index Handler', () => {
       expect(responseData).toEqual({ type: 1 }); // PONG response
     });
 
-    it('should reject invalid Discord request', async () => {
+    it('should return 401 status for invalid Discord request', async () => {
       const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
         isValid: false,
@@ -268,6 +293,21 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(401);
+    });
+
+    it('should return unauthorized message for invalid Discord request', async () => {
+      const { verifyDiscordRequestSecure } = await import('../middleware/security');
+      vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
+        isValid: false,
+        error: 'Invalid signature',
+      });
+
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(await response.text()).toBe('Unauthorized');
     });
 
@@ -559,7 +599,7 @@ describe('Main Index Handler', () => {
   });
 
   describe('Global error handling', () => {
-    it('should handle unexpected errors gracefully', async () => {
+    it('should return 500 status for unexpected errors', async () => {
       const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
 
@@ -570,11 +610,35 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, env, mockCtx);
 
       expect(response.status).toBe(500);
+    });
+
+    it('should return internal server error message for unexpected errors', async () => {
+      const { verifyDiscordRequestSecure } = await import('../middleware/security');
+      vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
+
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(await response.text()).toBe('Internal server error');
+    });
+
+    it('should include security headers in error responses', async () => {
+      const { verifyDiscordRequestSecure } = await import('../middleware/security');
+      vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
+
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
 
-    it('should handle errors without audit context', async () => {
+    it('should return 500 status for errors without audit context', async () => {
       // Create a malformed environment that will cause an error
       const badEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: null as unknown as string });
 
@@ -591,6 +655,24 @@ describe('Main Index Handler', () => {
       const response = await workerModule.fetch(request, badEnv, mockCtx);
 
       expect(response.status).toBe(500);
+    });
+
+    it('should return internal server error message for errors without audit context', async () => {
+      // Create a malformed environment that will cause an error
+      const badEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: null as unknown as string });
+
+      // Mock verifyDiscordRequestSecure to throw an error that breaks audit context
+      const { verifyDiscordRequestSecure } = await import('../middleware/security');
+      vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(
+        new Error('Critical system error')
+      );
+
+      const interaction = mockInteractions.ping();
+      const request = createMockDiscordRequest(interaction);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, badEnv, mockCtx);
+
       expect(await response.text()).toBe('Internal server error');
     });
 
