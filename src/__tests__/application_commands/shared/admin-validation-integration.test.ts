@@ -134,7 +134,7 @@ describe('Admin Validation Integration', () => {
   }
 
   describe('successful admin command scenarios', () => {
-    it('should allow admin user in correct channel', () => {
+    it('should fully authorize admin user in correct channel', () => {
       // Arrange
       const interaction = createAdminUserInCorrectChannel();
 
@@ -143,9 +143,49 @@ describe('Admin Validation Integration', () => {
 
       // Assert
       expect(result.isFullyAuthorized).toBe(true);
+    });
+
+    it('should pass channel validation for admin user in correct channel', () => {
+      // Arrange
+      const interaction = createAdminUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.channelResult.isAllowed).toBe(true);
+    });
+
+    it('should pass permission validation for admin user in correct channel', () => {
+      // Arrange
+      const interaction = createAdminUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.permissionResult.isAuthorized).toBe(true);
+    });
+
+    it('should identify admin role user type for admin user in correct channel', () => {
+      // Arrange
+      const interaction = createAdminUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.permissionResult.userType).toBe('admin_role');
+    });
+
+    it('should not return blocking error for admin user in correct channel', () => {
+      // Arrange
+      const interaction = createAdminUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.blockingError).toBeUndefined();
     });
 
@@ -166,7 +206,7 @@ describe('Admin Validation Integration', () => {
   });
 
   describe('blocked admin command scenarios', () => {
-    it('should block regular user in correct channel (permission issue)', () => {
+    it('should deny full authorization for regular user in correct channel', () => {
       // Arrange
       const interaction = createRegularUserInCorrectChannel();
 
@@ -175,8 +215,38 @@ describe('Admin Validation Integration', () => {
 
       // Assert
       expect(result.isFullyAuthorized).toBe(false);
+    });
+
+    it('should pass channel validation for regular user in correct channel', () => {
+      // Arrange
+      const interaction = createRegularUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.channelResult.isAllowed).toBe(true); // Channel is correct
+    });
+
+    it('should fail permission validation for regular user in correct channel', () => {
+      // Arrange
+      const interaction = createRegularUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.permissionResult.isAuthorized).toBe(false); // But no permissions
+    });
+
+    it('should return access denied error for regular user in correct channel', () => {
+      // Arrange
+      const interaction = createRegularUserInCorrectChannel();
+
+      // Act
+      const result = validateCompleteAdminAccess(interaction, mockEnv);
+
+      // Assert
       expect(result.blockingError).toBe(
         'Access denied. Admin role or special permissions required.'
       );
