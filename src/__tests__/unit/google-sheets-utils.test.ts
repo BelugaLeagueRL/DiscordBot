@@ -142,7 +142,8 @@ describe('Google Sheets Utilities - Unit Tests', () => {
       expect(result[6]).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/); // ISO format
 
       // Timestamp should be recent (within last few seconds)
-      const timestamp = new Date(result[6]);
+      expect(result[6]).toBeDefined();
+      const timestamp = new Date(result[6]!);
       const now = new Date();
       const diffMs = now.getTime() - timestamp.getTime();
       expect(diffMs).toBeLessThan(5000); // Within 5 seconds
