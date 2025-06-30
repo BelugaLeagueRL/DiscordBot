@@ -80,18 +80,30 @@ function createAuthenticatedSheetsClient(_credentials: GoogleSheetsCredentials):
   return {
     spreadsheets: {
       values: {
-        batchUpdate: (): Promise<{
+        batchUpdate: (params: {
+          readonly spreadsheetId: string;
+          readonly requestBody: {
+            readonly valueInputOption: string;
+            readonly data: readonly {
+              readonly range: string;
+              readonly values: readonly (readonly string[])[];
+            }[];
+          };
+        }): Promise<{
           readonly data: {
             readonly totalUpdatedRows?: number;
             readonly totalUpdatedColumns?: number;
             readonly totalUpdatedCells?: number;
           };
         }> => {
+          // Return the actual number of rows being updated
+          const rowCount = params.requestBody.data[0]?.values.length ?? 0;
+          const USER_SHEET_COLUMNS = 7; // discord_id, discord_username_display, discord_username_actual, server_join_date, is_banned, is_active, last_updated
           return Promise.resolve({
             data: {
-              totalUpdatedRows: 0,
-              totalUpdatedColumns: 4,
-              totalUpdatedCells: 0,
+              totalUpdatedRows: rowCount,
+              totalUpdatedColumns: USER_SHEET_COLUMNS,
+              totalUpdatedCells: rowCount * USER_SHEET_COLUMNS,
             },
           });
         },
@@ -158,7 +170,7 @@ export interface SyncOperation {
 }
 
 /**
- * Result of background sync initiation
+ * Result of background sync initiation with detailed stats
  */
 export interface BackgroundSyncResult {
   readonly success: boolean;
@@ -166,6 +178,14 @@ export interface BackgroundSyncResult {
   readonly error?: string;
   readonly requestId?: string;
   readonly estimatedDuration?: string;
+  readonly stats?: {
+    readonly newUsersAdded: number;
+    readonly existingUsersUpdated: number;
+    readonly totalProcessed: number;
+    readonly errorCount: number;
+    readonly duration: string;
+  };
+  readonly errorType?: string;
   readonly metadata?: {
     readonly guildId: string;
     readonly initiatedBy: string;
@@ -275,7 +295,10 @@ function validateSheetId(sheetId: string | undefined): asserts sheetId is string
   }
 }
 
-async function performBackgroundSync(operation: SyncOperation, env: Env): Promise<void> {
+async function performBackgroundSync(
+  operation: SyncOperation,
+  env: Env
+): Promise<{ newUsersAdded: number }> {
   try {
     // Step 1: Create Google Sheets client
     const sheetsResult = createSheetsClient(operation.credentials);
@@ -305,16 +328,19 @@ async function performBackgroundSync(operation: SyncOperation, env: Env): Promis
         console.log(
           `Background sync completed: ${updatedRows.toString()} new members added to sheet`
         );
+        return { newUsersAdded: updatedRows };
       } else {
         throw new Error(`Google Sheets API error: ${batchResult.error ?? 'Unknown error'}`);
       }
     } else {
       console.log('Background sync completed: No new members to add');
+      return { newUsersAdded: 0 };
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`Background sync failed for request ${operation.requestId}: ${errorMessage}`);
     // In real implementation, this would log to structured logging system
+    throw error; // Re-throw for synchronous callers
   }
 }
 
@@ -401,6 +427,55 @@ function validateSyncParameters(
 }
 
 /**
+ * Perform synchronous sync operation and return actual user count
+ * For admin commands that can wait for immediate results
+ */
+export async function syncUsersToSheetsSynchronous(
+  operation: SyncOperation,
+  env: Env
+): Promise<BackgroundSyncResult> {
+  // Validate all parameters (excluding context since this is synchronous)
+  const basicValidation = validateBasicParameters(operation, {} as CloudflareExecutionContext, env);
+  if (!basicValidation.success) {
+    return {
+      success: false,
+      error: basicValidation.error,
+    };
+  }
+
+  const formatsValidation = validateFormatsAndCredentials(operation, env);
+  if (!formatsValidation.success) {
+    return {
+      success: false,
+      error: formatsValidation.error,
+    };
+  }
+
+  try {
+    // Perform the actual sync operation synchronously
+    const syncStats = await performBackgroundSync(operation, env);
+
+    return {
+      success: true,
+      message: 'Sync completed successfully',
+      stats: {
+        newUsersAdded: syncStats.newUsersAdded,
+        existingUsersUpdated: 0,
+        totalProcessed: syncStats.newUsersAdded,
+        errorCount: 0,
+        duration: '< 1 second',
+      },
+    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
  * Initiate background sync operation using Cloudflare Workers ctx.waitUntil()
  */
 export function syncUsersToSheetsBackground(
@@ -421,7 +496,10 @@ export function syncUsersToSheetsBackground(
   const requestId = operation.requestId.length > 0 ? operation.requestId : generateRequestId();
 
   // Start background operation using ctx.waitUntil()
-  const backgroundOperation = performBackgroundSync(operation, env);
+  const backgroundOperation = performBackgroundSync(operation, env).then(() => {
+    // Background operation completed, but we don't return the stats here
+    // since this is fire-and-forget
+  });
   context.waitUntil(backgroundOperation);
 
   // Return immediate response

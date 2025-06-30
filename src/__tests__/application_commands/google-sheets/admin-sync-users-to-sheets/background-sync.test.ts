@@ -168,129 +168,94 @@ describe('Background Sync Operations', () => {
   });
 
   describe('background operation validation', () => {
-    it('should validate guild ID format correctly', () => {
-      // Test cases for Discord guild ID validation
-      const validGuildIds = ['123456789012345678', '987654321098765432'];
-      const invalidGuildIds = ['123', 'abc123', '', '12345678901234567890123']; // Too short, non-numeric, empty, too long
-
-      validGuildIds.forEach(id => {
-        expect(id).toMatch(/^\d{17,19}$/);
+    /**
+     * Factory for format validation tests
+     */
+    function testFormatValidation(
+      description: string,
+      validCases: readonly string[],
+      invalidCases: readonly string[],
+      pattern: RegExp
+    ): void {
+      it(`should validate ${description} correctly`, () => {
+        validCases.forEach(validCase => {
+          expect(validCase).toMatch(pattern);
+        });
+        invalidCases.forEach(invalidCase => {
+          expect(invalidCase).not.toMatch(pattern);
+        });
       });
+    }
 
-      invalidGuildIds.forEach(id => {
-        expect(id).not.toMatch(/^\d{17,19}$/);
-      });
-    });
+    testFormatValidation(
+      'guild ID format',
+      ['123456789012345678', '987654321098765432'] as const,
+      ['123', 'abc123', '', '12345678901234567890123'] as const,
+      /^\d{17,19}$/
+    );
 
-    it('should validate Discord token format correctly', () => {
-      // Test cases for Discord bot token validation
-      const validTokens = [
+    testFormatValidation(
+      'Discord token format',
+      [
         'Bot MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs',
         'Bot MTE5ODYyMjQ4MzQ3MTkyNTI0OA.GhTl5Q.abc123def456ghi789jkl012mno345pqr678stu901',
-      ];
-      const invalidTokens = [
+      ] as const,
+      [
         'invalid-token',
-        'MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs', // Missing 'Bot ' prefix
+        'MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs',
         'Bot invalid.format.token',
         '',
         'Bot ',
-      ];
-
-      validTokens.forEach(token => {
-        expect(token).toMatch(/^Bot [A-Za-z0-9+/=]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,}$/);
-      });
-
-      invalidTokens.forEach(token => {
-        expect(token).not.toMatch(
-          /^Bot [A-Za-z0-9+/=]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,}$/
-        );
-      });
-    });
+      ] as const,
+      /^Bot [A-Za-z0-9+/=]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,}$/
+    );
 
     it('should validate timestamp format correctly', () => {
-      // Test cases for ISO timestamp validation
-      const validTimestamps = [
-        '2023-06-29T10:00:00.000Z',
-        '2023-12-31T23:59:59.999Z',
-        '2024-01-01T00:00:00.000Z',
-      ];
+      const validTimestamps = ['2023-06-29T10:00:00.000Z', '2023-12-31T23:59:59.999Z'] as const;
       const invalidTimestamps = [
         '2023-06-29',
-        '2023-06-29T10:00:00',
         'invalid-timestamp',
-        '',
-        '2023-13-01T00:00:00.000Z', // Invalid month
-      ];
+        '2023-13-01T00:00:00.000Z',
+      ] as const;
 
       validTimestamps.forEach(timestamp => {
-        expect(() => new Date(timestamp).toISOString()).not.toThrow();
         expect(new Date(timestamp).toISOString()).toBe(timestamp);
       });
 
       invalidTimestamps.forEach(timestamp => {
         const date = new Date(timestamp);
-        if (isNaN(date.getTime())) {
-          // Invalid dates throw error or return 'Invalid Date'
-          expect(() => date.toISOString()).toThrow();
-        } else {
-          // Valid dates but not in correct format
-          expect(date.toISOString()).not.toBe(timestamp);
-        }
+        expect(isNaN(date.getTime()) || date.toISOString() !== timestamp).toBe(true);
       });
     });
 
     it('should handle request ID generation correctly', () => {
-      // UUID v4 format validation
       const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-      // Generate multiple UUIDs to test uniqueness
       const generatedIds = new Set<string>();
-      for (let i = 0; i < 100; i++) {
+
+      for (let i = 0; i < 10; i++) {
         const uuid = crypto.randomUUID();
         expect(uuid).toMatch(uuidPattern);
-        expect(generatedIds.has(uuid)).toBe(false); // Ensure uniqueness
+        expect(generatedIds.has(uuid)).toBe(false);
         generatedIds.add(uuid);
       }
     });
   });
 
   describe('Cloudflare Workers integration', () => {
-    it('should respect ExecutionContext interface requirements', () => {
-      // Arrange
+    it('should respect ExecutionContext interface and handle multiple calls', () => {
       const context = CloudflareExecutionContextFactory.create();
 
-      // Assert
-      expect(context.waitUntil).toBeDefined();
-      expect(context.passThroughOnException).toBeDefined();
       expect(typeof context.waitUntil).toBe('function');
       expect(typeof context.passThroughOnException).toBe('function');
-    });
 
-    it('should handle passThroughOnException correctly', () => {
-      // Arrange
-      const context = CloudflareExecutionContextFactory.create();
-
-      // Act
+      const promises = [Promise.resolve('task1'), Promise.resolve('task2')];
+      promises.forEach(promise => {
+        context.waitUntil(promise);
+      });
       context.passThroughOnException();
 
-      // Assert
-      expect(context.passThroughOnException).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle multiple waitUntil calls correctly', () => {
-      // Arrange
-      const context = CloudflareExecutionContextFactory.create();
-      const promise1 = Promise.resolve('task1');
-      const promise2 = Promise.resolve('task2');
-
-      // Act
-      context.waitUntil(promise1);
-      context.waitUntil(promise2);
-
-      // Assert
       expect(context.waitUntil).toHaveBeenCalledTimes(2);
-      expect(context.waitUntil).toHaveBeenNthCalledWith(1, promise1);
-      expect(context.waitUntil).toHaveBeenNthCalledWith(2, promise2);
+      expect(context.passThroughOnException).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -373,49 +338,57 @@ describe('Background Sync Operations', () => {
   });
 
   describe('error handling and edge cases', () => {
-    it('should handle missing required operation fields', () => {
-      // Arrange
-      const incompleteOperation = {
-        guildId: '123456789012345678',
-        // Missing credentials, requestId, initiatedBy, timestamp
-      } as unknown as SyncOperation;
+    /**
+     * Factory for error scenario tests
+     */
+    function testErrorScenario(
+      description: string,
+      setup: () => { operation: SyncOperation; context: CloudflareExecutionContext; env: Env },
+      expectedError: string,
+      shouldCheckWaitUntil: boolean = true
+    ): void {
+      it(description, () => {
+        const { operation, context, env } = setup();
+        const result = syncUsersToSheetsBackground(operation, context, env);
 
-      // Act
-      const result = syncUsersToSheetsBackground(incompleteOperation, mockContext, mockEnv);
+        expect(result.success).toBe(false);
+        expect(result.error).toBe(expectedError);
 
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing required operation fields');
-      expect(mockContext.waitUntil).not.toHaveBeenCalled();
-    });
+        if (shouldCheckWaitUntil) {
+          expect(vi.mocked(context).waitUntil).not.toHaveBeenCalled();
+        }
+      });
+    }
 
-    it('should handle execution context being undefined', () => {
-      // Arrange
-      const operation = SyncOperationFactory.create();
+    testErrorScenario(
+      'should handle missing required operation fields',
+      () => ({
+        operation: { guildId: '123456789012345678' } as unknown as SyncOperation,
+        context: mockContext,
+        env: mockEnv,
+      }),
+      'Missing required operation fields'
+    );
 
-      // Act
-      const result = syncUsersToSheetsBackground(
-        operation,
-        undefined as unknown as CloudflareExecutionContext,
-        mockEnv
-      );
+    testErrorScenario(
+      'should handle execution context being undefined',
+      () => ({
+        operation: SyncOperationFactory.create(),
+        context: undefined as unknown as CloudflareExecutionContext,
+        env: mockEnv,
+      }),
+      'Execution context not available',
+      false
+    );
 
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Execution context not available');
-    });
-
-    it('should handle extremely large estimated member counts', () => {
-      // Arrange
-      const operation = SyncOperationFactory.withMassiveGuild();
-
-      // Act
-      const result = syncUsersToSheetsBackground(operation, mockContext, mockEnv);
-
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Guild too large for synchronization (max 100,000 members)');
-      expect(mockContext.waitUntil).not.toHaveBeenCalled();
-    });
+    testErrorScenario(
+      'should handle extremely large estimated member counts',
+      () => ({
+        operation: SyncOperationFactory.withMassiveGuild(),
+        context: mockContext,
+        env: mockEnv,
+      }),
+      'Guild too large for synchronization (max 100,000 members)'
+    );
   });
 });

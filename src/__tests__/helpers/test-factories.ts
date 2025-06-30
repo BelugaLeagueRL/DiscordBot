@@ -161,6 +161,54 @@ export const ExecutionContextFactory = {
 } as const;
 
 /**
+ * Factory for creating mock Discord members (API response format)
+ */
+export const DiscordMemberFactory = {
+  create(
+    overrides: Partial<{
+      id: string;
+      username: string;
+      discriminator: string;
+      global_name: string;
+      joined_at: string;
+      nick: string;
+      roles: string[];
+    }> = {}
+  ) {
+    return {
+      user: {
+        id: overrides.id ?? faker.string.numeric(18),
+        username: overrides.username ?? faker.internet.username(),
+        discriminator: overrides.discriminator ?? '0001',
+        global_name: overrides.global_name ?? faker.person.fullName(),
+        avatar: null,
+        bot: false,
+      },
+      nick: overrides.nick ?? null,
+      roles: overrides.roles ?? ['role1'],
+      joined_at: overrides.joined_at ?? faker.date.past().toISOString(),
+      premium_since: null,
+      deaf: false,
+      mute: false,
+      flags: 0,
+      pending: false,
+      permissions: '0',
+      communication_disabled_until: null,
+    };
+  },
+
+  createBatch(count: number) {
+    return Array.from({ length: count }, (_, index) =>
+      this.create({
+        id: `${faker.string.numeric(17)}${index.toString()}`,
+        username: `testuser${(index + 1).toString()}`,
+        global_name: `Test User ${(index + 1).toString()}`,
+      })
+    );
+  },
+} as const;
+
+/**
  * Factory for creating mock MemberData for User sheet structure
  */
 export const MemberDataFactory = {
@@ -286,10 +334,11 @@ export const SyncOperationFactory = {
  * Factory for creating Cloudflare Workers ExecutionContext
  */
 export const CloudflareExecutionContextFactory = {
-  create() {
+  create(): ExecutionContext {
     return {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
+      props: {},
     };
   },
 } as const;

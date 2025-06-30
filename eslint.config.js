@@ -197,6 +197,8 @@ export default tseslint.config(
       'no-magic-numbers': 'off',
       '@typescript-eslint/prefer-readonly': 'off',
       'max-nested-callbacks': 'off',
+      // Allow unbound methods in test files for mock function assertions
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 

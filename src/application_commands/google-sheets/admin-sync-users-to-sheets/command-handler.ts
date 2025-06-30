@@ -7,7 +7,12 @@ import type { Env } from '../../../index';
 import type { DiscordInteraction } from '../../../types/discord';
 import type { GoogleSheetsCredentials } from './sheets-operations';
 import { validateCredentials } from './sheets-operations';
-import { syncUsersToSheetsBackground, type CloudflareExecutionContext } from './background-sync';
+import {
+  syncUsersToSheetsBackground,
+  syncUsersToSheetsSynchronous,
+  type CloudflareExecutionContext,
+} from './background-sync';
+import { createEphemeralResponse, createErrorResponse } from '../../../utils/discord';
 
 /**
  * Result pattern for type-safe error handling
@@ -331,6 +336,7 @@ function executeSyncOperation(
 
 /**
  * Main handler function for /admin_sync_users_to_sheets command
+ * Returns AdminSyncResponse for backward compatibility with tests
  */
 export function handleAdminSyncUsersToSheets(
   interaction: DiscordInteraction,
@@ -348,4 +354,55 @@ export function handleAdminSyncUsersToSheets(
   }
 
   return Promise.resolve(syncResult.data);
+}
+
+/**
+ * Discord handler function for /admin_sync_users_to_sheets command
+ * Returns immediate ephemeral response with sync results
+ */
+export async function handleAdminSyncUsersToSheetsDiscord(
+  interaction: DiscordInteraction,
+  context: ExecutionContext,
+  env: Env
+): Promise<Response> {
+  // Immediate validation check
+  const validationResult = performValidation(interaction, context, env);
+  if (!validationResult.success) {
+    return createErrorResponse(validationResult.error);
+  }
+
+  // Extract credentials for synchronous sync
+  const credentialsResult = extractCredentials(validationResult.data.extendedInteraction);
+  if (!credentialsResult.success) {
+    return createErrorResponse(credentialsResult.error);
+  }
+
+  // Perform synchronous sync to get actual user count
+  const requestId = crypto.randomUUID();
+  const timestamp = new Date().toISOString();
+  const guildId = validationResult.data.extendedInteraction.guild_id ?? '';
+
+  try {
+    const syncResult = await syncUsersToSheetsSynchronous(
+      {
+        guildId: guildId,
+        credentials: credentialsResult.data,
+        requestId: requestId,
+        initiatedBy: validationResult.data.userId,
+        timestamp: timestamp,
+      },
+      env
+    );
+
+    if (!syncResult.success) {
+      return createErrorResponse(`Error writing to sheet: ${syncResult.error ?? 'Unknown error'}`);
+    }
+
+    // Return success message with actual user count
+    const userCount = syncResult.stats?.newUsersAdded ?? 0;
+    return createEphemeralResponse(`Wrote ${userCount.toString()} new users to the sheet`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+    return createErrorResponse(`Error writing to sheet: ${errorMessage}`);
+  }
 }
