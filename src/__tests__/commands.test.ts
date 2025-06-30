@@ -95,27 +95,67 @@ describe('Command Definitions', () => {
       expect(tracker2.required).toBe(false);
     });
 
-    it('should have tracker3 as optional option', () => {
+    it('should have tracker3 option present', () => {
       const tracker3 = REGISTER_COMMAND.options[2];
       if (!tracker3) {
         throw new Error('tracker3 option not found');
       }
-
       expect(tracker3.name).toBe('tracker3');
+    });
+
+    it('should have tracker3 with correct description', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
       expect(tracker3.description).toBe('Third Rocket League tracker URL (optional)');
+    });
+
+    it('should have tracker3 with string type', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
       expect(tracker3.type).toBe(3); // STRING type
+    });
+
+    it('should have tracker3 as optional', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
       expect(tracker3.required).toBe(false);
     });
 
-    it('should have tracker4 as optional option', () => {
+    it('should have tracker4 option present', () => {
       const tracker4 = REGISTER_COMMAND.options[3];
       if (!tracker4) {
         throw new Error('tracker4 option not found');
       }
-
       expect(tracker4.name).toBe('tracker4');
+    });
+
+    it('should have tracker4 with correct description', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
       expect(tracker4.description).toBe('Fourth Rocket League tracker URL (optional)');
+    });
+
+    it('should have tracker4 with string type', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
       expect(tracker4.type).toBe(3); // STRING type
+    });
+
+    it('should have tracker4 as optional', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
       expect(tracker4.required).toBe(false);
     });
 
@@ -180,32 +220,78 @@ describe('Command Definitions', () => {
       expect(Array.isArray(commands)).toBe(true);
     });
 
-    it('should have all commands with required properties', () => {
-      commands.forEach(command => {
-        expect(command).toHaveProperty('name');
-        expect(command).toHaveProperty('description');
-        expect(command).toHaveProperty('options');
-
-        expect(typeof command.name).toBe('string');
-        expect(typeof command.description).toBe('string');
-        expect(Array.isArray(command.options)).toBe(true);
-      });
+    it('should have all commands with name property', () => {
+      const allHaveName = commands.every(command =>
+        Object.prototype.hasOwnProperty.call(command, 'name')
+      );
+      expect(allHaveName).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
     });
 
-    it('should have commands with valid names', () => {
-      commands.forEach(command => {
-        // Discord command names must be lowercase and contain only letters, numbers, hyphens, and underscores
-        expect(command.name).toMatch(/^[a-z0-9-_]+$/);
-        expect(command.name.length).toBeGreaterThanOrEqual(1);
-        expect(command.name.length).toBeLessThanOrEqual(32);
-      });
+    it('should have all commands with description property', () => {
+      const allHaveDescription = commands.every(command =>
+        Object.prototype.hasOwnProperty.call(command, 'description')
+      );
+      expect(allHaveDescription).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
     });
 
-    it('should have commands with valid descriptions', () => {
-      commands.forEach(command => {
-        expect(command.description.length).toBeGreaterThanOrEqual(1);
-        expect(command.description.length).toBeLessThanOrEqual(100);
-      });
+    it('should have all commands with options property', () => {
+      const allHaveOptions = commands.every(command =>
+        Object.prototype.hasOwnProperty.call(command, 'options')
+      );
+      expect(allHaveOptions).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command names as strings', () => {
+      const allNamesAreStrings = commands.every(command => typeof command.name === 'string');
+      expect(allNamesAreStrings).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command descriptions as strings', () => {
+      const allDescriptionsAreStrings = commands.every(
+        command => typeof command.description === 'string'
+      );
+      expect(allDescriptionsAreStrings).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command options as arrays', () => {
+      const allOptionsAreArrays = commands.every(command => Array.isArray(command.options));
+      expect(allOptionsAreArrays).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command names match allowed character pattern', () => {
+      const allNamesMatchPattern = commands.every(command => /^[a-z0-9-_]+$/.test(command.name));
+      expect(allNamesMatchPattern).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command names meet minimum length', () => {
+      const allNamesMinLength = commands.every(command => command.name.length >= 1);
+      expect(allNamesMinLength).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command names meet maximum length', () => {
+      const allNamesMaxLength = commands.every(command => command.name.length <= 32);
+      expect(allNamesMaxLength).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command descriptions meet minimum length', () => {
+      const allDescriptionsMinLength = commands.every(command => command.description.length >= 1);
+      expect(allDescriptionsMinLength).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all command descriptions meet maximum length', () => {
+      const allDescriptionsMaxLength = commands.every(command => command.description.length <= 100);
+      expect(allDescriptionsMaxLength).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
     });
 
     it('should have unique command names', () => {
@@ -217,51 +303,90 @@ describe('Command Definitions', () => {
   });
 
   describe('Discord API compliance', () => {
-    it('should have commands that comply with Discord slash command format', () => {
-      commands.forEach(command => {
-        // Check command structure
-        expect(command).toHaveProperty('name');
-        expect(command).toHaveProperty('description');
-        expect(command).toHaveProperty('options');
-
-        // Check command name constraints
-        expect(command.name).toMatch(/^[a-z0-9-_]{1,32}$/);
-
-        // Check description constraints
-        expect(command.description.length).toBeLessThanOrEqual(100);
-        expect(command.description.length).toBeGreaterThan(0);
-
-        // Check options
-        expect(command.options.length).toBeLessThanOrEqual(25); // Discord limit
-
-        command.options.forEach(option => {
-          expect(option).toHaveProperty('name');
-          expect(option).toHaveProperty('description');
-          expect(option).toHaveProperty('type');
-          expect(option).toHaveProperty('required');
-
-          // Option name constraints
-          expect(option.name).toMatch(/^[a-z0-9-_]{1,32}$/);
-
-          // Option description constraints
-          expect(option.description.length).toBeLessThanOrEqual(100);
-          expect(option.description.length).toBeGreaterThan(0);
-
-          // Type should be a valid Discord option type
-          expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]).toContain(option.type);
-
-          // Required should be boolean
-          expect(typeof option.required).toBe('boolean');
-        });
-      });
+    it('should have all commands with required Discord properties', () => {
+      const allHaveRequiredProps = commands.every(
+        command =>
+          Object.prototype.hasOwnProperty.call(command, 'name') &&
+          Object.prototype.hasOwnProperty.call(command, 'description') &&
+          Object.prototype.hasOwnProperty.call(command, 'options')
+      );
+      expect(allHaveRequiredProps).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
     });
 
-    it('should have valid option types for string inputs', () => {
-      const REGISTER_COMMAND_OPTIONS = REGISTER_COMMAND.options;
+    it('should have all command names match Discord format', () => {
+      const allNamesValid = commands.every(command => /^[a-z0-9-_]{1,32}$/.test(command.name));
+      expect(allNamesValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
 
-      REGISTER_COMMAND_OPTIONS.forEach(option => {
-        expect(option.type).toBe(3); // STRING type
-      });
+    it('should have all command descriptions within Discord length limits', () => {
+      const allDescriptionsValid = commands.every(
+        command => command.description.length <= 100 && command.description.length > 0
+      );
+      expect(allDescriptionsValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all commands with options count within Discord limits', () => {
+      const allOptionsCountValid = commands.every(command => command.options.length <= 25);
+      expect(allOptionsCountValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all options with required Discord properties', () => {
+      const allOptionsValid = commands.every(command =>
+        command.options.every(
+          option =>
+            Object.prototype.hasOwnProperty.call(option, 'name') &&
+            Object.prototype.hasOwnProperty.call(option, 'description') &&
+            Object.prototype.hasOwnProperty.call(option, 'type') &&
+            Object.prototype.hasOwnProperty.call(option, 'required')
+        )
+      );
+      expect(allOptionsValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all option names match Discord format', () => {
+      const allOptionNamesValid = commands.every(command =>
+        command.options.every(option => /^[a-z0-9-_]{1,32}$/.test(option.name))
+      );
+      expect(allOptionNamesValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all option descriptions within Discord length limits', () => {
+      const allOptionDescriptionsValid = commands.every(command =>
+        command.options.every(
+          option => option.description.length <= 100 && option.description.length > 0
+        )
+      );
+      expect(allOptionDescriptionsValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all option types as valid Discord types', () => {
+      const validTypes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      const allOptionTypesValid = commands.every(command =>
+        command.options.every(option => validTypes.includes(option.type))
+      );
+      expect(allOptionTypesValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all option required fields as boolean', () => {
+      const allOptionRequiredValid = commands.every(command =>
+        command.options.every(option => typeof option.required === 'boolean')
+      );
+      expect(allOptionRequiredValid).toBe(true);
+      expect(commands).toHaveLength(2); // Verify all commands are checked
+    });
+
+    it('should have all option types as string type', () => {
+      const allOptionsStringType = REGISTER_COMMAND.options.every(option => option.type === 3);
+      expect(allOptionsStringType).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
     });
 
     it('should have reasonable number of options', () => {
@@ -272,52 +397,82 @@ describe('Command Definitions', () => {
   });
 
   describe('Accessibility and UX', () => {
-    it('should have clear and descriptive command name', () => {
+    it('should have correct command name', () => {
       expect(REGISTER_COMMAND.name).toBe('register');
-      // Name should be intuitive for users
+    });
+
+    it('should not contain underscores in command name', () => {
       expect(REGISTER_COMMAND.name).not.toContain('_');
+    });
+
+    it('should not contain spaces in command name', () => {
       expect(REGISTER_COMMAND.name).not.toContain(' ');
     });
 
-    it('should have helpful command description', () => {
+    it('should contain "Register" in description', () => {
       expect(REGISTER_COMMAND.description).toContain('Register');
+    });
+
+    it('should contain "league" in description', () => {
       expect(REGISTER_COMMAND.description).toContain('league');
     });
 
-    it('should have clear option descriptions', () => {
-      REGISTER_COMMAND.options.forEach((option, index) => {
-        expect(option.description).toContain('Rocket League');
-        expect(option.description).toContain('tracker');
-        expect(option.description).toContain('URL');
-
-        if (index > 0) {
-          expect(option.description).toContain('optional');
-        }
-      });
+    it('should have all option descriptions contain "Rocket League"', () => {
+      const allContainRocketLeague = REGISTER_COMMAND.options.every(option =>
+        option.description.includes('Rocket League')
+      );
+      expect(allContainRocketLeague).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
     });
 
-    it('should indicate which options are required vs optional', () => {
+    it('should have all option descriptions contain "tracker"', () => {
+      const allContainTracker = REGISTER_COMMAND.options.every(option =>
+        option.description.includes('tracker')
+      );
+      expect(allContainTracker).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have all option descriptions contain "URL"', () => {
+      const allContainURL = REGISTER_COMMAND.options.every(option =>
+        option.description.includes('URL')
+      );
+      expect(allContainURL).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have optional option descriptions contain "optional"', () => {
+      const optionalOptions = REGISTER_COMMAND.options.slice(1);
+      const allOptionalContainOptional = optionalOptions.every(option =>
+        option.description.includes('optional')
+      );
+      expect(allOptionalContainOptional).toBe(true);
+      expect(optionalOptions).toHaveLength(3); // Verify all optional options are checked
+    });
+
+    it('should have exactly one required option', () => {
       const requiredOptions = REGISTER_COMMAND.options.filter(opt => opt.required);
-      const optionalOptions = REGISTER_COMMAND.options.filter(opt => !opt.required);
-
       expect(requiredOptions).toHaveLength(1);
-      expect(optionalOptions).toHaveLength(3);
+    });
 
-      // First option should be required
+    it('should have exactly three optional options', () => {
+      const optionalOptions = REGISTER_COMMAND.options.filter(opt => !opt.required);
+      expect(optionalOptions).toHaveLength(3);
+    });
+
+    it('should have first option as required', () => {
       const firstOption = REGISTER_COMMAND.options[0];
       if (!firstOption) {
         throw new Error('First option not found');
       }
       expect(firstOption.required).toBe(true);
+    });
 
-      // Rest should be optional
-      for (let i = 1; i < REGISTER_COMMAND.options.length; i++) {
-        const option = REGISTER_COMMAND.options[i];
-        if (!option) {
-          throw new Error(`Option at index ${String(i)} not found`);
-        }
-        expect(option.required).toBe(false);
-      }
+    it('should have all non-first options as optional', () => {
+      const nonFirstOptions = REGISTER_COMMAND.options.slice(1);
+      const allOptional = nonFirstOptions.every(option => !option.required);
+      expect(allOptional).toBe(true);
+      expect(nonFirstOptions).toHaveLength(3); // Verify all non-first options are checked
     });
   });
 
@@ -360,20 +515,46 @@ describe('Command Definitions', () => {
       expect(modifiedOptions.length).toBe(originalLength + 1);
     });
 
-    it('should have consistent option structure', () => {
+    it('should have all options with name property', () => {
+      const allHaveName = REGISTER_COMMAND.options.every(option =>
+        Object.prototype.hasOwnProperty.call(option, 'name')
+      );
+      expect(allHaveName).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have all options with description property', () => {
+      const allHaveDescription = REGISTER_COMMAND.options.every(option =>
+        Object.prototype.hasOwnProperty.call(option, 'description')
+      );
+      expect(allHaveDescription).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have all options with type property', () => {
+      const allHaveType = REGISTER_COMMAND.options.every(option =>
+        Object.prototype.hasOwnProperty.call(option, 'type')
+      );
+      expect(allHaveType).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have all options with required property', () => {
+      const allHaveRequired = REGISTER_COMMAND.options.every(option =>
+        Object.prototype.hasOwnProperty.call(option, 'required')
+      );
+      expect(allHaveRequired).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
+    });
+
+    it('should have all options with only expected properties', () => {
       const requiredProperties = ['name', 'description', 'type', 'required'];
-
-      REGISTER_COMMAND.options.forEach(option => {
-        requiredProperties.forEach(prop => {
-          expect(option).toHaveProperty(prop);
-        });
-
-        // No unexpected properties
+      const allHaveOnlyExpectedProps = REGISTER_COMMAND.options.every(option => {
         const optionKeys = Object.keys(option);
-        optionKeys.forEach(key => {
-          expect(requiredProperties).toContain(key);
-        });
+        return optionKeys.every(key => requiredProperties.includes(key));
       });
+      expect(allHaveOnlyExpectedProps).toBe(true);
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Verify all options are checked
     });
   });
 });

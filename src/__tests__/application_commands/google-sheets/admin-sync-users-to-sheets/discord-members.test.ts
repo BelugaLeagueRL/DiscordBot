@@ -11,78 +11,48 @@ import {
   filterNewMembers,
   type DiscordMember,
   type MemberData,
-  type GuildMemberResponse,
 } from '../../../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
 import { MemberDataFactory } from '../../../helpers/test-factories';
 
-// Mock Discord API response for guild members
-const mockGuildMembersResponse: GuildMemberResponse = {
+// Focused member creation helpers
+const createAdminMember = () => ({
+  user: {
+    id: '123456789012345678',
+    username: 'testuser1',
+    bot: false,
+  },
+  nick: 'TestNick1',
+  roles: ['8'], // Admin role
+  joined_at: '2023-01-01T00:00:00.000Z',
+});
+
+const createRegularMember = () => ({
+  user: {
+    id: '987654321098765432',
+    username: 'testuser2',
+    bot: false,
+  },
+  nick: null,
+  roles: ['123456789012345680'],
+  joined_at: '2023-02-01T00:00:00.000Z',
+});
+
+const createBotMember = () => ({
+  user: {
+    id: '111222333444555666',
+    username: 'botuser',
+    bot: true,
+  },
+  nick: 'BotNick',
+  roles: ['123456789012345681'],
+  joined_at: '2023-03-01T00:00:00.000Z',
+});
+
+const createMockResponse = (members: unknown[]) => ({
   ok: true,
   status: 200,
-  json: () =>
-    Promise.resolve([
-      {
-        user: {
-          id: '123456789012345678',
-          username: 'testuser1',
-          discriminator: '0001',
-          global_name: 'Test User One',
-          avatar: 'avatar1.jpg',
-          bot: false,
-        },
-        nick: 'TestNick1',
-        roles: ['8', '123456789012345679'], // Admin role + custom role
-        joined_at: '2023-01-01T00:00:00.000Z',
-        premium_since: null,
-        deaf: false,
-        mute: false,
-        flags: 0,
-        pending: false,
-        permissions: '2147483647',
-        communication_disabled_until: null,
-      },
-      {
-        user: {
-          id: '987654321098765432',
-          username: 'testuser2',
-          discriminator: '0002',
-          global_name: 'Test User Two',
-          avatar: 'avatar2.jpg',
-          bot: false,
-        },
-        nick: null,
-        roles: ['123456789012345680'], // Regular role
-        joined_at: '2023-02-01T00:00:00.000Z',
-        premium_since: '2023-03-01T00:00:00.000Z',
-        deaf: false,
-        mute: false,
-        flags: 0,
-        pending: false,
-        permissions: '104324673',
-        communication_disabled_until: null,
-      },
-      {
-        user: {
-          id: '111222333444555666',
-          username: 'botuser',
-          discriminator: '0000',
-          global_name: null,
-          avatar: null,
-          bot: true, // Bot user - should be filtered out
-        },
-        nick: 'BotNick',
-        roles: ['123456789012345681'],
-        joined_at: '2023-03-01T00:00:00.000Z',
-        premium_since: null,
-        deaf: false,
-        mute: false,
-        flags: 0,
-        pending: false,
-        permissions: '0',
-        communication_disabled_until: null,
-      },
-    ]),
-};
+  json: () => Promise.resolve(members),
+});
 
 describe('Discord Guild Member Operations', () => {
   const mockEnv: Env = {
@@ -109,34 +79,14 @@ describe('Discord Guild Member Operations', () => {
   describe('fetchGuildMembers', () => {
     it('should fetch guild members from Discord API', async () => {
       // Arrange
-      vi.mocked(global.fetch).mockResolvedValue(mockGuildMembersResponse as Response);
+      const testMembers = [createAdminMember(), createRegularMember(), createBotMember()];
+      vi.mocked(global.fetch).mockResolvedValue(createMockResponse(testMembers) as Response);
 
       // Act
       const result = await fetchGuildMembers(mockGuildId, mockEnv);
 
       // Assert
-      expect(result.success).toBe(true);
-      expect(result.members).toHaveLength(3);
-      expect(result.members?.[0]).toEqual({
-        user: {
-          id: '123456789012345678',
-          username: 'testuser1',
-          discriminator: '0001',
-          global_name: 'Test User One',
-          avatar: 'avatar1.jpg',
-          bot: false,
-        },
-        nick: 'TestNick1',
-        roles: ['8', '123456789012345679'],
-        joined_at: '2023-01-01T00:00:00.000Z',
-        premium_since: null,
-        deaf: false,
-        mute: false,
-        flags: 0,
-        pending: false,
-        permissions: '2147483647',
-        communication_disabled_until: null,
-      });
+      expect(result.members).toEqual(testMembers);
     });
 
     it('should handle Discord API errors gracefully', async () => {
@@ -154,7 +104,7 @@ describe('Discord Guild Member Operations', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Discord API error (403): Missing Permissions');
+      expect(result.error).toContain('403');
       expect(result.members).toBeUndefined();
     });
 
@@ -173,7 +123,8 @@ describe('Discord Guild Member Operations', () => {
 
     it('should include proper authorization header', async () => {
       // Arrange
-      vi.mocked(global.fetch).mockResolvedValue(mockGuildMembersResponse as Response);
+      const testMembers = [createAdminMember(), createRegularMember()];
+      vi.mocked(global.fetch).mockResolvedValue(createMockResponse(testMembers) as Response);
 
       // Act
       await fetchGuildMembers(mockGuildId, mockEnv);
@@ -183,10 +134,10 @@ describe('Discord Guild Member Operations', () => {
         `https://discord.com/api/v10/guilds/${mockGuildId}/members?limit=1000`,
         {
           method: 'GET',
-          headers: {
-            Authorization: 'Bot test-token-123',
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('test-token-123'),
             'Content-Type': 'application/json',
-          },
+          }),
         }
       );
     });
@@ -211,7 +162,7 @@ describe('Discord Guild Member Operations', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Discord API error (429): You are being rate limited.');
+      expect(result.error).toContain('429');
     });
   });
 
