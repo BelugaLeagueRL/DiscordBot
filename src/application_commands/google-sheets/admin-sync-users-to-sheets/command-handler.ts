@@ -203,7 +203,7 @@ export function validateInteractionStructure(interaction: unknown): Result<Disco
 /**
  * Validate channel and permission requirements
  */
-function validateChannelPermissions(
+export function validateChannelPermissions(
   interaction: ExtendedDiscordInteraction,
   env: Env
 ): Result<boolean> {
@@ -226,53 +226,7 @@ function validateChannelPermissions(
   return { success: true, data: true };
 }
 
-/**
- * Type guard for option with name property
- */
-function isOptionWithName(option: unknown): option is { name: string; value: string } {
-  return (
-    typeof option === 'object' &&
-    option !== null &&
-    'name' in option &&
-    'value' in option &&
-    typeof (option as { name: unknown }).name === 'string' &&
-    typeof (option as { value: unknown }).value === 'string'
-  );
-}
-
-/**
- * Extract and validate credentials from interaction
- */
-function extractCredentials(
-  interaction: ExtendedDiscordInteraction
-): Result<GoogleSheetsCredentials> {
-  const options = interaction.data?.options;
-  if (!Array.isArray(options) || options.length === 0) {
-    return { success: false, error: 'Google Sheets credentials are required' };
-  }
-
-  const credentialsOption = options.find(
-    (opt): opt is { name: string; value: string } =>
-      isOptionWithName(opt) && opt.name === 'credentials'
-  );
-  if (credentialsOption === undefined) {
-    return { success: false, error: 'Google Sheets credentials are required' };
-  }
-
-  let parsedCredentials: unknown;
-  try {
-    parsedCredentials = JSON.parse(credentialsOption.value);
-  } catch {
-    return { success: false, error: 'Invalid credentials format' };
-  }
-
-  const validation = validateCredentials(parsedCredentials as GoogleSheetsCredentials);
-  if (!validation.isValid) {
-    return { success: false, error: 'Invalid credentials provided' };
-  }
-
-  return { success: true, data: parsedCredentials as GoogleSheetsCredentials };
-}
+// SECURITY: isOptionWithName() helper removed - no longer needed without extractCredentials()
 
 /**
  * Validate basic context and interaction structure
@@ -380,7 +334,8 @@ function executeSyncOperation(
   },
   env: Env
 ): Result<AdminSyncResponse> {
-  const credentialsResult = extractCredentials(validatedData.extendedInteraction);
+  // SECURITY: Use environment credentials only, never from user input
+  const credentialsResult = loadCredentialsFromEnvironment(env);
   if (!credentialsResult.success) {
     return { success: false, error: credentialsResult.error };
   }

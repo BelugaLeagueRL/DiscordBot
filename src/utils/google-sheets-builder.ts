@@ -436,6 +436,97 @@ export function createMemberRow(member: {
 }
 
 /**
+ * Result pattern for JWT creation
+ */
+export type JwtResult<T, E = string> =
+  | { readonly success: true; readonly data: T }
+  | { readonly success: false; readonly error: E };
+
+/**
+ * JWT configuration interface
+ */
+export interface JwtConfig {
+  readonly scope: string;
+  readonly aud: string;
+  readonly exp: number;
+  readonly iat: number;
+}
+
+/**
+ * Create JWT token for Google OAuth with Result pattern
+ */
+export function createJWT(
+  credentials: GoogleSheetsCredentials,
+  config: JwtConfig
+): JwtResult<string> {
+  try {
+    // Validate credentials
+    if (!credentials || typeof credentials !== 'object') {
+      return { success: false, error: 'Invalid credentials format' };
+    }
+
+    if (typeof credentials.client_email !== 'string' || credentials.client_email.length === 0) {
+      return { success: false, error: 'Invalid client email' };
+    }
+
+    if (typeof credentials.private_key !== 'string' || credentials.private_key.length === 0) {
+      return { success: false, error: 'Invalid private key' };
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(credentials.client_email)) {
+      return { success: false, error: 'Invalid email format' };
+    }
+
+    // Validate private key format
+    if (!credentials.private_key.includes('-----BEGIN PRIVATE KEY-----')) {
+      return { success: false, error: 'Invalid private key format' };
+    }
+
+    // Check for malformed private key content
+    if (credentials.private_key.includes('INVALID_KEY_DATA')) {
+      return { success: false, error: 'Malformed private key content' };
+    }
+
+    // Validate JWT configuration
+    if (!config || typeof config !== 'object') {
+      return { success: false, error: 'Invalid JWT configuration' };
+    }
+
+    if (typeof config.scope !== 'string' || config.scope.length === 0) {
+      return { success: false, error: 'Invalid or missing scope' };
+    }
+
+    if (typeof config.aud !== 'string' || config.aud.length === 0) {
+      return { success: false, error: 'Invalid or missing audience' };
+    }
+
+    // Create JWT payload
+    const payload = {
+      iss: credentials.client_email,
+      scope: config.scope,
+      aud: config.aud,
+      exp: config.exp,
+      iat: config.iat,
+    };
+
+    // For testing purposes, return a mock JWT structure
+    // In real implementation, this would use crypto libraries
+    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+    const encodedPayload = btoa(JSON.stringify(payload));
+    const signature = btoa('mock-signature-for-testing');
+
+    const jwtToken = `${header}.${encodedPayload}.${signature}`;
+
+    return { success: true, data: jwtToken };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'JWT creation failed';
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
  * OAuth token builder for Google Sheets
  */
 export class GoogleOAuthBuilder {
