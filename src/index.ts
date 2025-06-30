@@ -496,12 +496,12 @@ function initializeRequest(
 /**
  * Handle method routing
  */
-function handleMethodRouting(
+async function handleMethodRouting(
   request: Readonly<Request>,
   env: Readonly<Env>,
   audit: Readonly<AuditLogger>,
   context: Readonly<SecurityContext>
-): Response | null {
+): Promise<Response | null> {
   // Handle CORS preflight requests
   if (request.method === 'OPTIONS') {
     audit.logHealthCheck(context);
@@ -609,7 +609,7 @@ export default {
       audit = init.audit;
 
       // Handle method routing
-      const methodResponse = handleMethodRouting(request, env, audit, context);
+      const methodResponse = await handleMethodRouting(request, env, audit, context);
       if (methodResponse !== null) {
         return methodResponse;
       }

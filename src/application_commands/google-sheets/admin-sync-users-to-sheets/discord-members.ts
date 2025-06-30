@@ -119,7 +119,7 @@ export async function fetchGuildMembers(
 /**
  * Check if user object is valid
  */
-function isValidUser(user: DiscordUser): boolean {
+export function isValidUser(user: DiscordUser): boolean {
   return (
     typeof user.id === 'string' &&
     typeof user.username === 'string' &&
