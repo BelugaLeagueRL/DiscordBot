@@ -643,4 +643,158 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(diffMs).toBeLessThan(5000); // Within 5 seconds
     });
   });
+
+  describe('filterNewMembers', () => {
+    it('should filter out members that already exist in Google Sheets', async () => {
+      // RED: This will fail because filterNewMembers is exported but test doesn't pass yet
+
+      // Arrange - Member data with some existing IDs
+      const memberData = [
+        {
+          discord_id: '123456789012345678',
+          discord_username_display: 'NewUser1',
+          discord_username_actual: 'newuser1',
+          server_join_date: '2023-01-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-01-01T00:00:00.000Z',
+        },
+        {
+          discord_id: '987654321098765432',
+          discord_username_display: 'ExistingUser',
+          discord_username_actual: 'existinguser',
+          server_join_date: '2023-02-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-02-01T00:00:00.000Z',
+        },
+        {
+          discord_id: '555666777888999000',
+          discord_username_display: 'NewUser2',
+          discord_username_actual: 'newuser2',
+          server_join_date: '2023-03-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-03-01T00:00:00.000Z',
+        },
+      ];
+
+      // Set of existing IDs (middle user already exists)
+      const existingIds = new Set(['987654321098765432']);
+
+      const { filterNewMembers } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = filterNewMembers(memberData, existingIds);
+
+      // Assert - Should only return members not in existingIds
+      expect(result).toHaveLength(2);
+      expect(result[0]?.discord_id).toBe('123456789012345678');
+      expect(result[1]?.discord_id).toBe('555666777888999000');
+
+      // Should not contain the existing user
+      const existingUserFound = result.some(member => member.discord_id === '987654321098765432');
+      expect(existingUserFound).toBe(false);
+    });
+
+    it('should return all members when no existing IDs provided', async () => {
+      // Testing the case where Google Sheets is empty (no existing members)
+
+      // Arrange - Member data with empty existing IDs set
+      const memberData = [
+        {
+          discord_id: '123456789012345678',
+          discord_username_display: 'User1',
+          discord_username_actual: 'user1',
+          server_join_date: '2023-01-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-01-01T00:00:00.000Z',
+        },
+        {
+          discord_id: '987654321098765432',
+          discord_username_display: 'User2',
+          discord_username_actual: 'user2',
+          server_join_date: '2023-02-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-02-01T00:00:00.000Z',
+        },
+      ];
+
+      const existingIds = new Set<string>(); // Empty set
+
+      const { filterNewMembers } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = filterNewMembers(memberData, existingIds);
+
+      // Assert - Should return all members
+      expect(result).toHaveLength(2);
+      expect(result).toEqual(memberData);
+    });
+
+    it('should return empty array when all members already exist', async () => {
+      // Testing the case where all Discord members are already in Google Sheets
+
+      // Arrange - Member data where all IDs already exist
+      const memberData = [
+        {
+          discord_id: '123456789012345678',
+          discord_username_display: 'ExistingUser1',
+          discord_username_actual: 'existinguser1',
+          server_join_date: '2023-01-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-01-01T00:00:00.000Z',
+        },
+        {
+          discord_id: '987654321098765432',
+          discord_username_display: 'ExistingUser2',
+          discord_username_actual: 'existinguser2',
+          server_join_date: '2023-02-01T00:00:00.000Z',
+          is_banned: false,
+          is_active: true,
+          last_updated: '2023-02-01T00:00:00.000Z',
+        },
+      ];
+
+      // All IDs exist in sheets
+      const existingIds = new Set(['123456789012345678', '987654321098765432']);
+
+      const { filterNewMembers } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = filterNewMembers(memberData, existingIds);
+
+      // Assert - Should return empty array
+      expect(result).toHaveLength(0);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle empty input arrays gracefully', async () => {
+      // Testing edge case of empty member data input
+
+      // Arrange - Empty member data
+      const memberData: any[] = [];
+      const existingIds = new Set(['123456789012345678', '987654321098765432']);
+
+      const { filterNewMembers } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = filterNewMembers(memberData, existingIds);
+
+      // Assert - Should return empty array
+      expect(result).toHaveLength(0);
+      expect(result).toEqual([]);
+    });
+  });
 });
