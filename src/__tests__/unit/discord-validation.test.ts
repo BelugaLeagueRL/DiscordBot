@@ -392,4 +392,255 @@ describe('Discord Validation Functions - Unit Tests', () => {
       });
     });
   });
+
+  describe('transformMemberData', () => {
+    it('should transform valid members with nickname priority logic', async () => {
+      // Testing the core transformation logic with nickname > global_name > username priority
+
+      // Arrange - Valid members with different name scenarios
+      const validMembers = [
+        {
+          user: {
+            id: '123456789012345678',
+            username: 'username1',
+            discriminator: '0001',
+            global_name: 'GlobalName1',
+            avatar: 'avatar1.jpg',
+            bot: false,
+          },
+          nick: 'Nickname1', // Should use this (highest priority)
+          roles: ['role1', 'role2'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '2147483647',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '987654321098765432',
+            username: 'username2',
+            discriminator: '0002',
+            global_name: 'GlobalName2',
+            avatar: null,
+            bot: false,
+          },
+          nick: null, // Should use global_name (second priority)
+          roles: ['role3'],
+          joined_at: '2023-02-01T00:00:00.000Z',
+          premium_since: '2023-03-01T00:00:00.000Z',
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '104324673',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '555666777888999000',
+            username: 'username3',
+            discriminator: '0003',
+            global_name: null,
+            avatar: null,
+            bot: false,
+          },
+          nick: null, // Should use username (fallback)
+          roles: [],
+          joined_at: '2023-03-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+      ];
+
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData(validMembers);
+
+      // Assert
+      expect(result).toHaveLength(3);
+
+      // Test nickname priority
+      expect(result[0]).toEqual({
+        discord_id: '123456789012345678',
+        discord_username_display: 'Nickname1', // nick used
+        discord_username_actual: 'username1',
+        server_join_date: '2023-01-01T00:00:00.000Z',
+        is_banned: false,
+        is_active: true,
+        last_updated: expect.any(String),
+      });
+
+      // Test global_name fallback
+      expect(result[1]).toEqual({
+        discord_id: '987654321098765432',
+        discord_username_display: 'GlobalName2', // global_name used
+        discord_username_actual: 'username2',
+        server_join_date: '2023-02-01T00:00:00.000Z',
+        is_banned: false,
+        is_active: true,
+        last_updated: expect.any(String),
+      });
+
+      // Test username fallback
+      expect(result[2]).toEqual({
+        discord_id: '555666777888999000',
+        discord_username_display: 'username3', // username used
+        discord_username_actual: 'username3',
+        server_join_date: '2023-03-01T00:00:00.000Z',
+        is_banned: false,
+        is_active: true,
+        last_updated: expect.any(String),
+      });
+    });
+
+    it('should filter out invalid members during transformation', async () => {
+      // Testing that invalid members are automatically filtered out
+
+      // Arrange - Mix of valid and invalid members
+      const mixedMembers = [
+        {
+          user: {
+            id: '123456789012345678',
+            username: 'validuser',
+            discriminator: '0001',
+            global_name: 'Valid User',
+            avatar: null,
+            bot: false, // Valid user
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '987654321098765432',
+            username: 'botuser',
+            discriminator: '0000',
+            global_name: 'Bot User',
+            avatar: null,
+            bot: true, // Invalid - bot user
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: 'invalid-id', // Invalid - bad Discord ID
+            username: 'invaliduser',
+            discriminator: '0002',
+            global_name: 'Invalid User',
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+      ];
+
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData(mixedMembers);
+
+      // Assert - Only valid member should remain
+      expect(result).toHaveLength(1);
+      expect(result[0]?.discord_id).toBe('123456789012345678');
+      expect(result[0]?.discord_username_actual).toBe('validuser');
+    });
+
+    it('should handle empty input arrays gracefully', async () => {
+      // Testing edge case of empty input
+
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData([]);
+
+      // Assert
+      expect(result).toEqual([]);
+      expect(result).toHaveLength(0);
+    });
+
+    it('should generate consistent last_updated timestamps', async () => {
+      // Testing that timestamp generation works correctly
+
+      // Arrange
+      const validMember = {
+        user: {
+          id: '123456789012345678',
+          username: 'testuser',
+          discriminator: '0001',
+          global_name: 'Test User',
+          avatar: null,
+          bot: false,
+        },
+        nick: null,
+        roles: ['role1'],
+        joined_at: '2023-01-01T00:00:00.000Z',
+        premium_since: null,
+        deaf: false,
+        mute: false,
+        flags: 0,
+        pending: false,
+        permissions: '0',
+        communication_disabled_until: null,
+      };
+
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData([validMember]);
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0]?.last_updated).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/); // ISO format
+
+      // Timestamp should be recent (within last few seconds)
+      const timestamp = new Date(result[0]?.last_updated ?? '');
+      const now = new Date();
+      const diffMs = now.getTime() - timestamp.getTime();
+      expect(diffMs).toBeLessThan(5000); // Within 5 seconds
+    });
+  });
 });
