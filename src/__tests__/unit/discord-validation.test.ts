@@ -203,4 +203,193 @@ describe('Discord Validation Functions - Unit Tests', () => {
       });
     });
   });
+
+  describe('isValidMember', () => {
+    it('should validate members with required fields and valid users', async () => {
+      // RED: This will fail because isValidMember is not exported yet
+
+      // Arrange - Valid member objects
+      const validMembers = [
+        {
+          user: {
+            id: '123456789012345678',
+            username: 'testuser',
+            discriminator: '0001',
+            global_name: 'Test User',
+            avatar: 'avatar.jpg',
+            bot: false,
+          },
+          nick: 'TestNick',
+          roles: ['role1', 'role2'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '2147483647',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '987654321098765432',
+            username: 'anotheruser',
+            discriminator: '0002',
+            global_name: null,
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: [], // Empty roles array should still be valid
+          joined_at: '2023-02-01T00:00:00.000Z',
+          premium_since: '2023-03-01T00:00:00.000Z',
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '104324673',
+          communication_disabled_until: null,
+        },
+      ];
+
+      const { isValidMember } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      validMembers.forEach(member => {
+        // Act & Assert
+        expect(isValidMember(member)).toBe(true);
+      });
+    });
+
+    it('should reject members with invalid user objects', async () => {
+      // Arrange - Members with invalid users (bots, invalid IDs, etc.)
+      const invalidUserMembers = [
+        {
+          user: {
+            id: '123456789012345678',
+            username: 'botuser',
+            discriminator: '0000',
+            global_name: 'Bot User',
+            avatar: null,
+            bot: true, // Bot user should make member invalid
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: 'invalid-id', // Invalid Discord ID
+            username: 'testuser',
+            discriminator: '0001',
+            global_name: 'Test User',
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+      ];
+
+      const { isValidMember } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      invalidUserMembers.forEach(member => {
+        // Act & Assert
+        expect(isValidMember(member)).toBe(false);
+      });
+    });
+
+    it('should reject members with malformed required fields', async () => {
+      // Arrange - Members with invalid roles or joined_at fields
+      const malformedMembers = [
+        {
+          user: {
+            id: '123456789012345678',
+            username: 'testuser',
+            discriminator: '0001',
+            global_name: 'Test User',
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: 'not-an-array' as any, // Should be array
+          joined_at: '2023-01-01T00:00:00.000Z',
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '987654321098765432',
+            username: 'anotheruser',
+            discriminator: '0002',
+            global_name: null,
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: null as any, // Should be string
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+        {
+          user: {
+            id: '555666777888999000',
+            username: 'thirduser',
+            discriminator: '0003',
+            global_name: 'Third User',
+            avatar: null,
+            bot: false,
+          },
+          nick: null,
+          roles: ['role1'],
+          joined_at: 123456789 as any, // Should be string, not number
+          premium_since: null,
+          deaf: false,
+          mute: false,
+          flags: 0,
+          pending: false,
+          permissions: '0',
+          communication_disabled_until: null,
+        },
+      ];
+
+      const { isValidMember } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      malformedMembers.forEach(member => {
+        // Act & Assert
+        expect(isValidMember(member)).toBe(false);
+      });
+    });
+  });
 });

@@ -135,7 +135,7 @@ export function isValidUser(user: DiscordUser): boolean {
  * @param member - Discord member to validate
  * @returns True if member has required fields and is not a bot
  */
-function isValidMember(member: DiscordMember): boolean {
+export function isValidMember(member: DiscordMember): boolean {
   // Check for required user object and fields
   if (!isValidUser(member.user)) {
     return false;
