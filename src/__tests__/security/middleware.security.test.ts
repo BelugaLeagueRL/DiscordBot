@@ -111,60 +111,86 @@ describe('Security Middleware', () => {
       expect(validateRateLimit(clientIP)).toBe(true);
     });
 
-    it('should track request count correctly', () => {
+    it('should allow first request for new IP', () => {
       const clientIP = '192.168.1.1';
-
-      // Make several requests
-      for (let i = 0; i < 5; i++) {
-        expect(validateRateLimit(clientIP)).toBe(true);
-      }
+      expect(validateRateLimit(clientIP)).toBe(true);
     });
 
-    it('should block requests after exceeding rate limit', () => {
-      const clientIP = '192.168.1.1';
+    it('should allow sequential requests within limit', () => {
+      const clientIP = '192.168.1.2';
+      expect(validateRateLimit(clientIP)).toBe(true);
+      expect(validateRateLimit(clientIP)).toBe(true);
+    });
 
-      // Exhaust rate limit (100 requests)
-      for (let i = 0; i < 100; i++) {
-        validateRateLimit(clientIP);
-      }
+    it('should maintain separate counters per IP', () => {
+      const ip1 = '192.168.1.3';
+      const ip2 = '192.168.1.4';
+      expect(validateRateLimit(ip1)).toBe(true);
+      expect(validateRateLimit(ip2)).toBe(true);
+    });
 
-      // 101st request should be blocked
+    it('should enforce rate limit threshold at 100 requests', () => {
+      const clientIP = '192.168.1.5';
+
+      // Test behavior: rate limiting enforces 100 request limit
+      // Create helper to avoid forEach anti-pattern
+      const makeRequests = (ip: string, count: number): boolean[] => {
+        const results: boolean[] = [];
+        for (let i = 0; i < count; i++) {
+          results.push(validateRateLimit(ip));
+        }
+        return results;
+      };
+
+      const first100Results = makeRequests(clientIP, 100);
+
+      // Behavioral assertion: all 100 requests should be allowed
+      expect(first100Results.every(result => result === true)).toBe(true);
+      expect(first100Results).toHaveLength(100);
+
+      // Behavioral assertion: 101st request should be blocked
       expect(validateRateLimit(clientIP)).toBe(false);
     });
 
     it('should reset rate limit after time window', () => {
-      const clientIP = '192.168.1.1';
+      const clientIP = '192.168.1.6';
 
-      // Exhaust rate limit
-      for (let i = 0; i < 100; i++) {
-        validateRateLimit(clientIP);
-      }
+      // Test behavior: rate limit resets after time window
+      const exhaustRateLimit = (ip: string): void => {
+        for (let i = 0; i < 100; i++) {
+          validateRateLimit(ip);
+        }
+      };
 
-      // Should be blocked
+      exhaustRateLimit(clientIP);
+
+      // Behavioral assertion: should be blocked after exhaustion
       expect(validateRateLimit(clientIP)).toBe(false);
 
-      // Advance time beyond window (mock implementation would need time mocking)
+      // Advance time beyond window
       vi.setSystemTime(Date.now() + 61 * 1000); // 61 seconds later
 
-      // Should be allowed again
+      // Behavioral assertion: should be allowed again after reset
       expect(validateRateLimit(clientIP)).toBe(true);
 
       vi.useRealTimers();
     });
 
     it('should handle different IPs independently', () => {
-      const ip1 = '192.168.1.1';
-      const ip2 = '192.168.1.2';
+      const ip1 = '192.168.1.7';
+      const ip2 = '192.168.1.8';
 
-      // Exhaust rate limit for IP1
-      for (let i = 0; i < 100; i++) {
-        validateRateLimit(ip1);
-      }
+      // Test behavior: rate limits are enforced per IP independently
+      const exhaustRateLimit = (ip: string): void => {
+        for (let i = 0; i < 100; i++) {
+          validateRateLimit(ip);
+        }
+      };
 
-      // IP1 should be blocked
+      exhaustRateLimit(ip1);
+
+      // Behavioral assertions: IP1 blocked, IP2 still allowed
       expect(validateRateLimit(ip1)).toBe(false);
-
-      // IP2 should still be allowed
       expect(validateRateLimit(ip2)).toBe(true);
     });
   });
@@ -299,10 +325,14 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction);
       const context = SecurityContextFactory.withIP('192.168.1.1');
 
-      // Exhaust rate limit first
-      for (let i = 0; i < 100; i++) {
-        validateRateLimit(context.clientIP);
-      }
+      // Test behavior: rate limit should block after 100 requests
+      const exhaustRateLimit = (ip: string): void => {
+        for (let i = 0; i < 100; i++) {
+          validateRateLimit(ip);
+        }
+      };
+
+      exhaustRateLimit(context.clientIP);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -495,10 +525,18 @@ describe('Security Middleware', () => {
       // Reset timer to ensure clean state for validation
       vi.setSystemTime(startTime + 66 * 1000);
 
-      // Should be able to make full 100 requests again
-      for (let i = 0; i < 100; i++) {
-        expect(validateRateLimit(clientIP)).toBe(true);
-      }
+      // Test behavior: should be able to make full 100 requests again after cleanup
+      const validateFullRateLimit = (ip: string): boolean[] => {
+        const results: boolean[] = [];
+        for (let i = 0; i < 100; i++) {
+          results.push(validateRateLimit(ip));
+        }
+        return results;
+      };
+
+      const results = validateFullRateLimit(clientIP);
+      expect(results.every(result => result === true)).toBe(true);
+      expect(results).toHaveLength(100);
 
       vi.useRealTimers();
     });
@@ -511,17 +549,28 @@ describe('Security Middleware', () => {
       const startTime = 1000000000000; // Fixed timestamp
       vi.setSystemTime(startTime);
 
-      // Make 50 requests
-      for (let i = 0; i < 50; i++) {
-        validateRateLimit(clientIP);
-      }
+      // Test behavior: make 50 requests before cleanup
+      const makePartialRequests = (ip: string, count: number): void => {
+        for (let i = 0; i < count; i++) {
+          validateRateLimit(ip);
+        }
+      };
 
+      makePartialRequests(clientIP, 50);
       cleanupRateLimits();
 
-      // Should still be limited to 50 more requests
-      for (let i = 0; i < 50; i++) {
-        expect(validateRateLimit(clientIP)).toBe(true);
-      }
+      // Test behavior: should still be limited to 50 more requests
+      const validateRemainingRequests = (ip: string, count: number): boolean[] => {
+        const results: boolean[] = [];
+        for (let i = 0; i < count; i++) {
+          results.push(validateRateLimit(ip));
+        }
+        return results;
+      };
+
+      const remainingResults = validateRemainingRequests(clientIP, 50);
+      expect(remainingResults.every(result => result === true)).toBe(true);
+      expect(remainingResults).toHaveLength(50);
 
       // 101st request should be blocked
       expect(validateRateLimit(clientIP)).toBe(false);

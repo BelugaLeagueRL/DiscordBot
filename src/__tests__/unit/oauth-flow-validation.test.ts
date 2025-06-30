@@ -4,74 +4,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-
-// Object Mother pattern for OAuth flow test data
-const OAuthFlowMother = {
-  // Valid OAuth token response
-  validTokenResponse() {
-    return {
-      access_token: 'ya29.c.b0Aaekm1K7-valid-access-token-here',
-      expires_in: 3600,
-      token_type: 'Bearer',
-    };
-  },
-
-  // Invalid OAuth token response (missing access_token)
-  invalidTokenResponseMissingToken() {
-    return {
-      expires_in: 3600,
-      token_type: 'Bearer',
-    };
-  },
-
-  // Invalid OAuth token response (invalid expires_in)
-  invalidTokenResponseInvalidExpiry() {
-    return {
-      access_token: 'ya29.c.b0Aaekm1K7-valid-access-token-here',
-      expires_in: 'not-a-number',
-      token_type: 'Bearer',
-    };
-  },
-
-  // Error response from OAuth endpoint
-  oauthErrorResponse() {
-    return {
-      error: 'invalid_grant',
-      error_description: 'Invalid JWT Signature.',
-    };
-  },
-
-  // Valid OAuth request parameters
-  validOAuthRequestParams() {
-    return {
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion:
-        'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZXN0QGV4YW1wbGUuY29tIiwic2NvcGUiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3NwcmVhZHNoZWV0cyIsImF1ZCI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi90b2tlbiIsImV4cCI6MTY4NzUzMjAwMCwiaWF0IjoxNjg3NTI4NDAwfQ.mock-signature',
-    };
-  },
-
-  // Invalid OAuth request parameters (missing assertion)
-  invalidOAuthRequestParamsMissingAssertion() {
-    return {
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-    };
-  },
-
-  // Invalid OAuth request parameters (wrong grant type)
-  invalidOAuthRequestParamsWrongGrantType() {
-    return {
-      grant_type: 'authorization_code',
-      assertion:
-        'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZXN0QGV4YW1wbGUuY29tIiwic2NvcGUiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL3NwcmVhZHNoZWV0cyIsImF1ZCI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi90b2tlbiIsImV4cCI6MTY4NzUzMjAwMCwiaWF0IjoxNjg3NTI4NDAwfQ.mock-signature',
-    };
-  },
-};
+import { TestDataBuilders } from '../helpers/test-builders';
 
 describe('OAuth Flow Validation - Unit Tests', () => {
   describe('validateOAuthTokenResponse', () => {
     it('should validate valid OAuth token response successfully', async () => {
       // Arrange
-      const validResponse = OAuthFlowMother.validTokenResponse();
+      const validResponse = TestDataBuilders.validOAuthResponse().build();
       const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
@@ -86,48 +25,92 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should reject invalid OAuth token responses', async () => {
-      // Testing the behavioral requirement: invalid responses cause validation failure
-      const invalidResponses = [
-        OAuthFlowMother.invalidTokenResponseMissingToken(),
-        OAuthFlowMother.invalidTokenResponseInvalidExpiry(),
-        OAuthFlowMother.oauthErrorResponse(),
-      ];
-
+    it('should reject OAuth token response with missing access token', async () => {
+      // Arrange
+      const invalidResponse = TestDataBuilders.invalidOAuthResponse().build();
       const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
-      invalidResponses.forEach(response => {
-        // Act
-        const result = validateOAuthTokenResponse(response);
+      // Act
+      const result = validateOAuthTokenResponse(invalidResponse);
 
-        // Assert - Focus on behavior: validation fails for invalid responses
-        expect(result.success).toBe(false);
-      });
+      // Assert - Focus on behavior: validation fails for invalid responses
+      expect(result.success).toBe(false);
     });
 
-    it('should handle null and undefined responses gracefully', async () => {
-      // Testing the behavioral requirement: null/undefined responses are handled
-      const invalidInputs = [null, undefined, 'not-an-object', 123];
+    it('should reject OAuth token response with invalid expires_in', async () => {
+      // Arrange
+      const invalidResponse = TestDataBuilders.validOAuthResponse().withInvalidExpiresIn().build();
       const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
-      invalidInputs.forEach(input => {
-        // Act
-        const result = validateOAuthTokenResponse(input as any);
+      // Act
+      const result = validateOAuthTokenResponse(invalidResponse);
 
-        // Assert - Focus on behavior: validation fails gracefully
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error).toBeDefined();
-          expect(typeof result.error).toBe('string');
-        }
-      });
+      // Assert - Focus on behavior: validation fails for invalid responses
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject OAuth error responses', async () => {
+      // Arrange
+      const errorResponse = TestDataBuilders.oauthErrorResponse().build();
+      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
+
+      // Act
+      const result = validateOAuthTokenResponse(errorResponse);
+
+      // Assert - Focus on behavior: validation fails for invalid responses
+      expect(result.success).toBe(false);
+    });
+
+    it('should handle null responses gracefully', async () => {
+      // Arrange
+      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
+
+      // Act
+      const result = validateOAuthTokenResponse(null as any);
+
+      // Assert - Focus on behavior: validation fails gracefully
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      }
+    });
+
+    it('should handle undefined responses gracefully', async () => {
+      // Arrange
+      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
+
+      // Act
+      const result = validateOAuthTokenResponse(undefined as any);
+
+      // Assert - Focus on behavior: validation fails gracefully
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      }
+    });
+
+    it('should handle non-object responses gracefully', async () => {
+      // Arrange
+      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
+
+      // Act
+      const result = validateOAuthTokenResponse('not-an-object' as any);
+
+      // Assert - Focus on behavior: validation fails gracefully
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      }
     });
   });
 
   describe('validateOAuthRequestParams', () => {
     it('should validate OAuth request parameters correctly', async () => {
       // Testing the behavioral requirement: valid request parameters pass validation
-      const validParams = OAuthFlowMother.validOAuthRequestParams();
+      const validParams = TestDataBuilders.validOAuthParams().build();
       const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
 
       // Act
@@ -141,26 +124,36 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should reject invalid OAuth request parameters', async () => {
-      // Testing the behavioral requirement: invalid parameters cause validation failure
-      const invalidParams = [
-        OAuthFlowMother.invalidOAuthRequestParamsMissingAssertion(),
-        OAuthFlowMother.invalidOAuthRequestParamsWrongGrantType(),
-      ];
-
+    it('should reject OAuth request parameters with missing assertion', async () => {
+      // Arrange
+      const invalidParams = TestDataBuilders.invalidOAuthParams().build();
       const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
 
-      invalidParams.forEach(params => {
-        // Act
-        const result = validateOAuthRequestParams(params);
+      // Act
+      const result = validateOAuthRequestParams(invalidParams);
 
-        // Assert - Focus on behavior: validation fails for invalid parameters
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error).toBeDefined();
-          expect(typeof result.error).toBe('string');
-        }
-      });
+      // Assert - Focus on behavior: validation fails for invalid parameters
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      }
+    });
+
+    it('should reject OAuth request parameters with wrong grant type', async () => {
+      // Arrange
+      const invalidParams = TestDataBuilders.validOAuthParams().withWrongGrantType().build();
+      const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
+
+      // Act
+      const result = validateOAuthRequestParams(invalidParams);
+
+      // Assert - Focus on behavior: validation fails for invalid parameters
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      }
     });
   });
 });

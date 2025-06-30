@@ -71,45 +71,51 @@ describe('Execution Context Validation - Unit Tests', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject null or undefined execution context', async () => {
-      // Testing the behavioral requirement: null/undefined contexts are invalid
-      const testCases = [
-        { context: ExecutionContextMother.nullContext(), description: 'null context' },
-        { context: ExecutionContextMother.undefinedContext(), description: 'undefined context' },
-      ];
-
+    it('should reject null execution contexts', async () => {
+      // Arrange
+      const context = ExecutionContextMother.nullContext();
       const { validateExecutionContext } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
       );
 
-      testCases.forEach(({ context }) => {
-        // Act
-        const result = validateExecutionContext(context);
+      // Act
+      const result = validateExecutionContext(context);
 
-        // Assert - Focus on behavior: validation fails
-        expect(result.success).toBe(false);
-      });
+      // Assert - Focus on behavior: validation fails
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject undefined execution contexts', async () => {
+      // Arrange
+      const context = ExecutionContextMother.undefinedContext();
+      const { validateExecutionContext } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
+      );
+
+      // Act
+      const result = validateExecutionContext(context);
+
+      // Assert - Focus on behavior: validation fails
+      expect(result.success).toBe(false);
     });
 
     it('should reject execution context missing required methods', async () => {
       // Testing the behavioral requirement: contexts without proper waitUntil are invalid
-      const invalidContexts = [
-        ExecutionContextMother.contextMissingWaitUntil(),
-        ExecutionContextMother.contextWithInvalidWaitUntil(),
-        ExecutionContextMother.primitiveContext(),
-      ];
-
       const { validateExecutionContext } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
       );
 
-      invalidContexts.forEach(invalidContext => {
-        // Act
-        const result = validateExecutionContext(invalidContext);
+      // Act
+      const result1 = validateExecutionContext(ExecutionContextMother.contextMissingWaitUntil());
+      const result2 = validateExecutionContext(
+        ExecutionContextMother.contextWithInvalidWaitUntil()
+      );
+      const result3 = validateExecutionContext(ExecutionContextMother.primitiveContext());
 
-        // Assert - Focus on behavior: validation fails
-        expect(result.success).toBe(false);
-      });
+      // Assert - Focus on behavior: validation fails
+      expect(result1.success).toBe(false);
+      expect(result2.success).toBe(false);
+      expect(result3.success).toBe(false);
     });
   });
 });

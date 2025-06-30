@@ -4,94 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Object Mother pattern for GoogleSheetsApiBuilder test data
-const ApiBuilderMother = {
-  // Valid builder configuration
-  validBuilderConfig() {
-    return {
-      spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-      range: 'Sheet1!A:G',
-      accessToken: 'ya29.a0AfH6SMBeiGFHJT9k...',
-      valueInputOption: 'USER_ENTERED' as const,
-    };
-  },
-
-  // Sample member data for append operations
-  sampleMemberRows() {
-    return [
-      [
-        '123456789012345678',
-        'DisplayName1',
-        'username1',
-        '2023-01-01T00:00:00.000Z',
-        'false',
-        'true',
-        '2023-06-01T12:00:00.000Z',
-      ],
-      [
-        '987654321098765432',
-        'DisplayName2',
-        'username2',
-        '2023-02-01T00:00:00.000Z',
-        'false',
-        'true',
-        '2023-06-01T12:00:00.000Z',
-      ],
-    ];
-  },
-
-  // Sample Google Sheets API response for get operations
-  sampleGetResponse() {
-    return {
-      range: 'Sheet1!A:G',
-      majorDimension: 'ROWS',
-      values: [
-        [
-          'discord_id',
-          'display_name',
-          'username',
-          'join_date',
-          'is_banned',
-          'is_active',
-          'last_updated',
-        ],
-        [
-          '123456789012345678',
-          'ExistingUser',
-          'existinguser',
-          '2023-01-01T00:00:00.000Z',
-          'false',
-          'true',
-          '2023-01-01T12:00:00.000Z',
-        ],
-      ],
-    };
-  },
-
-  // Sample Google Sheets API response for append operations
-  sampleAppendResponse() {
-    return {
-      spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-      updates: {
-        spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-        updatedRows: 2,
-        updatedColumns: 7,
-        updatedCells: 14,
-        updatedRange: 'Sheet1!A3:G4',
-      },
-    };
-  },
-
-  // Empty Google Sheets response (for empty sheets)
-  emptyGetResponse() {
-    return {
-      range: 'Sheet1!A:G',
-      majorDimension: 'ROWS',
-      values: undefined,
-    };
-  },
-};
+import { TestDataBuilders } from '../helpers/test-builders';
 
 describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   beforeEach(() => {
@@ -174,9 +87,9 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   describe('append', () => {
     it('should successfully append rows when properly configured', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const rows = ApiBuilderMother.sampleMemberRows();
-      const mockResponse = ApiBuilderMother.sampleAppendResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const rows = TestDataBuilders.sampleMemberRows().build();
+      const mockResponse = TestDataBuilders.appendSheetsResponse().build();
 
       // Mock fetch to return successful response
       global.fetch = vi.fn().mockResolvedValue({
@@ -218,8 +131,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   describe('get', () => {
     it('should successfully retrieve values when properly configured', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const mockResponse = ApiBuilderMother.sampleGetResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const mockResponse = TestDataBuilders.validSheetsGetResponse().build();
 
       // Mock fetch to return successful response
       global.fetch = vi.fn().mockResolvedValue({
@@ -244,8 +157,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
 
     it('should handle empty sheets gracefully', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const mockResponse = ApiBuilderMother.emptyGetResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const mockResponse = TestDataBuilders.emptySheetsResponse().build();
 
       // Mock fetch to return empty response
       global.fetch = vi.fn().mockResolvedValue({
@@ -272,8 +185,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   describe('findRowsByValue', () => {
     it('should find matching rows by column value', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const mockResponse = ApiBuilderMother.sampleGetResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const mockResponse = TestDataBuilders.validSheetsGetResponse().build();
 
       // Mock fetch to return response with existing data
       global.fetch = vi.fn().mockResolvedValue({
@@ -298,8 +211,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
 
     it('should return empty array when no matches found', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const mockResponse = ApiBuilderMother.sampleGetResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const mockResponse = TestDataBuilders.validSheetsGetResponse().build();
 
       // Mock fetch to return response with existing data
       global.fetch = vi.fn().mockResolvedValue({
@@ -326,11 +239,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   describe('deleteRows', () => {
     it('should successfully delete specified rows', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const mockResponse = {
-        spreadsheetId: config.spreadsheetId,
-        replies: [{}], // Mock batch update response
-      };
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const mockResponse = TestDataBuilders.batchUpdateResponse().build();
 
       // Mock fetch to return successful batch update response
       global.fetch = vi.fn().mockResolvedValue({
@@ -354,7 +264,7 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
 
     it('should handle empty row numbers array gracefully', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
 
       const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
@@ -374,12 +284,9 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   describe('deleteRowsByDiscordId', () => {
     it('should find and delete rows matching Discord ID', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const getResponse = ApiBuilderMother.sampleGetResponse();
-      const deleteResponse = {
-        spreadsheetId: config.spreadsheetId,
-        replies: [{}],
-      };
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const getResponse = TestDataBuilders.validSheetsGetResponse().build();
+      const deleteResponse = TestDataBuilders.batchUpdateResponse().build();
 
       // Mock fetch for both get and delete operations
       global.fetch = vi
@@ -410,8 +317,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
 
     it('should return zero deleted count when Discord ID not found', async () => {
       // Arrange
-      const config = ApiBuilderMother.validBuilderConfig();
-      const getResponse = ApiBuilderMother.sampleGetResponse();
+      const config = TestDataBuilders.validApiBuilderConfig().build();
+      const getResponse = TestDataBuilders.validSheetsGetResponse().build();
 
       // Mock fetch for get operation only (no matching rows)
       global.fetch = vi.fn().mockResolvedValue({

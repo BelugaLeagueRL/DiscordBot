@@ -154,25 +154,34 @@ describe('Channel Permissions Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject interactions from wrong channels or unauthorized users', async () => {
-      // Testing the behavioral requirement: channel and user restrictions are enforced
-      const restrictedInteractions = [
-        ChannelPermissionsMother.wrongChannelInteraction(),
-        ChannelPermissionsMother.unprivilegedUserInteraction(),
-      ];
-
+    it('should reject interactions from wrong channels', async () => {
+      // Arrange
+      const wrongChannelInteraction = ChannelPermissionsMother.wrongChannelInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
       const { validateChannelPermissions } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
       );
 
-      restrictedInteractions.forEach(interaction => {
-        // Act
-        const result = validateChannelPermissions(interaction as any, validEnv as any);
+      // Act
+      const result = validateChannelPermissions(wrongChannelInteraction as any, validEnv as any);
 
-        // Assert - Focus on behavior: validation fails for security restrictions
-        expect(result.success).toBe(false);
-      });
+      // Assert - Focus on behavior: validation fails for channel restrictions
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject interactions from unauthorized users', async () => {
+      // Arrange
+      const unprivilegedInteraction = ChannelPermissionsMother.unprivilegedUserInteraction();
+      const validEnv = ChannelPermissionsMother.validEnvironment();
+      const { validateChannelPermissions } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
+      );
+
+      // Act
+      const result = validateChannelPermissions(unprivilegedInteraction as any, validEnv as any);
+
+      // Assert - Focus on behavior: validation fails for user restrictions
+      expect(result.success).toBe(false);
     });
 
     it('should handle member-based user identification correctly', async () => {

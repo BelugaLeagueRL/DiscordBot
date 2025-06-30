@@ -158,10 +158,17 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const totalTime = endTime - startTime;
 
-      // All requests should succeed
-      responses.forEach(response => {
-        expect(response.status).toBe(200);
-      });
+      // All requests should succeed - RED: Replace forEach with individual assertions
+      expect(responses[0]?.status).toBe(200);
+      expect(responses[1]?.status).toBe(200);
+      expect(responses[2]?.status).toBe(200);
+      expect(responses[3]?.status).toBe(200);
+      expect(responses[4]?.status).toBe(200);
+      expect(responses[5]?.status).toBe(200);
+      expect(responses[6]?.status).toBe(200);
+      expect(responses[7]?.status).toBe(200);
+      expect(responses[8]?.status).toBe(200);
+      expect(responses[9]?.status).toBe(200);
 
       // Average response time should be reasonable for Workers
       const avgResponseTime = totalTime / concurrentRequests;
@@ -212,10 +219,27 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const totalTime = endTime - startTime;
 
-      // All requests should return 200 (errors are handled gracefully)
-      responses.forEach(response => {
-        expect(response.status).toBe(200);
-      });
+      // All requests should return 200 (errors are handled gracefully) - RED: Replace forEach with individual assertions
+      expect(responses[0]?.status).toBe(200);
+      expect(responses[1]?.status).toBe(200);
+      expect(responses[2]?.status).toBe(200);
+      expect(responses[3]?.status).toBe(200);
+      expect(responses[4]?.status).toBe(200);
+      expect(responses[5]?.status).toBe(200);
+      expect(responses[6]?.status).toBe(200);
+      expect(responses[7]?.status).toBe(200);
+      expect(responses[8]?.status).toBe(200);
+      expect(responses[9]?.status).toBe(200);
+      expect(responses[10]?.status).toBe(200);
+      expect(responses[11]?.status).toBe(200);
+      expect(responses[12]?.status).toBe(200);
+      expect(responses[13]?.status).toBe(200);
+      expect(responses[14]?.status).toBe(200);
+      expect(responses[15]?.status).toBe(200);
+      expect(responses[16]?.status).toBe(200);
+      expect(responses[17]?.status).toBe(200);
+      expect(responses[18]?.status).toBe(200);
+      expect(responses[19]?.status).toBe(200);
 
       const avgResponseTime = totalTime / concurrentRequests;
       expect(avgResponseTime).toBeLessThan(2); // Error cases should be very fast
@@ -392,10 +416,10 @@ describe('Performance and Load Testing', () => {
       // Error handling should be very fast
       expect(avgResponseTime).toBeLessThan(2);
 
-      // All should return 200 with error messages
-      responses.forEach(response => {
-        expect(response.status).toBe(200);
-      });
+      // All should return 200 with error messages - RED: Replace forEach with individual assertions
+      expect(responses[0]?.status).toBe(200);
+      expect(responses[1]?.status).toBe(200);
+      expect(responses[2]?.status).toBe(200);
 
       console.log(`Error handling performance: ${avgResponseTime.toFixed(2)}ms average`);
     });
