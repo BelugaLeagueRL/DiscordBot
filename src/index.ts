@@ -253,6 +253,36 @@ async function handleTestSheetsWrite(
 
     const { testData } = (await request.json()) as { testData: unknown };
 
+    // Type guard for test data
+    interface TestMemberData {
+      discord_id: string;
+      discord_username_display: string;
+      discord_username_actual: string;
+      server_join_date: string;
+      is_banned: boolean;
+      is_active: boolean;
+    }
+
+    function isValidTestData(data: unknown): data is TestMemberData {
+      if (typeof data !== 'object' || data === null) {
+        return false;
+      }
+
+      const obj = data as Record<string, unknown>;
+      return (
+        typeof obj['discord_id'] === 'string' &&
+        typeof obj['discord_username_display'] === 'string' &&
+        typeof obj['discord_username_actual'] === 'string' &&
+        typeof obj['server_join_date'] === 'string' &&
+        typeof obj['is_banned'] === 'boolean' &&
+        typeof obj['is_active'] === 'boolean'
+      );
+    }
+
+    if (!isValidTestData(testData)) {
+      return new Response('Invalid test data format', { status: 400 });
+    }
+
     // Build credentials from environment
     const credentials = buildGoogleSheetsCredentials(env);
 
