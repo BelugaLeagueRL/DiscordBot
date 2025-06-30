@@ -37,18 +37,22 @@ export const EnvFactory = {
   create(overrides: Partial<Env> = {}): Env {
     return {
       DISCORD_TOKEN:
-        process.env['DISCORD_TOKEN'] ?? `mock_discord_token_${faker.string.alphanumeric(64)}`,
+        process.env['DISCORD_TOKEN'] ??
+        `Bot ${faker.string.alphanumeric(24)}.${faker.string.alphanumeric(6)}.${faker.string.alphanumeric(27)}`,
       DISCORD_PUBLIC_KEY:
         process.env['DISCORD_PUBLIC_KEY'] ?? `mock_public_key_${faker.string.alphanumeric(64)}`,
       DISCORD_APPLICATION_ID: process.env['DISCORD_APPLICATION_ID'] ?? faker.string.numeric(18),
       DATABASE_URL: process.env['DATABASE_URL'] ?? 'sqlite://test.db',
       GOOGLE_SHEETS_API_KEY:
         process.env['GOOGLE_SHEETS_API_KEY'] ?? `mock_sheets_key_${faker.string.alphanumeric(32)}`,
+      GOOGLE_SHEET_ID: process.env['GOOGLE_SHEET_ID'] ?? `1${faker.string.alphanumeric(43)}`,
       ENVIRONMENT: process.env['ENVIRONMENT'] ?? 'test',
       REGISTER_COMMAND_REQUEST_CHANNEL_ID:
-        process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? '1388177835331424386',
+        process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? faker.string.numeric(18),
       REGISTER_COMMAND_RESPONSE_CHANNEL_ID:
-        process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? '1388058893552320655',
+        process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? faker.string.numeric(18),
+      TEST_CHANNEL_ID: process.env['TEST_CHANNEL_ID'] ?? faker.string.numeric(18),
+      PRIVILEGED_USER_ID: process.env['PRIVILEGED_USER_ID'] ?? faker.string.numeric(18),
       ...overrides,
     };
   },
@@ -63,6 +67,19 @@ export const EnvFactory = {
 
   test(): Env {
     return this.create({ ENVIRONMENT: 'test' });
+  },
+
+  withGoogleSheets(sheetId?: string): Env {
+    return this.create({
+      GOOGLE_SHEET_ID: sheetId ?? `1${faker.string.alphanumeric(43)}`,
+      GOOGLE_SHEETS_API_KEY: `mock_sheets_key_${faker.string.alphanumeric(32)}`,
+    });
+  },
+
+  withValidDiscordToken(): Env {
+    return this.create({
+      DISCORD_TOKEN: 'Bot MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs',
+    });
   },
 } as const;
 
@@ -139,6 +156,140 @@ export const ExecutionContextFactory = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
       props: {},
+    };
+  },
+} as const;
+
+/**
+ * Factory for creating mock MemberData for User sheet structure
+ */
+export const MemberDataFactory = {
+  create(
+    overrides: Partial<{
+      discord_id: string;
+      discord_username_display: string;
+      discord_username_actual: string;
+      server_join_date: string;
+      is_banned: boolean;
+      is_active: boolean;
+      last_updated: string;
+    }> = {}
+  ) {
+    const baseTimestamp = faker.date.past().toISOString();
+    return {
+      discord_id: faker.string.numeric(18),
+      discord_username_display: faker.internet.username(),
+      discord_username_actual: faker.internet.username(),
+      server_join_date: baseTimestamp,
+      is_banned: false,
+      is_active: true,
+      last_updated: baseTimestamp,
+      ...overrides,
+    };
+  },
+
+  createBatch(count: number, baseOverrides: Record<string, unknown> = {}) {
+    return Array.from({ length: count }, (_, index) =>
+      this.create({
+        discord_id: faker.string.numeric(18),
+        discord_username_display: `testuser${(index + 1).toString()}`,
+        discord_username_actual: `user${(index + 1).toString()}`,
+        ...baseOverrides,
+      })
+    );
+  },
+
+  banned() {
+    return this.create({ is_banned: true, is_active: false });
+  },
+
+  inactive() {
+    return this.create({ is_active: false });
+  },
+} as const;
+
+/**
+ * Factory for creating mock Google Sheets credentials
+ */
+export const GoogleSheetsCredentialsFactory = {
+  create(overrides: Record<string, unknown> = {}) {
+    return {
+      type: 'service_account' as const,
+      project_id: `test-project-${faker.string.numeric(3)}`,
+      private_key_id: `test-key-${faker.string.uuid()}`,
+      private_key: '-----BEGIN PRIVATE KEY-----\nTEST_PRIVATE_KEY\n-----END PRIVATE KEY-----',
+      client_email: `test-${faker.string.numeric(3)}@test-project.iam.gserviceaccount.com`,
+      client_id: faker.string.numeric(21),
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+      auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+      client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/test%40test-project.iam.gserviceaccount.com`,
+      universe_domain: 'googleapis.com',
+      ...overrides,
+    };
+  },
+
+  invalid() {
+    return this.create({
+      private_key: 'invalid-key-format',
+    });
+  },
+
+  wrongType() {
+    return this.create({
+      type: 'user_account',
+    });
+  },
+} as const;
+
+/**
+ * Factory for creating sync operations
+ */
+export const SyncOperationFactory = {
+  create(overrides: Record<string, unknown> = {}) {
+    return {
+      guildId: faker.string.numeric(18),
+      credentials: GoogleSheetsCredentialsFactory.create(),
+      requestId: faker.string.uuid(),
+      initiatedBy: faker.string.numeric(18),
+      timestamp: new Date().toISOString(),
+      ...overrides,
+    };
+  },
+
+  withLargeGuild(memberCount: number = 50000) {
+    return this.create({
+      estimatedMemberCount: memberCount,
+    });
+  },
+
+  withInvalidGuildId() {
+    return this.create({
+      guildId: 'invalid-guild-id',
+    });
+  },
+
+  withoutRequestId() {
+    return this.create({
+      requestId: '',
+    });
+  },
+
+  withMassiveGuild() {
+    return this.create({
+      estimatedMemberCount: 1000000,
+    });
+  },
+} as const;
+
+/**
+ * Factory for creating Cloudflare Workers ExecutionContext
+ */
+export const CloudflareExecutionContextFactory = {
+  create() {
+    return {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn(),
     };
   },
 } as const;

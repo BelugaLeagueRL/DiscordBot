@@ -35,20 +35,31 @@ interface SheetsAPIClient {
 }
 
 /**
- * Transform member data into spreadsheet row format
+ * Transform member data into spreadsheet row format for User sheet
  */
 function formatMembersForSheet(members: readonly unknown[]): readonly (readonly string[])[] {
   return members.map((member): readonly string[] => {
     if (typeof member === 'object' && member !== null) {
-      const memberObj = member as { id?: string; username?: string; discriminator?: string };
+      const memberObj = member as {
+        discord_id?: string;
+        discord_username_display?: string;
+        discord_username_actual?: string;
+        server_join_date?: string;
+        is_banned?: boolean;
+        is_active?: boolean;
+        last_updated?: string;
+      };
       return [
-        memberObj.id ?? '',
-        memberObj.username ?? '',
-        memberObj.discriminator ?? '',
-        new Date().toISOString(),
+        memberObj.discord_id ?? '',
+        memberObj.discord_username_display ?? '',
+        memberObj.discord_username_actual ?? '',
+        memberObj.server_join_date ?? '',
+        (memberObj.is_banned ?? false).toString(),
+        (memberObj.is_active ?? true).toString(),
+        memberObj.last_updated ?? new Date().toISOString(),
       ] as const;
     }
-    return ['', '', '', new Date().toISOString()] as const;
+    return ['', '', '', '', 'false', 'true', new Date().toISOString()] as const;
   });
 }
 
@@ -103,7 +114,7 @@ async function batchAppendToSheets(
 
   try {
     const formattedData = formatMembersForSheet(members);
-    const range = `Sheet1!A:D`; // Assuming columns A-D for ID, Username, Discriminator, Timestamp
+    const range = `Sheet1!A:G`; // User sheet: discord_id, discord_username_display, discord_username_actual, server_join_date, is_banned, is_active, last_updated
 
     const response = await sheetsClient.spreadsheets.values.batchUpdate({
       spreadsheetId: sheetId,
