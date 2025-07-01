@@ -17,6 +17,7 @@ import {
 } from './middleware/security';
 import { AuditLogger } from './utils/audit';
 import { createProductionHealthCheck } from './utils/health-check';
+import { formatGlobalErrorMessage } from './utils/index-functions';
 import type { DiscordInteraction } from './types/discord';
 
 export interface Env {
@@ -659,7 +660,7 @@ export default {
           },
         });
       } else {
-        console.error('Global error (no audit context):', errorMsg);
+        console.error(formatGlobalErrorMessage(errorMsg));
       }
 
       return new Response('Internal server error', {

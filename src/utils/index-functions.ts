@@ -210,3 +210,10 @@ export function createSheetsDeleteResponseData(
     discordId,
   };
 }
+
+/**
+ * Pure function: Format global error message (Line 662 business logic)
+ */
+export function formatGlobalErrorMessage(errorMsg: string): string {
+  return `Global error (no audit context): ${errorMsg}`;
+}

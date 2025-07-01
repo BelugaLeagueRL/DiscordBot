@@ -16,6 +16,7 @@ import {
   formatSuccessResponse,
   createSheetsReadResponseData,
   createSheetsDeleteResponseData,
+  formatGlobalErrorMessage,
   type TestMemberData,
 } from '../../utils/index-functions';
 import type { Env } from '../../index';
@@ -360,6 +361,53 @@ describe('Pure Functions from index.ts', () => {
       expect(result.deletedRowsCount).toBe(0);
       expect(result.discordId).toBe('user789');
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('formatGlobalErrorMessage', () => {
+    it('should format global error message correctly (Line 662 logic)', () => {
+      // Arrange
+      const errorMsg = 'Database connection failed';
+
+      // Act - Test the pure string formatting logic from Line 662
+      const result = formatGlobalErrorMessage(errorMsg);
+
+      // Assert - Single concern: string formatting
+      expect(result).toBe('Global error (no audit context): Database connection failed');
+    });
+
+    it('should handle empty error message', () => {
+      // Arrange
+      const errorMsg = '';
+
+      // Act
+      const result = formatGlobalErrorMessage(errorMsg);
+
+      // Assert
+      expect(result).toBe('Global error (no audit context): ');
+    });
+
+    it('should handle special characters in error message', () => {
+      // Arrange
+      const errorMsg = 'Error with "quotes" and <tags>';
+
+      // Act
+      const result = formatGlobalErrorMessage(errorMsg);
+
+      // Assert
+      expect(result).toBe('Global error (no audit context): Error with "quotes" and <tags>');
+    });
+
+    it('should handle very long error messages', () => {
+      // Arrange
+      const longError = 'x'.repeat(1000);
+
+      // Act
+      const result = formatGlobalErrorMessage(longError);
+
+      // Assert
+      expect(result).toBe(`Global error (no audit context): ${longError}`);
+      expect(result.length).toBe(1000 + 'Global error (no audit context): '.length);
     });
   });
 });
