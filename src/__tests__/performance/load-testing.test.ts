@@ -481,4 +481,211 @@ describe('Performance and Load Testing', () => {
       console.log(`   Memory Footprint: Stable across ${String(benchmarkRuns)} iterations`);
     });
   });
+
+  describe('Edge Case Performance Scenarios', () => {
+    it('should handle memory pressure with large number of operations', async () => {
+      const memoryPressureRuns = 100;
+      const responseTimes: number[] = [];
+
+      for (let i = 0; i < memoryPressureRuns; i++) {
+        const startTime = performance.now();
+
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview`,
+            },
+          ],
+          { id: `memory_test_${String(i)}` }
+        );
+
+        const mockCtx = ExecutionContextFactory.create();
+        const response = await handleRegisterCommand(interaction, mockEnv, mockCtx);
+
+        const endTime = performance.now();
+        responseTimes.push(endTime - startTime);
+
+        expect(response.status).toBe(200);
+      }
+
+      // Performance should not degrade significantly under memory pressure
+      const firstQuarter = responseTimes.slice(0, 25);
+      const lastQuarter = responseTimes.slice(-25);
+
+      const firstAvg = firstQuarter.reduce((a, b) => a + b, 0) / firstQuarter.length;
+      const lastAvg = lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
+
+      // Memory leak test: last quarter shouldn't be more than 3x slower than first
+      expect(lastAvg).toBeLessThanOrEqual(firstAvg * 3);
+
+      console.log(
+        `Memory pressure test: First 25 avg: ${firstAvg.toFixed(2)}ms, Last 25 avg: ${lastAvg.toFixed(2)}ms`
+      );
+    });
+
+    it('should handle CPU-intensive validation without blocking', async () => {
+      // Create interaction with complex validation scenario
+      const cpuIntensiveInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/epic/VeryLongEpicUsernameForComplexValidation/overview',
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/psn/ComplexPSNUsername123/overview',
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/xbl/ComplexXboxGamertag/overview',
+          },
+        ],
+        { channel_id: getRequestChannelId(mockEnv) }
+      );
+
+      const startTime = performance.now();
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(cpuIntensiveInteraction, mockEnv, mockCtx);
+
+      const endTime = performance.now();
+      const responseTime = endTime - startTime;
+
+      expect(response.status).toBe(200);
+      // Should still complete within reasonable time even with complex validation
+      expect(responseTime).toBeLessThan(50);
+    });
+
+    it('should handle rapid error scenarios without degradation', async () => {
+      const errorScenarios = [
+        'invalid_url',
+        'malformed_steam_id',
+        'unsupported_platform',
+        'missing_platform_id',
+        'invalid_domain',
+      ];
+
+      const startTime = performance.now();
+
+      const responses = await Promise.all(
+        errorScenarios.map((scenario, i) => {
+          const interaction = createMockCommandInteraction(
+            'register',
+            [
+              {
+                name: 'tracker1',
+                type: 3,
+                value: `https://invalid-${scenario}.com/profile/steam/invalid/overview`,
+              },
+            ],
+            { id: `error_${scenario}_${String(i)}` }
+          );
+
+          const mockCtx = ExecutionContextFactory.create();
+          return handleRegisterCommand(interaction, mockEnv, mockCtx);
+        })
+      );
+
+      const endTime = performance.now();
+      const totalTime = endTime - startTime;
+      const avgErrorTime = totalTime / errorScenarios.length;
+
+      // Error handling should be very fast
+      expect(avgErrorTime).toBeLessThan(5);
+
+      // All should handle errors gracefully
+      const allResponsesValid = responses.every(r => r.status === 200);
+      expect(allResponsesValid).toBe(true);
+
+      console.log(`Error scenario performance: ${avgErrorTime.toFixed(2)}ms average`);
+    });
+
+    it('should handle network timeout simulation gracefully', async () => {
+      // Test performance with simulated network delays
+      const timeoutInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value:
+              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+          },
+        ],
+        {
+          id: 'timeout_test',
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
+
+      const startTime = performance.now();
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(timeoutInteraction, mockEnv, mockCtx);
+
+      const endTime = performance.now();
+      const responseTime = endTime - startTime;
+
+      expect(response.status).toBe(200);
+      // Should handle potential network issues within reasonable time
+      expect(responseTime).toBeLessThan(100);
+    });
+
+    it('should maintain performance under concurrent error conditions', async () => {
+      const concurrentErrorRequests = 15;
+
+      const startTime = performance.now();
+
+      const requests = Array.from({ length: concurrentErrorRequests }, (_, i) => {
+        const errorTypes = ['invalid_url', 'missing_data', 'malformed_input'];
+        const errorType = errorTypes[i % errorTypes.length];
+
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: `https://error-${errorType}-${String(i)}.com/invalid`,
+            },
+          ],
+          { id: `concurrent_error_${String(i)}` }
+        );
+
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
+      });
+
+      const responses = await Promise.all(requests);
+
+      const endTime = performance.now();
+      const totalTime = endTime - startTime;
+      const avgConcurrentErrorTime = totalTime / concurrentErrorRequests;
+
+      // Concurrent error handling should be efficient
+      expect(avgConcurrentErrorTime).toBeLessThan(10);
+
+      // All error scenarios should be handled gracefully
+      const allErrorsHandled = responses.every(r => r.status === 200);
+      expect(allErrorsHandled).toBe(true);
+
+      console.log(`Concurrent error handling: ${avgConcurrentErrorTime.toFixed(2)}ms average`);
+    });
+  });
 });

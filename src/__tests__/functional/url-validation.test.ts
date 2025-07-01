@@ -265,4 +265,114 @@ describe('Real-World Use Case Testing', () => {
       expect(typeof result.platformId).toBe('string');
     });
   });
+
+  describe('Network and Availability Edge Cases', () => {
+    it('should handle URLs with valid format but unreachable domains', () => {
+      const unreachableUrl =
+        'https://nonexistent.tracker.network/rocket-league/profile/steam/76561198123456789/overview';
+      const result = validateTrackerUrl(unreachableUrl);
+
+      // URL validation should focus on format, not network reachability
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('rocketleague.tracker.network');
+    });
+
+    it('should handle URLs with invalid subdomains', () => {
+      const invalidSubdomain =
+        'https://fake.rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview';
+      const result = validateTrackerUrl(invalidSubdomain);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('rocketleague.tracker.network');
+    });
+
+    it('should handle URLs with query parameters', () => {
+      const urlWithQuery =
+        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview?tab=overview&season=current';
+      const result = validateTrackerUrl(urlWithQuery);
+
+      expect(result.isValid).toBe(true);
+      expect(result.platform).toBe('steam');
+      expect(result.platformId).toBe('76561198123456789');
+    });
+
+    it('should handle URLs with fragments', () => {
+      const urlWithFragment =
+        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview#overview';
+      const result = validateTrackerUrl(urlWithFragment);
+
+      expect(result.isValid).toBe(true);
+      expect(result.platform).toBe('steam');
+      expect(result.platformId).toBe('76561198123456789');
+    });
+
+    it('should handle URLs with encoded special characters', () => {
+      const encodedUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/epic/Test%2DPlayer/overview';
+      const result = validateTrackerUrl(encodedUrl);
+
+      // Should decode and validate the actual username
+      expect(result.isValid).toBe(true);
+      expect(result.platform).toBe('epic');
+      expect(result.platformId).toBe('Test-Player');
+    });
+
+    it('should reject URLs with dangerous encoded characters', () => {
+      const maliciousUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789%2F..%2F..%2Fadmin/overview';
+      const result = validateTrackerUrl(maliciousUrl);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('Invalid Steam ID64 format');
+    });
+  });
+
+  describe('Input Validation Boundary Cases', () => {
+    it('should handle extremely long URLs', () => {
+      const baseUrl = 'https://rocketleague.tracker.network/rocket-league/profile/steam/';
+      const longId = '7656119812345678' + 'x'.repeat(1000);
+      const longUrl = baseUrl + longId + '/overview';
+
+      const result = validateTrackerUrl(longUrl);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Platform ID too long (maximum 100 characters)');
+    });
+
+    it('should handle URLs with null bytes', () => {
+      const nullByteUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789\x00/overview';
+      const result = validateTrackerUrl(nullByteUrl);
+
+      expect(result.isValid).toBe(false);
+    });
+
+    it('should handle URLs with Unicode characters', () => {
+      const unicodeUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/epic/Tëst_Üser123/overview';
+      const result = validateTrackerUrl(unicodeUrl);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('Invalid Epic Games display name format');
+    });
+
+    it('should handle empty platform ID', () => {
+      const emptyIdUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/steam//overview';
+      const result = validateTrackerUrl(emptyIdUrl);
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('URL must follow the format');
+    });
+
+    it('should handle case sensitivity in platform names', () => {
+      const mixedCaseUrl =
+        'https://rocketleague.tracker.network/rocket-league/profile/Steam/76561198123456789/overview';
+      const result = validateTrackerUrl(mixedCaseUrl);
+
+      // Should normalize to lowercase
+      expect(result.isValid).toBe(true);
+      expect(result.platform).toBe('steam');
+    });
+  });
 });

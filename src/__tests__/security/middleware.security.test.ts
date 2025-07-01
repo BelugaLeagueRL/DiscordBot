@@ -104,29 +104,80 @@ describe('Security Middleware', () => {
       clearRateLimits();
     });
 
-    it('should allow requests within rate limit', () => {
+    it('should initialize new IP with zero request count and allow first request', () => {
       const clientIP = '192.168.1.1';
 
-      // First request should be allowed
-      expect(validateRateLimit(clientIP)).toBe(true);
+      // Act: Make first request
+      const firstRequestAllowed = validateRateLimit(clientIP);
+
+      // Assert: Behavioral validation - request should be allowed AND we should be able to make more
+      expect(firstRequestAllowed).toBe(true);
+      expect(validateRateLimit(clientIP)).toBe(true); // Second request also allowed
+      expect(validateRateLimit(clientIP)).toBe(true); // Third request also allowed
     });
 
-    it('should allow first request for new IP', () => {
-      const clientIP = '192.168.1.1';
-      expect(validateRateLimit(clientIP)).toBe(true);
-    });
-
-    it('should allow sequential requests within limit', () => {
+    it('should track request count progression for rate limiting behavior', () => {
       const clientIP = '192.168.1.2';
-      expect(validateRateLimit(clientIP)).toBe(true);
+
+      // Act: Test rate limiting behavior progression
+      const makeRequestBatch = (count: number): boolean[] => {
+        return Array.from({ length: count }, () => validateRateLimit(clientIP));
+      };
+
+      // Assert: Behavioral validation - should allow multiple requests and track count
+      const first10Requests = makeRequestBatch(10);
+      expect(first10Requests.every(allowed => allowed === true)).toBe(true);
+      expect(first10Requests).toHaveLength(10);
+
+      // Should still allow more requests (proves counting behavior)
       expect(validateRateLimit(clientIP)).toBe(true);
     });
 
-    it('should maintain separate counters per IP', () => {
-      const ip1 = '192.168.1.3';
-      const ip2 = '192.168.1.4';
-      expect(validateRateLimit(ip1)).toBe(true);
-      expect(validateRateLimit(ip2)).toBe(true);
+    it('should maintain separate rate limit state for sequential requests', () => {
+      const clientIP = '192.168.1.3';
+
+      // Act: Test sequential request behavior maintains proper state
+      const sequentialResults = [
+        validateRateLimit(clientIP),
+        validateRateLimit(clientIP),
+        validateRateLimit(clientIP),
+        validateRateLimit(clientIP),
+        validateRateLimit(clientIP),
+      ];
+
+      // Assert: Behavioral validation - all sequential requests allowed and state preserved
+      expect(sequentialResults).toEqual([true, true, true, true, true]);
+      expect(sequentialResults).toHaveLength(5);
+
+      // Should continue to allow more requests (proves state consistency)
+      expect(validateRateLimit(clientIP)).toBe(true);
+    });
+
+    it('should maintain independent rate limit counter for first IP', () => {
+      const ip1 = '192.168.1.4';
+
+      // Act: Test that IP1 maintains its own counter
+      const ip1Results = Array.from({ length: 15 }, () => validateRateLimit(ip1));
+
+      // Assert: Behavioral validation - IP1 counter works independently
+      expect(ip1Results.every(allowed => allowed === true)).toBe(true);
+      expect(ip1Results).toHaveLength(15);
+      expect(validateRateLimit(ip1)).toBe(true); // Should continue allowing requests
+    });
+
+    it('should maintain independent rate limit counter for different IP without interference', () => {
+      const ip1 = '192.168.1.4';
+      const ip2 = '192.168.1.5';
+
+      // Arrange: Exhaust IP1's requests to test isolation
+      Array.from({ length: 100 }, () => validateRateLimit(ip1));
+      expect(validateRateLimit(ip1)).toBe(false); // IP1 should be blocked
+
+      // Act: Test that IP2 is unaffected by IP1's exhaustion
+      const ip2Result = validateRateLimit(ip2);
+
+      // Assert: Behavioral validation - IP2 completely isolated from IP1 state
+      expect(ip2Result).toBe(true);
     });
 
     it('should enforce rate limit threshold at 100 requests', () => {
