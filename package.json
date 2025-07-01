@@ -14,6 +14,7 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
+    "test:coverage-check": "vitest run --coverage",
     "test:register": "vitest run src/__tests__/register",
     "test:integration": "vitest run src/__tests__/integration",
     "test:production": "node scripts/test-production-deployment.js",
@@ -36,7 +37,13 @@
     "save:tunnel": "node scripts/capture-tunnel.js",
     "ngrok": "node scripts/ngrok-with-capture.js",
     "prepare": "husky",
-    "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage",
+    "quality-check": "npm run typecheck && npm run lint && npm run type-coverage && npm run antipattern:check && npm run test:coverage",
+    "antipattern:check": "npm run antipattern:free-ride && npm run antipattern:slow-poke && npm run antipattern:liar && npm run antipattern:foreach",
+    "antipattern:free-ride": "echo 'Checking for Free Ride patterns (multiple unrelated assertions)...' && (rg 'expect.*expect' src/__tests__ --type ts || echo '✅ No Free Ride patterns found')",
+    "antipattern:slow-poke": "echo 'Checking for Slow Poke patterns (dynamic imports)...' && (rg 'await import\\(' src/__tests__ --type ts || echo '✅ No Slow Poke patterns found')",
+    "antipattern:liar": "echo 'Checking for Liar patterns (generic boolean assertions)...' && (rg 'expect.*\\.toBe\\(true\\)$' src/__tests__ --type ts || echo '✅ No Liar patterns found')",
+    "antipattern:foreach": "echo 'Checking for forEach Logic patterns (unsafe loops)...' && (rg '\\.forEach\\(' src/__tests__ --type ts || echo '✅ No forEach Logic patterns found')",
+    "antipattern:report": "echo '🔍 ANTI-PATTERN DETECTION REPORT' && echo '================================' && npm run antipattern:check && echo '================================' && echo '✅ All anti-patterns check complete!'",
     "dev:full": "npm run setup:dev && npm run register:dev && npm run dev"
   },
   "keywords": [
