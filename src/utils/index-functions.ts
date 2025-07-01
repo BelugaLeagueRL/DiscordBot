@@ -192,3 +192,21 @@ export function createSheetsReadResponseData(values: string[][]): {
     totalRows: (values ?? []).length,
   };
 }
+
+/**
+ * Pure function: Create Google Sheets delete response data (Lines 216-220 business logic)
+ */
+export function createSheetsDeleteResponseData(
+  deletedRowsCount: number,
+  discordId: string
+): {
+  success: boolean;
+  deletedRowsCount: number;
+  discordId: string;
+} {
+  return {
+    success: true,
+    deletedRowsCount: deletedRowsCount ?? 0,
+    discordId,
+  };
+}

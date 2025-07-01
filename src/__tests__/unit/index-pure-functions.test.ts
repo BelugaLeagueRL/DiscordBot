@@ -15,6 +15,7 @@ import {
   formatErrorResponse,
   formatSuccessResponse,
   createSheetsReadResponseData,
+  createSheetsDeleteResponseData,
   type TestMemberData,
 } from '../../utils/index-functions';
 import type { Env } from '../../index';
@@ -314,6 +315,50 @@ describe('Pure Functions from index.ts', () => {
       // Assert - Should use fallback behavior
       expect(result.totalRows).toBe(0);
       expect(result.values).toEqual([]);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('createSheetsDeleteResponseData', () => {
+    it('should create delete response data with correct structure (Lines 216-220 logic)', () => {
+      // Arrange
+      const deletedRowsCount = 3;
+      const discordId = 'user123';
+
+      // Act - Test the pure business logic from Lines 216-220
+      const result = createSheetsDeleteResponseData(deletedRowsCount, discordId);
+
+      // Assert - Single concern: business logic
+      expect(result.success).toBe(true);
+      expect(result.deletedRowsCount).toBe(3);
+      expect(result.discordId).toBe('user123');
+    });
+
+    it('should handle null deletedRowsCount with fallback', () => {
+      // Arrange - Test the null coalescing logic from Line 219
+      const nullCount = null as any;
+      const discordId = 'user456';
+
+      // Act
+      const result = createSheetsDeleteResponseData(nullCount, discordId);
+
+      // Assert - Should use fallback behavior
+      expect(result.deletedRowsCount).toBe(0);
+      expect(result.discordId).toBe('user456');
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle zero deletedRowsCount', () => {
+      // Arrange
+      const deletedRowsCount = 0;
+      const discordId = 'user789';
+
+      // Act
+      const result = createSheetsDeleteResponseData(deletedRowsCount, discordId);
+
+      // Assert
+      expect(result.deletedRowsCount).toBe(0);
+      expect(result.discordId).toBe('user789');
       expect(result.success).toBe(true);
     });
   });
