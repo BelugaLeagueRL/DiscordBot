@@ -6,7 +6,17 @@
 import type { Env } from '../../../index';
 import type { DiscordInteraction } from '../../../types/discord';
 import type { GoogleSheetsCredentials } from '../../../utils/google-sheets-builder';
-import { createEphemeralResponse, createErrorResponse } from '../../../utils/discord';
+import {
+  createErrorResponse,
+  createDeferredResponse,
+  updateDeferredResponse,
+} from '../../../utils/discord';
+import { fetchGuildMembers, transformMemberData, filterNewMembers } from './discord-members';
+import {
+  GoogleOAuthBuilder,
+  GoogleSheetsApiBuilder,
+  createMemberRow,
+} from '../../../utils/google-sheets-builder';
 
 /**
  * Result pattern for type-safe error handling
@@ -115,20 +125,87 @@ function syncUsersToSheetsBackground(
 /**
  * Perform the actual background sync operation
  */
-async function performBackgroundSync(params: SyncParameters, _env: Env): Promise<void> {
+async function performBackgroundSync(
+  params: SyncParameters,
+  env: Env
+): Promise<{ newMembersAdded: number }> {
+  console.log(`Starting background sync for guild ${params.guildId}`);
+
+  // 1. Authenticate with Google Sheets using GoogleOAuthBuilder
+  const oauth = GoogleOAuthBuilder.create().setCredentials(params.credentials);
+  const accessToken = await oauth.getAccessToken();
+
+  // 2. Fetch Discord guild members using fetchGuildMembers
+  const memberResult = await fetchGuildMembers(params.guildId, env);
+  if (!memberResult.success) {
+    throw new Error(`Failed to fetch members: ${memberResult.error}`);
+  }
+
+  // 3. Transform members using transformMemberData
+  const memberData = transformMemberData(memberResult.members || []);
+
+  // 4. Get existing IDs to prevent duplicates
+  const sheetsApi = GoogleSheetsApiBuilder.create()
+    .setSpreadsheetId(env.GOOGLE_SHEET_ID as string)
+    .setRange('Sheet1!A:A')
+    .setAccessToken(accessToken);
+
+  const existingResult = await sheetsApi.get();
+  const existingIds = new Set(
+    existingResult.success && existingResult.values
+      ? existingResult.values
+          .slice(1)
+          .flat()
+          .filter(id => id && id.length > 0)
+      : []
+  );
+
+  // 5. Filter new members using filterNewMembers
+  const newMembers = filterNewMembers(memberData, existingIds);
+
+  // 6. Append new members using GoogleSheetsApiBuilder
+  if (newMembers.length > 0) {
+    const appendApi = GoogleSheetsApiBuilder.create()
+      .setSpreadsheetId(env.GOOGLE_SHEET_ID as string)
+      .setRange('Sheet1!A:G')
+      .setAccessToken(accessToken)
+      .setValues(newMembers.map(createMemberRow));
+
+    const appendResult = await appendApi.append();
+    if (!appendResult.success) {
+      throw new Error(`Failed to append members: ${appendResult.error}`);
+    }
+  }
+
+  console.log(`Background sync completed for guild ${params.guildId}`);
+  return { newMembersAdded: newMembers.length };
+}
+
+/**
+ * Execute admin sync operation and notify Discord with results
+ */
+export async function executeAdminSyncAndNotify(
+  interaction: DiscordInteraction,
+  env: Env,
+  params: SyncParameters
+): Promise<void> {
   try {
-    console.log(`Starting background sync for guild ${params.guildId}`);
+    const syncResult = await performBackgroundSync(params, env);
 
-    // This is a placeholder for the actual sync implementation
-    // The real implementation would:
-    // 1. Fetch Discord guild members
-    // 2. Transform member data to sheet format
-    // 3. Use GoogleSheetsApiBuilder to write to sheets
-    // 4. Handle errors and retries
-
-    console.log(`Background sync completed for guild ${params.guildId}`);
+    // Notify success with member count
+    await updateDeferredResponse(
+      env.DISCORD_APPLICATION_ID,
+      interaction.token,
+      `✅ Successfully synced ${syncResult.newMembersAdded} new members to sheets`
+    );
   } catch (error) {
-    console.error(`Background sync failed for guild ${params.guildId}:`, error);
+    // Convert technical errors to user-friendly messages
+    const friendlyMessage = convertErrorToUserMessage(error);
+    await updateDeferredResponse(
+      env.DISCORD_APPLICATION_ID,
+      interaction.token,
+      `❌ Sync failed: ${friendlyMessage}`
+    );
   }
 }
 
@@ -469,7 +546,7 @@ function loadCredentialsFromEnvironment(env: Env): Result<GoogleSheetsCredential
 
 /**
  * Discord handler function for /admin_sync_users_to_sheets command
- * Returns immediate ephemeral response with sync results
+ * Implements Flow 3 deferred response pattern with background processing
  */
 export function handleAdminSyncUsersToSheetsDiscord(
   interaction: DiscordInteraction,
@@ -488,30 +565,49 @@ export function handleAdminSyncUsersToSheetsDiscord(
     return createErrorResponse(credentialsResult.error);
   }
 
-  // Start background sync immediately and return quick response to Discord
+  // Return ephemeral deferred response immediately (Flow 3 requirement: < 3 seconds)
+  const deferredResponse = createDeferredResponse(true);
+
+  // Schedule background processing with Discord notification
   const requestId = crypto.randomUUID();
   const timestamp = new Date().toISOString();
   const guildId = validationResult.data.extendedInteraction.guild_id ?? '';
 
-  const syncResult = syncUsersToSheetsBackground(
-    {
-      guildId: guildId,
-      credentials: credentialsResult.data,
-      requestId: requestId,
-      initiatedBy: validationResult.data.userId,
-      timestamp: timestamp,
-    },
-    validationResult.data.validatedContext as CloudflareExecutionContext,
-    env
-  );
+  const syncParams: SyncParameters = {
+    guildId: guildId,
+    credentials: credentialsResult.data,
+    requestId: requestId,
+    initiatedBy: validationResult.data.userId,
+    timestamp: timestamp,
+  };
 
-  if (!syncResult.success) {
-    return new Response(JSON.stringify({ error: syncResult.error ?? 'Unknown sync error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  // Use context.waitUntil for background work with notification
+  context.waitUntil(executeAdminSyncAndNotify(interaction, env, syncParams));
+
+  return deferredResponse;
+}
+
+/**
+ * Convert technical errors to user-friendly messages
+ */
+function convertErrorToUserMessage(error: unknown): string {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  if (errorMessage.includes('Bot lacks permission')) {
+    return 'Bot needs "View Server Members" permission';
+  }
+  if (errorMessage.includes('authentication failed') || errorMessage.includes('OAuth failed')) {
+    return 'Google Sheets configuration error';
+  }
+  if (errorMessage.includes('Discord API error')) {
+    return 'Discord service temporarily unavailable';
+  }
+  if (errorMessage.includes('Failed to fetch members')) {
+    return 'Could not access Discord server members';
+  }
+  if (errorMessage.includes('Failed to append members')) {
+    return 'Could not update Google Sheets';
   }
 
-  // Return immediate ephemeral response - sync happens in background
-  return createEphemeralResponse('Syncing users to the sheet...');
+  return 'Unexpected error - check server logs';
 }

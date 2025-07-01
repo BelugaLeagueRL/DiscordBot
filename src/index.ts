@@ -412,8 +412,9 @@ function handlePingInteraction(
 
 /**
  * Handle application command
+ * Exported for testing purposes
  */
-async function handleApplicationCommand(
+export async function handleApplicationCommand(
   params: Readonly<{
     readonly interaction: DiscordInteraction;
     readonly env: Env;

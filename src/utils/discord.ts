@@ -90,6 +90,38 @@ export function createPublicResponse(content: string): Response {
 }
 
 /**
+ * Create a deferred response for long-running operations
+ */
+export function createDeferredResponse(ephemeral = false): Response {
+  const EPHEMERAL_FLAG = 64;
+  return createInteractionResponse(
+    InteractionResponseType.DeferredChannelMessageWithSource,
+    ephemeral ? { flags: EPHEMERAL_FLAG } : undefined
+  );
+}
+
+/**
+ * Update a deferred response via Discord webhook
+ */
+export async function updateDeferredResponse(
+  applicationId: string,
+  interactionToken: string,
+  content: string
+): Promise<void> {
+  const webhookUrl = `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+
+  const response = await fetch(webhookUrl, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  });
+
+  if (!response.ok) {
+    console.error(`Discord webhook failed: ${response.status}`);
+  }
+}
+
+/**
  * Create an error response
  */
 export function createErrorResponse(message = 'An error occurred. Please try again.'): Response {
