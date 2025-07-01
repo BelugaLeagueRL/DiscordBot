@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('discord-interactions', () => ({
   verifyKey: vi.fn().mockResolvedValue(true),
 }));
+import { verifyKey } from 'discord-interactions';
 import {
   extractSecurityContext,
   validateRateLimit,
@@ -347,7 +348,6 @@ describe('Security Middleware', () => {
       const context = SecurityContextFactory.create();
 
       // Mock the verifyKey function properly using vi.mock
-      const { verifyKey } = await import('discord-interactions');
       vi.mocked(verifyKey).mockResolvedValue(true);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
@@ -362,7 +362,6 @@ describe('Security Middleware', () => {
       const context = SecurityContextFactory.create();
 
       // Mock the verifyKey function to return false
-      const { verifyKey } = await import('discord-interactions');
       vi.mocked(verifyKey).mockReturnValue(false);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
@@ -418,7 +417,6 @@ describe('Security Middleware', () => {
       const context = SecurityContextFactory.create();
 
       // Mock verifyKey to throw error
-      const { verifyKey } = await import('discord-interactions');
       vi.mocked(verifyKey).mockImplementation(() => {
         throw new Error('Verification failed');
       });

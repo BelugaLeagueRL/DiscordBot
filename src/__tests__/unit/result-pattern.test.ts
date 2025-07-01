@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { mapResult, combineResults } from '../../utils/google-sheets-builder';
 
 // Object Mother pattern for Result pattern test data
 const ResultPatternMother = {
@@ -69,11 +70,9 @@ const ResultPatternMother = {
 
 describe('Result Pattern Implementation - Unit Tests', () => {
   describe('mapResult', () => {
-    it('should transform successful result data while preserving success state', async () => {
+    it('should transform successful result data while preserving success state', () => {
       // Arrange
       const successResult = ResultPatternMother.successResultString();
-      const { mapResult } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = mapResult(successResult, (data: string) => data.toUpperCase());
 
@@ -84,11 +83,9 @@ describe('Result Pattern Implementation - Unit Tests', () => {
       }
     });
 
-    it('should pass through error results without transformation', async () => {
+    it('should pass through error results without transformation', () => {
       // Testing the behavioral requirement: errors bypass transformation
       const errorResult = ResultPatternMother.errorResultString();
-      const { mapResult } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = mapResult(errorResult, (data: unknown) => `transformed-${String(data)}`);
 
@@ -101,14 +98,12 @@ describe('Result Pattern Implementation - Unit Tests', () => {
   });
 
   describe('combineResults', () => {
-    it('should combine multiple successful results into array', async () => {
+    it('should combine multiple successful results into array', () => {
       // Testing the behavioral requirement: all success results combine into data array
       const results = [
         ResultPatternMother.successResultString(),
         { success: true as const, data: 'second-item' },
       ];
-      const { combineResults } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = combineResults(results);
 
@@ -120,11 +115,9 @@ describe('Result Pattern Implementation - Unit Tests', () => {
       }
     });
 
-    it('should return first error when any result fails', async () => {
+    it('should return first error when any result fails', () => {
       // Testing the behavioral requirement: first error short-circuits combination
       const mixedResults = ResultPatternMother.mixedResultsArray();
-      const { combineResults } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = combineResults(mixedResults);
 

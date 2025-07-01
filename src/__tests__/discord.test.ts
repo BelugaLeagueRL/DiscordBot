@@ -25,6 +25,7 @@ function isDiscordResponseData(
 vi.mock('discord-interactions', () => ({
   verifyKey: vi.fn(),
 }));
+import { verifyKey } from 'discord-interactions';
 
 describe('Discord utilities', () => {
   let mockVerifyKey: MockedFunction<
@@ -41,7 +42,7 @@ describe('Discord utilities', () => {
     vi.clearAllMocks();
 
     // Setup properly typed mocks
-    mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
+    mockVerifyKey = vi.mocked(verifyKey);
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
       // Mock implementation
     });

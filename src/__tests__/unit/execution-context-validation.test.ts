@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { validateExecutionContext } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
 
 // Object Mother pattern for execution context test data
 const ExecutionContextMother = {
@@ -57,13 +58,9 @@ const ExecutionContextMother = {
 
 describe('Execution Context Validation - Unit Tests', () => {
   describe('validateExecutionContext', () => {
-    it('should accept valid execution context with waitUntil method', async () => {
+    it('should accept valid execution context with waitUntil method', () => {
       // Arrange
       const validContext = ExecutionContextMother.validExecutionContext();
-      const { validateExecutionContext } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-
       // Act
       const result = validateExecutionContext(validContext);
 
@@ -71,12 +68,9 @@ describe('Execution Context Validation - Unit Tests', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject null execution contexts', async () => {
+    it('should reject null execution contexts', () => {
       // Arrange
       const context = ExecutionContextMother.nullContext();
-      const { validateExecutionContext } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateExecutionContext(context);
@@ -85,12 +79,9 @@ describe('Execution Context Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject undefined execution contexts', async () => {
+    it('should reject undefined execution contexts', () => {
       // Arrange
       const context = ExecutionContextMother.undefinedContext();
-      const { validateExecutionContext } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateExecutionContext(context);
@@ -99,11 +90,8 @@ describe('Execution Context Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject execution context missing required methods', async () => {
+    it('should reject execution context missing required methods', () => {
       // Testing the behavioral requirement: contexts without proper waitUntil are invalid
-      const { validateExecutionContext } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result1 = validateExecutionContext(ExecutionContextMother.contextMissingWaitUntil());

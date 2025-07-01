@@ -8,6 +8,8 @@ import { mockInteractions } from './mocks/interactions';
 import { EnvFactory, ExecutionContextFactory } from './helpers/test-factories';
 import workerModule from '../index';
 import type { Env } from '../index';
+import { verifyDiscordRequestSecure, cleanupRateLimits } from '../middleware/security';
+import { handleRegisterCommand } from '../application_commands/register/handler';
 
 // Type guard for Discord response data - handles both PONG and message responses
 function isDiscordResponse(
@@ -280,7 +282,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should return 401 status for invalid Discord request', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
         isValid: false,
         error: 'Invalid signature',
@@ -296,7 +297,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should return unauthorized message for invalid Discord request', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
         isValid: false,
         error: 'Invalid signature',
@@ -312,7 +312,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle rate limit exceeded', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
         isValid: false,
         error: 'Rate limit exceeded',
@@ -328,7 +327,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle timestamp validation error', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockResolvedValueOnce({
         isValid: false,
         error: 'Request timestamp too old',
@@ -446,7 +444,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should handle command execution error', async () => {
-      const { handleRegisterCommand } = await import('../application_commands/register/handler');
       vi.mocked(handleRegisterCommand).mockRejectedValueOnce(new Error('Database error'));
 
       const interaction = mockInteractions.registerValid();
@@ -564,8 +561,6 @@ describe('Main Index Handler', () => {
 
   describe('Rate limit cleanup', () => {
     it('should occasionally trigger rate limit cleanup', async () => {
-      const { cleanupRateLimits } = await import('../middleware/security');
-
       // Mock Math.random to always trigger cleanup
       const mockRandom = vi.spyOn(Math, 'random').mockReturnValue(0.005); // Less than 0.01
 
@@ -581,8 +576,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should not trigger cleanup most of the time', async () => {
-      const { cleanupRateLimits } = await import('../middleware/security');
-
       // Mock Math.random to not trigger cleanup
       const mockRandom = vi.spyOn(Math, 'random').mockReturnValue(0.5); // Greater than 0.01
 
@@ -600,7 +593,6 @@ describe('Main Index Handler', () => {
 
   describe('Global error handling', () => {
     it('should return 500 status for unexpected errors', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
 
       const interaction = mockInteractions.ping();
@@ -613,7 +605,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should return internal server error message for unexpected errors', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
 
       const interaction = mockInteractions.ping();
@@ -626,7 +617,6 @@ describe('Main Index Handler', () => {
     });
 
     it('should include security headers in error responses', async () => {
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Unexpected error'));
 
       const interaction = mockInteractions.ping();
@@ -643,7 +633,6 @@ describe('Main Index Handler', () => {
       const badEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: null as unknown as string });
 
       // Mock verifyDiscordRequestSecure to throw an error that breaks audit context
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(
         new Error('Critical system error')
       );
@@ -662,7 +651,6 @@ describe('Main Index Handler', () => {
       const badEnv = EnvFactory.create({ DISCORD_PUBLIC_KEY: null as unknown as string });
 
       // Mock verifyDiscordRequestSecure to throw an error that breaks audit context
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(
         new Error('Critical system error')
       );
@@ -678,7 +666,6 @@ describe('Main Index Handler', () => {
 
     it('should handle timeout errors', async () => {
       // Mock verifyDiscordRequestSecure to throw timeout error
-      const { verifyDiscordRequestSecure } = await import('../middleware/security');
       vi.mocked(verifyDiscordRequestSecure).mockRejectedValueOnce(new Error('Request timeout'));
 
       const interaction = mockInteractions.ping();

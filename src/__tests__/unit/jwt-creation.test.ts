@@ -5,15 +5,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { TestDataBuilders } from '../helpers/test-builders';
+import { createJWT } from '../../utils/google-sheets-builder';
 
 describe('JWT Creation - Unit Tests', () => {
   describe('createJWT', () => {
-    it('should create valid JWT with proper credentials and configuration', async () => {
+    it('should create valid JWT with proper credentials and configuration', () => {
       // Arrange
       const validCredentials = TestDataBuilders.validCredentials().build();
       const validConfig = TestDataBuilders.validJwtConfig().build();
-      const { createJWT } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = createJWT(validCredentials, validConfig);
 
@@ -26,11 +25,10 @@ describe('JWT Creation - Unit Tests', () => {
       }
     });
 
-    it('should reject credentials with invalid email format', async () => {
+    it('should reject credentials with invalid email format', () => {
       // Arrange
       const invalidCredentials = TestDataBuilders.invalidCredentials().build();
       const validConfig = TestDataBuilders.validJwtConfig().build();
-      const { createJWT } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createJWT(invalidCredentials, validConfig);
@@ -39,13 +37,12 @@ describe('JWT Creation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject credentials with invalid private key', async () => {
+    it('should reject credentials with invalid private key', () => {
       // Arrange
       const invalidCredentials = TestDataBuilders.validCredentials()
         .withInvalidPrivateKey()
         .build();
       const validConfig = TestDataBuilders.validJwtConfig().build();
-      const { createJWT } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createJWT(invalidCredentials, validConfig);
@@ -54,11 +51,10 @@ describe('JWT Creation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject credentials with empty fields', async () => {
+    it('should reject credentials with empty fields', () => {
       // Arrange
       const invalidCredentials = TestDataBuilders.emptyCredentials().build();
       const validConfig = TestDataBuilders.validJwtConfig().build();
-      const { createJWT } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createJWT(invalidCredentials, validConfig);
@@ -67,11 +63,10 @@ describe('JWT Creation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid JWT configuration', async () => {
+    it('should reject invalid JWT configuration', () => {
       // Testing the behavioral requirement: invalid configuration causes failure
       const validCredentials = TestDataBuilders.validCredentials().build();
       const invalidConfig = TestDataBuilders.invalidJwtConfig().build();
-      const { createJWT } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createJWT(validCredentials, invalidConfig);
@@ -80,14 +75,12 @@ describe('JWT Creation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should handle cryptographic errors gracefully', async () => {
+    it('should handle cryptographic errors gracefully', () => {
       // Testing the behavioral requirement: cryptographic failures are handled properly
       const malformedCredentials = TestDataBuilders.validCredentials()
         .withMalformedPrivateKey()
         .build();
       const validConfig = TestDataBuilders.validJwtConfig().build();
-
-      const { createJWT } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createJWT(malformedCredentials, validConfig);

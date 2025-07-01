@@ -11,6 +11,7 @@ import { verifyDiscordRequest } from '../../utils/discord';
 vi.mock('discord-interactions', () => ({
   verifyKey: vi.fn(),
 }));
+import { verifyKey } from 'discord-interactions';
 
 describe('Discord Signature Verification Functional Tests', () => {
   let mockVerifyKey: MockedFunction<
@@ -25,7 +26,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
+    mockVerifyKey = vi.mocked(verifyKey);
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
       // Mock implementation
     });

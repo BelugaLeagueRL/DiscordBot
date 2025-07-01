@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { validateChannelPermissions } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
 
 // Object Mother pattern for Discord interaction and environment test data
 const ChannelPermissionsMother = {
@@ -124,13 +125,10 @@ const ChannelPermissionsMother = {
 
 describe('Channel Permissions Validation - Unit Tests', () => {
   describe('validateChannelPermissions', () => {
-    it('should accept valid admin interaction with all permissions', async () => {
+    it('should accept valid admin interaction with all permissions', () => {
       // Arrange
       const validInteraction = ChannelPermissionsMother.validAdminInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
-      const { validateChannelPermissions } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateChannelPermissions(validInteraction as any, validEnv as any);
@@ -139,13 +137,10 @@ describe('Channel Permissions Validation - Unit Tests', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject interactions outside Discord servers', async () => {
+    it('should reject interactions outside Discord servers', () => {
       // Testing the behavioral requirement: DM interactions are forbidden
       const dmInteraction = ChannelPermissionsMother.dmInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
-      const { validateChannelPermissions } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateChannelPermissions(dmInteraction as any, validEnv as any);
@@ -154,13 +149,10 @@ describe('Channel Permissions Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject interactions from wrong channels', async () => {
+    it('should reject interactions from wrong channels', () => {
       // Arrange
       const wrongChannelInteraction = ChannelPermissionsMother.wrongChannelInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
-      const { validateChannelPermissions } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateChannelPermissions(wrongChannelInteraction as any, validEnv as any);
@@ -169,13 +161,10 @@ describe('Channel Permissions Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject interactions from unauthorized users', async () => {
+    it('should reject interactions from unauthorized users', () => {
       // Arrange
       const unprivilegedInteraction = ChannelPermissionsMother.unprivilegedUserInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
-      const { validateChannelPermissions } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateChannelPermissions(unprivilegedInteraction as any, validEnv as any);
@@ -184,13 +173,10 @@ describe('Channel Permissions Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should handle member-based user identification correctly', async () => {
+    it('should handle member-based user identification correctly', () => {
       // Testing the behavioral requirement: alternative user access patterns work
       const memberInteraction = ChannelPermissionsMother.memberBasedInteraction();
       const validEnv = ChannelPermissionsMother.validEnvironment();
-      const { validateChannelPermissions } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateChannelPermissions(memberInteraction as any, validEnv as any);

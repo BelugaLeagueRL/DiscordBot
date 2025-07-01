@@ -4,6 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import {
+  validateCredentials,
+  buildCredentialsObject,
+} from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
 
 // Object Mother pattern for Google Sheets credentials test data
 const CredentialsMother = {
@@ -59,13 +63,9 @@ const CredentialsMother = {
 
 describe('Command Validation Functions - Unit Tests', () => {
   describe('validateCredentials', () => {
-    it('should validate credentials with required fields', async () => {
+    it('should validate credentials with required fields', () => {
       // Arrange
       const validCredentials = CredentialsMother.validCredentials();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-
       // Act
       const result = validateCredentials(validCredentials);
 
@@ -73,12 +73,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: true });
     });
 
-    it('should reject null credentials', async () => {
+    it('should reject null credentials', () => {
       // Arrange
       const credentials = CredentialsMother.nullCredentials();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials as any);
@@ -87,12 +84,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
 
-    it('should reject undefined credentials', async () => {
+    it('should reject undefined credentials', () => {
       // Arrange
       const credentials = CredentialsMother.undefinedCredentials();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials as any);
@@ -101,12 +95,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
 
-    it('should reject credentials with empty client_email', async () => {
+    it('should reject credentials with empty client_email', () => {
       // Arrange
       const credentials = CredentialsMother.emptyClientEmail();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials);
@@ -115,12 +106,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
 
-    it('should reject credentials missing client_email', async () => {
+    it('should reject credentials missing client_email', () => {
       // Arrange
       const credentials = CredentialsMother.missingClientEmail();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials as any);
@@ -129,12 +117,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
 
-    it('should reject credentials with empty private_key', async () => {
+    it('should reject credentials with empty private_key', () => {
       // Arrange
       const credentials = CredentialsMother.emptyPrivateKey();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials);
@@ -143,12 +128,9 @@ describe('Command Validation Functions - Unit Tests', () => {
       expect(result).toEqual({ isValid: false });
     });
 
-    it('should reject credentials missing private_key', async () => {
+    it('should reject credentials missing private_key', () => {
       // Arrange
       const credentials = CredentialsMother.missingPrivateKey();
-      const { validateCredentials } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = validateCredentials(credentials as any);
@@ -159,17 +141,13 @@ describe('Command Validation Functions - Unit Tests', () => {
   });
 
   describe('buildCredentialsObject', () => {
-    it('should build credentials object from environment variables', async () => {
+    it('should build credentials object from environment variables', () => {
       // Arrange
       const mockEnv = {
         GOOGLE_SHEETS_CLIENT_EMAIL: 'test@serviceaccount.com',
         GOOGLE_SHEETS_PRIVATE_KEY:
           '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7VJTUt9Us8cKB\n-----END PRIVATE KEY-----',
       };
-
-      const { buildCredentialsObject } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = buildCredentialsObject(mockEnv as any);
@@ -182,7 +160,7 @@ describe('Command Validation Functions - Unit Tests', () => {
       });
     });
 
-    it('should build credentials object with type assertions for required fields', async () => {
+    it('should build credentials object with type assertions for required fields', () => {
       // Testing that the function properly extracts and type-asserts environment variables
 
       // Arrange
@@ -193,10 +171,6 @@ describe('Command Validation Functions - Unit Tests', () => {
         GOOGLE_SHEETS_TYPE: 'service_account', // Extra field that might exist
         GOOGLE_SHEETS_PROJECT_ID: 'test-project', // Extra field that might exist
       };
-
-      const { buildCredentialsObject } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
 
       // Act
       const result = buildCredentialsObject(mockEnv as any);

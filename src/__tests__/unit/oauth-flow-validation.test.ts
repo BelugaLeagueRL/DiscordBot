@@ -5,13 +5,16 @@
 
 import { describe, it, expect } from 'vitest';
 import { TestDataBuilders } from '../helpers/test-builders';
+import {
+  validateOAuthTokenResponse,
+  validateOAuthRequestParams,
+} from '../../utils/google-sheets-builder';
 
 describe('OAuth Flow Validation - Unit Tests', () => {
   describe('validateOAuthTokenResponse', () => {
-    it('should validate valid OAuth token response successfully', async () => {
+    it('should validate valid OAuth token response successfully', () => {
       // Arrange
       const validResponse = TestDataBuilders.validOAuthResponse().build();
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = validateOAuthTokenResponse(validResponse);
@@ -25,11 +28,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should reject OAuth token response with missing access token', async () => {
+    it('should reject OAuth token response with missing access token', () => {
       // Arrange
       const invalidResponse = TestDataBuilders.invalidOAuthResponse().build();
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = validateOAuthTokenResponse(invalidResponse);
 
@@ -37,11 +38,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject OAuth token response with invalid expires_in', async () => {
+    it('should reject OAuth token response with invalid expires_in', () => {
       // Arrange
       const invalidResponse = TestDataBuilders.validOAuthResponse().withInvalidExpiresIn().build();
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = validateOAuthTokenResponse(invalidResponse);
 
@@ -49,10 +48,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject OAuth error responses', async () => {
+    it('should reject OAuth error responses', () => {
       // Arrange
       const errorResponse = TestDataBuilders.oauthErrorResponse().build();
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = validateOAuthTokenResponse(errorResponse);
@@ -61,9 +59,8 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should handle null responses gracefully', async () => {
+    it('should handle null responses gracefully', () => {
       // Arrange
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = validateOAuthTokenResponse(null as any);
@@ -76,9 +73,8 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should handle undefined responses gracefully', async () => {
+    it('should handle undefined responses gracefully', () => {
       // Arrange
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = validateOAuthTokenResponse(undefined as any);
@@ -91,9 +87,8 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should handle non-object responses gracefully', async () => {
+    it('should handle non-object responses gracefully', () => {
       // Arrange
-      const { validateOAuthTokenResponse } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = validateOAuthTokenResponse('not-an-object' as any);
@@ -108,11 +103,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
   });
 
   describe('validateOAuthRequestParams', () => {
-    it('should validate OAuth request parameters correctly', async () => {
+    it('should validate OAuth request parameters correctly', () => {
       // Testing the behavioral requirement: valid request parameters pass validation
       const validParams = TestDataBuilders.validOAuthParams().build();
-      const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = validateOAuthRequestParams(validParams);
 
@@ -124,11 +117,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should reject OAuth request parameters with missing assertion', async () => {
+    it('should reject OAuth request parameters with missing assertion', () => {
       // Arrange
       const invalidParams = TestDataBuilders.invalidOAuthParams().build();
-      const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = validateOAuthRequestParams(invalidParams);
 
@@ -140,11 +131,9 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       }
     });
 
-    it('should reject OAuth request parameters with wrong grant type', async () => {
+    it('should reject OAuth request parameters with wrong grant type', () => {
       // Arrange
       const invalidParams = TestDataBuilders.validOAuthParams().withWrongGrantType().build();
-      const { validateOAuthRequestParams } = await import('../../utils/google-sheets-builder');
-
       // Act
       const result = validateOAuthRequestParams(invalidParams);
 
