@@ -230,27 +230,19 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const totalTime = endTime - startTime;
 
-      // All requests should return 200 (errors are handled gracefully) - RED: Replace forEach with individual assertions
-      expect(responses[0]?.status).toBe(200);
-      expect(responses[1]?.status).toBe(200);
-      expect(responses[2]?.status).toBe(200);
-      expect(responses[3]?.status).toBe(200);
-      expect(responses[4]?.status).toBe(200);
-      expect(responses[5]?.status).toBe(200);
-      expect(responses[6]?.status).toBe(200);
-      expect(responses[7]?.status).toBe(200);
-      expect(responses[8]?.status).toBe(200);
-      expect(responses[9]?.status).toBe(200);
-      expect(responses[10]?.status).toBe(200);
-      expect(responses[11]?.status).toBe(200);
-      expect(responses[12]?.status).toBe(200);
-      expect(responses[13]?.status).toBe(200);
-      expect(responses[14]?.status).toBe(200);
-      expect(responses[15]?.status).toBe(200);
-      expect(responses[16]?.status).toBe(200);
-      expect(responses[17]?.status).toBe(200);
-      expect(responses[18]?.status).toBe(200);
-      expect(responses[19]?.status).toBe(200);
+      // Behavioral validation: verify error handling behavior for mixed requests
+      const allGracefullyHandled = responses.every(response => response.status === 200);
+      expect(allGracefullyHandled).toBe(true);
+      expect(responses).toHaveLength(20);
+
+      // Behavioral validation: verify error responses contain proper Discord error format
+      const evenIndexResponse = await responses[1]?.json(); // Invalid request (odd index)
+      expect(isDiscordResponse(evenIndexResponse)).toBe(true);
+      if (!isDiscordResponse(evenIndexResponse)) {
+        throw new Error('Invalid response format');
+      }
+      // Should contain error message for invalid URL
+      expect(evenIndexResponse.data.content).toMatch(/error|invalid|failed/i);
 
       const avgResponseTime = totalTime / concurrentRequests;
       expect(avgResponseTime).toBeLessThan(2); // Error cases should be very fast
