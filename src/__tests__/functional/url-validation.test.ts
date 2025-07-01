@@ -66,12 +66,22 @@ describe('Current URL Validation Implementation', () => {
         switch: 'TestUser123', // Valid Nintendo Switch ID
       };
 
-      Object.entries(validPlatformIds).forEach(([platform, platformId]) => {
+      // Behavioral validation: verify all platforms parsed correctly
+      const results = Object.entries(validPlatformIds).map(([platform, platformId]) => {
         const url = `https://rocketleague.tracker.network/rocket-league/profile/${platform}/${platformId}/overview`;
-        const result = validateTrackerUrl(url);
+        return { platform, platformId, result: validateTrackerUrl(url) };
+      });
 
-        expect(result.isValid).toBe(true);
+      // Verify all platforms succeeded
+      const allValid = results.every(({ result }) => result.isValid);
+      expect(allValid).toBe(true);
+      expect(results).toHaveLength(5);
+
+      // Behavioral validation: verify each platform parsed correctly
+      results.forEach(({ platform, platformId, result }) => {
         expect(result.platform).toBe(platform);
+        expect(result.platformId).toBe(platformId);
+        expect(result.error).toBeUndefined();
       });
     });
 
