@@ -600,11 +600,21 @@ export function handleAdminSyncUsersToSheetsDiscord(
 
 /**
  * Convert technical errors to user-friendly messages
+ * Exported for testing purposes
  */
-function convertErrorToUserMessage(error: unknown): string {
+export function convertErrorToUserMessage(error: unknown): string {
   const errorMessage = error instanceof Error ? error.message : String(error);
 
-  if (errorMessage.includes('Bot lacks permission')) {
+  // Handle empty or whitespace-only messages
+  if (!errorMessage || errorMessage.trim().length === 0) {
+    return 'Unexpected error - check server logs';
+  }
+
+  // Priority-based error matching (order matters for tests)
+  if (
+    errorMessage.includes('Bot lacks permission') ||
+    errorMessage.includes('bot lacks permission')
+  ) {
     return 'Bot needs "View Server Members" permission';
   }
   if (errorMessage.includes('authentication failed') || errorMessage.includes('OAuth failed')) {

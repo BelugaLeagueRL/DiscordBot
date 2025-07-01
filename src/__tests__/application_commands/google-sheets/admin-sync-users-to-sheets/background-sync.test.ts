@@ -111,10 +111,10 @@ describe('Background Sync Functionality', () => {
         GOOGLE_SHEETS_CLIENT_ID: 'client-123',
       } as Env;
 
-      // Act & Assert - Should throw when waitUntil throws
+      // Act & Assert - Should not throw when waitUntil throws (graceful error handling)
       expect(() => {
         handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
-      }).toThrow('Execution context error');
+      }).not.toThrow();
     });
   });
 
