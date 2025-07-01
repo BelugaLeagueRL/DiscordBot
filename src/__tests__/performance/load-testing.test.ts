@@ -440,6 +440,7 @@ describe('Performance and Load Testing', () => {
     it('should establish performance baselines', async () => {
       const benchmarkRuns = 10;
       const responseTimes: number[] = [];
+      const responses: Response[] = [];
 
       for (let i = 0; i < benchmarkRuns; i++) {
         const startTime = performance.now();
@@ -464,9 +465,13 @@ describe('Performance and Load Testing', () => {
 
         const endTime = performance.now();
         responseTimes.push(endTime - startTime);
-
-        expect(response.status).toBe(200);
+        responses.push(response);
       }
+
+      // Behavioral validation: verify all benchmark requests succeeded
+      const allSuccessful = responses.every(response => response.status === 200);
+      expect(allSuccessful).toBe(true);
+      expect(responses).toHaveLength(benchmarkRuns);
 
       const avgTime = responseTimes.reduce((a, b) => a + b, 0) / benchmarkRuns;
       const minTime = Math.min(...responseTimes);
