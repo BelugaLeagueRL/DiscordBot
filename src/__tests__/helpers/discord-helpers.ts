@@ -223,7 +223,7 @@ export function createMockCommandInteraction(
     },
     // Context properties
     guild_id: '765432109876543210',
-    channel_id: '654321098765432109',
+    channel_id: '987654321098765432', // Match REGISTER_COMMAND_REQUEST_CHANNEL_ID
     // Minimal user identification
     member: {
       user: {
