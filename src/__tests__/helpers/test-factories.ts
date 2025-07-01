@@ -36,7 +36,9 @@ export const SecurityContextFactory = {
 export const EnvFactory = {
   create(overrides: Partial<Env> = {}): Env {
     return {
-      DISCORD_TOKEN: process.env['DISCORD_TOKEN'] ?? 'Bot mock_token_123',
+      DISCORD_TOKEN:
+        process.env['DISCORD_TOKEN'] ??
+        `Bot ${faker.string.alphanumeric(24)}.${faker.string.alphanumeric(6)}.${faker.string.alphanumeric(27)}`,
       DISCORD_PUBLIC_KEY: process.env['DISCORD_PUBLIC_KEY'] ?? 'mock_public_key_456',
       DISCORD_APPLICATION_ID: process.env['DISCORD_APPLICATION_ID'] ?? '123456789012345678',
       DATABASE_URL: process.env['DATABASE_URL'] ?? 'sqlite://test.db',
