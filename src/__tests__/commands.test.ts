@@ -92,7 +92,14 @@ describe('Command Definitions', () => {
         throw new Error('tracker2 option not found');
       }
 
+      // Behavioral validation: verify optional tracker design behavior
       expect(tracker2.required).toBe(false);
+      expect(tracker2.type).toBe(3); // STRING type
+      expect(tracker2.description).toMatch(/tracker|URL|optional/i);
+
+      // Behavioral validation: verify command structure supports multiple optional trackers
+      const optionalTrackers = REGISTER_COMMAND.options.filter(opt => opt.required === false);
+      expect(optionalTrackers).toHaveLength(3);
     });
 
     it('should have tracker3 option present', () => {
@@ -124,7 +131,14 @@ describe('Command Definitions', () => {
       if (!tracker3) {
         throw new Error('tracker3 option not found');
       }
+
+      // Behavioral validation: verify tracker3 optional behavior and consistency
       expect(tracker3.required).toBe(false);
+      expect(tracker3.type).toBe(3); // STRING type for URL input
+      expect(tracker3.description).toMatch(/tracker|URL|optional/i);
+
+      // Behavioral validation: verify consistent naming pattern
+      expect(tracker3.name).toBe('tracker3');
     });
 
     it('should have tracker4 option present', () => {
@@ -156,7 +170,15 @@ describe('Command Definitions', () => {
       if (!tracker4) {
         throw new Error('tracker4 option not found');
       }
+
+      // Behavioral validation: verify tracker4 completes the optional tracker set
       expect(tracker4.required).toBe(false);
+      expect(tracker4.type).toBe(3); // STRING type for URL input
+      expect(tracker4.description).toMatch(/tracker|URL|optional/i);
+
+      // Behavioral validation: verify complete command structure
+      expect(tracker4.name).toBe('tracker4');
+      expect(REGISTER_COMMAND.options).toHaveLength(4); // Total command options
     });
 
     it('should have all options with string type', () => {
