@@ -90,4 +90,52 @@ describe('loadCredentialsFromEnvironment error handling (Lines 465-466)', () => 
       },
     });
   });
+
+  describe('validation failure error handling (Line 482)', () => {
+    it('should return Discord error response when interaction validation fails (Line 482)', async () => {
+      // Arrange - Create invalid interaction missing 'id' field
+      // Path: Missing 'id' → validateInteractionStructure Line 197 → validateBasics Line 245
+      //       → performValidation Line 308 → handleAdminSyncUsersToSheetsDiscord Line 482
+      const invalidInteraction = {
+        // Missing required 'id' field to trigger validateInteractionStructure failure
+        application_id: 'app-456',
+        type: 2,
+        token: 'token-abc',
+        version: 1,
+      };
+
+      const validEnv = {
+        TEST_CHANNEL_ID: 'test-channel-id',
+        PRIVILEGED_USER_ID: 'privileged-user-id',
+        GOOGLE_SHEET_ID: 'sheet-123',
+        GOOGLE_SHEETS_TYPE: 'service_account',
+        GOOGLE_SHEETS_PROJECT_ID: 'project-123',
+        GOOGLE_SHEETS_PRIVATE_KEY_ID: 'key-id-123',
+        GOOGLE_SHEETS_CLIENT_EMAIL: 'test@service.com',
+        GOOGLE_SHEETS_PRIVATE_KEY: 'valid-key-content',
+        GOOGLE_SHEETS_CLIENT_ID: 'client-123',
+      } as Env;
+
+      // Act - Call Discord handler with invalid interaction (cast to bypass TypeScript validation)
+      const result = handleAdminSyncUsersToSheetsDiscord(
+        invalidInteraction as any,
+        mockContext,
+        validEnv
+      );
+
+      // Assert - Should return Discord error response from Line 482
+      expect(result).toBeInstanceOf(Response);
+      expect(result.status).toBe(200); // Discord slash commands always return 200
+
+      // Verify error message is from validateInteractionStructure → Line 482
+      const responseBody = await result.json();
+      expect(responseBody).toMatchObject({
+        type: 4, // Discord ephemeral response type
+        data: {
+          content: '❌ Invalid interaction format',
+          flags: 64, // Ephemeral flag
+        },
+      });
+    });
+  });
 });
