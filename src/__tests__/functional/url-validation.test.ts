@@ -29,8 +29,14 @@ describe('Current URL Validation Implementation', () => {
       const invalidUrl = 'https://example.com/rocket-league/profile/steam/testuser/overview';
       const result = validateTrackerUrl(invalidUrl);
 
+      // Behavioral validation: verify domain validation behavior
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('rocketleague.tracker.network');
+      expect(result.platform).toBeUndefined();
+      expect(result.platformId).toBeUndefined();
+
+      // Behavioral validation: verify error message is helpful
+      expect(result.error).toMatch(/domain|rocketleague\.tracker\.network/i);
     });
 
     it('should reject malformed URLs', () => {
