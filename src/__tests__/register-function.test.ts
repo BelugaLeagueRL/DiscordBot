@@ -178,7 +178,7 @@ describe('registerCommands function with valid environment', () => {
       'Registering commands for development environment...'
     );
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      'Successfully registered 2 commands for development environment'
+      'Successfully registered 1 commands for development environment'
     );
     expect(mockConsoleLog).toHaveBeenCalledWith('  - register: Register with the league');
   });

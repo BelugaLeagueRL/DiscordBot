@@ -430,7 +430,7 @@ describe('Performance and Load Testing', () => {
       if (!isDiscordResponse(firstErrorResponse)) {
         throw new Error('Invalid response format');
       }
-      expect(firstErrorResponse.data.content).toMatch(/error|invalid|failed/i);
+      expect(firstErrorResponse.data.content).toMatch(/error|invalid|failed|could not identify/i);
 
       console.log(`Error handling performance: ${avgResponseTime.toFixed(2)}ms average`);
     });

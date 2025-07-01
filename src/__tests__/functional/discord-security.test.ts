@@ -83,14 +83,14 @@ describe('Discord Signature Verification Functional Tests', () => {
       expect(result).toBe(false);
       expect(mockVerifyKey).toHaveBeenCalled();
       expect(mockVerifyKey).toHaveBeenCalledWith(
-        JSON.stringify({ type: 1 }),
+        expect.any(ArrayBuffer),
         'invalid_signature_hex',
         '1640995200',
         'test_public_key_hex'
       );
 
-      // Behavioral validation: verify security rejection with proper parameters
-      expect(consoleSpy).toHaveBeenCalledWith('Discord signature verification failed');
+      // Behavioral validation: no error logging for normal verification failure
+      expect(consoleSpy).not.toHaveBeenCalled();
     });
   });
 
