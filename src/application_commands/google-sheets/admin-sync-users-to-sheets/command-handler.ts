@@ -506,7 +506,10 @@ export function handleAdminSyncUsersToSheetsDiscord(
   );
 
   if (!syncResult.success) {
-    return createErrorResponse(syncResult.error ?? 'Unknown sync error');
+    return new Response(JSON.stringify({ error: syncResult.error ?? 'Unknown sync error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   // Return immediate ephemeral response - sync happens in background

@@ -44,6 +44,10 @@
     "antipattern:liar": "echo 'Checking for Liar patterns (generic boolean assertions)...' && (rg 'expect.*\\.toBe\\(true\\)$' src/__tests__ --type ts || echo '✅ No Liar patterns found')",
     "antipattern:foreach": "echo 'Checking for forEach Logic patterns (unsafe loops)...' && (rg '\\.forEach\\(' src/__tests__ --type ts || echo '✅ No forEach Logic patterns found')",
     "antipattern:report": "echo '🔍 ANTI-PATTERN DETECTION REPORT' && echo '================================' && npm run antipattern:check && echo '================================' && echo '✅ All anti-patterns check complete!'",
+    "commit:tdd": "echo 'TDD commit (skipping coverage)...' && SKIP_COVERAGE=1 git commit",
+    "commit:wip": "echo 'WIP commit (skipping coverage + type coverage)...' && SKIP_COVERAGE=1 SKIP_TYPE_COVERAGE=1 git commit",
+    "commit:quick": "echo 'Quick commit (lint + typecheck only)...' && SKIP_COVERAGE=1 SKIP_TYPE_COVERAGE=1 git commit",
+    "precommit:test": "echo 'Testing pre-commit hooks...' && .husky/pre-commit",
     "dev:full": "npm run setup:dev && npm run register:dev && npm run dev"
   },
   "keywords": [

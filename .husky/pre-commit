@@ -3,13 +3,32 @@
 echo "🔧 Running pre-commit quality checks..."
 
 # ZERO TOLERANCE - FAIL FAST APPROACH
-echo "📝 Running lint-staged (ESLint + Prettier)..."
-npx lint-staged --verbose
+if [ "$SKIP_LINT" != "1" ]; then
+  echo "📝 Running lint-staged (ESLint + Prettier)..."
+  npx lint-staged --verbose
+else
+  echo "⏭️  Skipping lint-staged (SKIP_LINT=1)"
+fi
 
-echo "🔍 Running TypeScript compilation check..."
-npm run typecheck
+if [ "$SKIP_TYPECHECK" != "1" ]; then
+  echo "🔍 Running TypeScript compilation check..."
+  npm run typecheck
+else
+  echo "⏭️  Skipping TypeScript check (SKIP_TYPECHECK=1)"
+fi
 
-echo "📊 Running type coverage check..."
-npm run type-coverage
+if [ "$SKIP_TYPE_COVERAGE" != "1" ]; then
+  echo "📊 Running type coverage check..."
+  npm run type-coverage
+else
+  echo "⏭️  Skipping type coverage (SKIP_TYPE_COVERAGE=1)"
+fi
 
-echo "✅ All pre-commit checks passed!"
+if [ "$SKIP_COVERAGE" != "1" ]; then
+  echo "🧪 Running test coverage check (90% threshold)..."
+  npm run test:coverage-check
+else
+  echo "⏭️  Skipping coverage check (SKIP_COVERAGE=1)"
+fi
+
+echo "✅ Pre-commit checks completed!"

@@ -66,4 +66,58 @@ describe('Background Sync Functionality', () => {
       expect(mockContext.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
     });
   });
+
+  describe('syncUsersToSheetsBackground error scenario (Lines 107-112)', () => {
+    it('should return error response when context.waitUntil throws an exception', () => {
+      // Arrange
+      const mockContext = {
+        waitUntil: vi.fn(() => {
+          throw new Error('Execution context error');
+        }),
+        passThroughOnException: vi.fn(),
+      };
+
+      const validInteraction = {
+        id: 'interaction-123',
+        application_id: 'app-456',
+        type: 2,
+        guild_id: '123456789012345678',
+        channel_id: 'test-channel-id',
+        user: {
+          id: 'privileged-user-id',
+          username: 'testuser',
+          discriminator: '1234',
+          global_name: 'Test User',
+        },
+        data: {
+          id: 'command-789',
+          name: 'admin_sync_users_to_sheets',
+          type: 1,
+        },
+        token: 'token-abc',
+        version: 1,
+      };
+
+      const mockEnv = {
+        TEST_CHANNEL_ID: 'test-channel-id',
+        PRIVILEGED_USER_ID: 'privileged-user-id',
+        GOOGLE_SHEET_ID: 'sheet-123',
+        GOOGLE_SHEETS_TYPE: 'service_account',
+        GOOGLE_SHEETS_PROJECT_ID: 'project-123',
+        GOOGLE_SHEETS_PRIVATE_KEY_ID: 'key-id-123',
+        GOOGLE_SHEETS_PRIVATE_KEY:
+          '-----BEGIN PRIVATE KEY-----\ntest-key\n-----END PRIVATE KEY-----\n',
+        GOOGLE_SHEETS_CLIENT_EMAIL: 'test@serviceaccount.com',
+        GOOGLE_SHEETS_CLIENT_ID: 'client-123',
+      } as Env;
+
+      // Act
+      const result = handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
+
+      // Assert - Focus on specific error handling behavior of failed sync operation
+      expect(result).toBeInstanceOf(Response);
+      expect(result.status).toBe(500); // HTTP 500: Internal Server Error when sync operation fails
+      expect(mockContext.waitUntil).toHaveBeenCalledTimes(1); // waitUntil should be called exactly once
+    });
+  });
 });
