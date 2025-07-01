@@ -208,29 +208,28 @@ export function createMockCommandInteraction(
   overrides: Partial<DiscordInteraction> = {}
 ): DiscordInteraction {
   const baseInteraction: DiscordInteraction = {
-    id: faker.string.numeric(18),
-    application_id: faker.string.numeric(18),
+    // Essential core properties
+    id: '123456789012345678',
+    application_id: '987654321098765432',
     type: InteractionType.ApplicationCommand,
+    token: 'mock_token_123',
+    version: 1,
+    // Command data
     data: {
-      id: faker.string.numeric(18),
+      id: '876543210987654321',
       name: commandName,
       type: 1, // ApplicationCommandType.ChatInput
       options,
     },
-    guild_id: faker.string.numeric(18),
-    channel_id: faker.string.numeric(18),
+    // Context properties
+    guild_id: '765432109876543210',
+    channel_id: '654321098765432109',
+    // Minimal user identification
     member: {
       user: {
-        id: faker.string.numeric(18),
-        username: faker.internet.username(),
-        discriminator: faker.string.numeric(4),
+        id: '543210987654321098',
       },
     },
-    token: faker.string.alphanumeric(84),
-    version: 1,
-    locale: 'en-US',
-    guild_locale: 'en-US',
-    app_permissions: '0',
     ...overrides,
   };
 

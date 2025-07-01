@@ -212,46 +212,11 @@ describe('Discord Signature Verification Functional Tests', () => {
       // Test with realistic Discord interaction payload size
       mockVerifyKey.mockReturnValue(true);
 
+      // Create large payload - content doesn't matter, only size
       const largePayload = {
-        id: '123456789012345678',
-        type: 2, // APPLICATION_COMMAND
-        data: {
-          id: '987654321098765432',
-          name: 'register',
-          options: [
-            {
-              name: 'tracker1',
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
-            },
-            {
-              name: 'tracker2',
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/epic/test-player-name/overview',
-            },
-            {
-              name: 'tracker3',
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/psn/testplayer123/overview',
-            },
-            {
-              name: 'tracker4',
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/xbl/TestPlayer/overview',
-            },
-          ],
-        },
-        guild_id: '123456789012345678',
-        channel_id: '987654321098765432',
-        member: {
-          user: {
-            id: '555666777888999000',
-            username: 'testuser',
-            discriminator: '1234',
-          },
-        },
-        token: 'very_long_token_string_here_that_discord_sends_with_interactions',
-        version: 1,
+        type: 2,
+        data: { name: 'register', large_field: 'x'.repeat(500) },
+        token: 'x'.repeat(100),
       };
 
       const request = new Request('https://example.com/discord-webhook', {

@@ -36,52 +36,23 @@ export const SecurityContextFactory = {
 export const EnvFactory = {
   create(overrides: Partial<Env> = {}): Env {
     return {
-      DISCORD_TOKEN:
-        process.env['DISCORD_TOKEN'] ??
-        `Bot ${faker.string.alphanumeric(24)}.${faker.string.alphanumeric(6)}.${faker.string.alphanumeric(27)}`,
-      DISCORD_PUBLIC_KEY:
-        process.env['DISCORD_PUBLIC_KEY'] ?? `mock_public_key_${faker.string.alphanumeric(64)}`,
-      DISCORD_APPLICATION_ID: process.env['DISCORD_APPLICATION_ID'] ?? faker.string.numeric(18),
+      DISCORD_TOKEN: process.env['DISCORD_TOKEN'] ?? 'Bot mock_token_123',
+      DISCORD_PUBLIC_KEY: process.env['DISCORD_PUBLIC_KEY'] ?? 'mock_public_key_456',
+      DISCORD_APPLICATION_ID: process.env['DISCORD_APPLICATION_ID'] ?? '123456789012345678',
       DATABASE_URL: process.env['DATABASE_URL'] ?? 'sqlite://test.db',
-      GOOGLE_SHEETS_API_KEY:
-        process.env['GOOGLE_SHEETS_API_KEY'] ?? `mock_sheets_key_${faker.string.alphanumeric(32)}`,
-      GOOGLE_SHEET_ID: process.env['GOOGLE_SHEET_ID'] ?? `1${faker.string.alphanumeric(43)}`,
+      GOOGLE_SHEETS_API_KEY: process.env['GOOGLE_SHEETS_API_KEY'] ?? 'mock_sheets_key_789',
+      GOOGLE_SHEET_ID: process.env['GOOGLE_SHEET_ID'] ?? '1mock_sheet_id_abc123',
       ENVIRONMENT: process.env['ENVIRONMENT'] ?? 'test',
       REGISTER_COMMAND_REQUEST_CHANNEL_ID:
-        process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? faker.string.numeric(18),
+        process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? '987654321098765432',
       REGISTER_COMMAND_RESPONSE_CHANNEL_ID:
-        process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? faker.string.numeric(18),
-      TEST_CHANNEL_ID: process.env['TEST_CHANNEL_ID'] ?? faker.string.numeric(18),
-      PRIVILEGED_USER_ID: process.env['PRIVILEGED_USER_ID'] ?? faker.string.numeric(18),
+        process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? '876543210987654321',
+      TEST_CHANNEL_ID: process.env['TEST_CHANNEL_ID'] ?? '765432109876543210',
+      PRIVILEGED_USER_ID: process.env['PRIVILEGED_USER_ID'] ?? '654321098765432109',
       ...overrides,
     };
   },
-
-  development(): Env {
-    return this.create({ ENVIRONMENT: 'development' });
-  },
-
-  production(): Env {
-    return this.create({ ENVIRONMENT: 'production' });
-  },
-
-  test(): Env {
-    return this.create({ ENVIRONMENT: 'test' });
-  },
-
-  withGoogleSheets(sheetId?: string): Env {
-    return this.create({
-      GOOGLE_SHEET_ID: sheetId ?? `1${faker.string.alphanumeric(43)}`,
-      GOOGLE_SHEETS_API_KEY: `mock_sheets_key_${faker.string.alphanumeric(32)}`,
-    });
-  },
-
-  withValidDiscordToken(): Env {
-    return this.create({
-      DISCORD_TOKEN: 'Bot MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs',
-    });
-  },
-} as const;
+};
 
 /**
  * Factory for creating mock audit log entries
