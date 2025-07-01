@@ -78,8 +78,18 @@ describe('Discord Signature Verification Functional Tests', () => {
 
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
+      // Behavioral validation: verify signature verification security behavior
       expect(result).toBe(false);
       expect(mockVerifyKey).toHaveBeenCalled();
+      expect(mockVerifyKey).toHaveBeenCalledWith(
+        JSON.stringify({ type: 1 }),
+        'invalid_signature_hex',
+        '1640995200',
+        'test_public_key_hex'
+      );
+
+      // Behavioral validation: verify security rejection with proper parameters
+      expect(consoleSpy).toHaveBeenCalledWith('Discord signature verification failed');
     });
   });
 
