@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { createMemberRow } from '../../utils/google-sheets-builder';
 
 // Object Mother pattern for test data - provides well-known test objects
 interface MemberData {
@@ -82,10 +83,9 @@ const MemberMother = {
 
 describe('Google Sheets Utilities - Unit Tests', () => {
   describe('createMemberRow', () => {
-    it('should transform member data into sheet row format with all required fields', async () => {
+    it('should transform member data into sheet row format with all required fields', () => {
       // Arrange
       const memberData = MemberMother.validMember();
-      const { createMemberRow } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createMemberRow(memberData);
@@ -103,10 +103,9 @@ describe('Google Sheets Utilities - Unit Tests', () => {
       expect(result).toHaveLength(7);
     });
 
-    it('should convert true boolean values to string "true"', async () => {
+    it('should convert true boolean values to string "true"', () => {
       // Arrange
       const memberData = MemberMother.bannedMember();
-      const { createMemberRow } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createMemberRow(memberData);
@@ -116,10 +115,9 @@ describe('Google Sheets Utilities - Unit Tests', () => {
       expect(result[5]).toBe('false'); // is_active
     });
 
-    it('should convert false boolean values to string "false"', async () => {
+    it('should convert false boolean values to string "false"', () => {
       // Arrange
       const memberData = MemberMother.activeMember();
-      const { createMemberRow } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createMemberRow(memberData);
@@ -129,10 +127,9 @@ describe('Google Sheets Utilities - Unit Tests', () => {
       expect(result[5]).toBe('true'); // is_active
     });
 
-    it('should generate automatic timestamp when last_updated is not provided', async () => {
+    it('should generate automatic timestamp when last_updated is not provided', () => {
       // Arrange
       const memberData = MemberMother.memberWithoutTimestamp();
-      const { createMemberRow } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createMemberRow(memberData);
@@ -149,10 +146,9 @@ describe('Google Sheets Utilities - Unit Tests', () => {
       expect(diffMs).toBeLessThan(5000); // Within 5 seconds
     });
 
-    it('should handle edge cases with special characters and empty strings', async () => {
+    it('should handle edge cases with special characters and empty strings', () => {
       // Arrange
       const memberData = MemberMother.memberWithSpecialChars();
-      const { createMemberRow } = await import('../../utils/google-sheets-builder');
 
       // Act
       const result = createMemberRow(memberData);

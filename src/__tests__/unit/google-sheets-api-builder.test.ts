@@ -5,6 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestDataBuilders } from '../helpers/test-builders';
+import { GoogleSheetsApiBuilder } from '../../utils/google-sheets-builder';
 
 describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   beforeEach(() => {
@@ -13,9 +14,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   });
 
   describe('setSpreadsheetId', () => {
-    it('should set the spreadsheet ID and return builder instance for chaining', async () => {
+    it('should set the spreadsheet ID and return builder instance for chaining', () => {
       // Arrange
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create();
       const testId = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
 
@@ -29,9 +29,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   });
 
   describe('setRange', () => {
-    it('should set the range and return builder instance for chaining', async () => {
+    it('should set the range and return builder instance for chaining', () => {
       // Arrange
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create();
       const testRange = 'Sheet1!A:G';
 
@@ -45,9 +44,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   });
 
   describe('setAccessToken', () => {
-    it('should set the access token and return builder instance for chaining', async () => {
+    it('should set the access token and return builder instance for chaining', () => {
       // Arrange
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create();
       const testToken = 'ya29.a0AfH6SMBeiGFHJT9k...';
 
@@ -61,9 +59,8 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
   });
 
   describe('addRow', () => {
-    it('should add a row and return builder instance for chaining', async () => {
+    it('should add a row and return builder instance for chaining', () => {
       // Arrange
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create();
       const testRow = [
         '123456789012345678',
@@ -97,7 +94,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -115,7 +111,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
 
     it('should return error when missing required configuration', async () => {
       // Arrange
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create(); // No configuration set
 
       // Act
@@ -140,7 +135,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -166,7 +160,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -194,7 +187,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -220,7 +212,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -248,7 +239,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(mockResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setAccessToken(config.accessToken);
@@ -266,7 +256,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
       // Arrange
       const config = TestDataBuilders.validApiBuilderConfig().build();
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setAccessToken(config.accessToken);
@@ -300,7 +289,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
           json: vi.fn().mockResolvedValue(deleteResponse),
         });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
@@ -326,7 +314,6 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
         json: vi.fn().mockResolvedValue(getResponse),
       });
 
-      const { GoogleSheetsApiBuilder } = await import('../../utils/google-sheets-builder');
       const builder = GoogleSheetsApiBuilder.create()
         .setSpreadsheetId(config.spreadsheetId)
         .setRange(config.range)
