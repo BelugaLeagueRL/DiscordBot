@@ -13,9 +13,16 @@ describe('Current URL Validation Implementation', () => {
         'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview';
       const result = validateTrackerUrl(validUrl);
 
+      // Behavioral validation: verify URL parsing extracted correct components
       expect(result.isValid).toBe(true);
       expect(result.platform).toBe('steam');
       expect(result.platformId).toBe('76561198123456789');
+      expect(result.error).toBeUndefined();
+
+      // Behavioral validation: verify Steam ID format is actually valid Steam ID64
+      expect(result.platformId).toBeDefined();
+      expect(result.platformId).toMatch(/^7656119\d{10}$/);
+      expect(result.platformId?.length).toBe(17);
     });
 
     it('should reject wrong domain', () => {
