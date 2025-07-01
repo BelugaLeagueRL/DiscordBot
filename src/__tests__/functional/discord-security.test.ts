@@ -105,9 +105,14 @@ describe('Discord Signature Verification Functional Tests', () => {
 
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
+      // Behavioral validation: verify missing header security behavior
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith('Missing signature headers');
       expect(mockVerifyKey).not.toHaveBeenCalled();
+
+      // Behavioral validation: verify security fails fast without crypto operations
+      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).not.toHaveBeenCalledWith('Discord signature verification failed');
     });
 
     it('should reject request missing timestamp header', async () => {
