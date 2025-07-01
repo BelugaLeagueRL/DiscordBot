@@ -85,5 +85,40 @@ describe('GoogleOAuthBuilder', () => {
 
       expect(accessToken).toBe('ya29.mock-access-token');
     });
+
+    it('should throw error when credentials are missing (Lines 696-697)', async () => {
+      // Arrange - Builder without credentials set
+      const builder = new GoogleOAuthBuilder();
+
+      // Act & Assert - Should throw error for missing credentials (Line 697)
+      await expect(builder.getAccessToken()).rejects.toThrow('OAuth credentials not set');
+    });
+
+    it('should throw error when OAuth API request fails (Lines 723-724)', async () => {
+      // Arrange - Mock JWT library for successful JWT creation
+      const mockJwtSign = vi.fn().mockResolvedValue('mock-jwt-token');
+      const mockJwtLibrary = { default: { sign: mockJwtSign } };
+      vi.doMock('@tsndr/cloudflare-worker-jwt', () => mockJwtLibrary);
+
+      // Mock fetch to return failed OAuth response (Line 723)
+      const mockFailedResponse = {
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+      };
+      global.fetch = vi.fn().mockResolvedValue(mockFailedResponse);
+
+      // Valid credentials but API will fail
+      const validCredentials: GoogleSheetsCredentials = {
+        client_email: 'test@serviceaccount.com',
+        private_key: '-----BEGIN PRIVATE KEY-----\nvalid-key-content\n-----END PRIVATE KEY-----\n',
+      };
+
+      // Act & Assert - Should throw error for OAuth API failure (Line 724)
+      const builder = new GoogleOAuthBuilder();
+      builder.setCredentials(validCredentials);
+
+      await expect(builder.getAccessToken()).rejects.toThrow('OAuth failed: 401 Unauthorized');
+    });
   });
 });
