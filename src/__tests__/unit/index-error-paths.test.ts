@@ -278,4 +278,85 @@ describe('index.ts error paths for coverage', () => {
       });
     });
   });
+
+  describe('health check unhealthy path (Lines 85-101)', () => {
+    it('should return 503 status for unhealthy health check (Lines 85-101)', async () => {
+      // Arrange - Create a corrupted environment to cause health check failure
+      const unhealthyEnv = {
+        ...mockEnv,
+        // Remove required health check dependencies to trigger unhealthy status
+        DISCORD_TOKEN: '', // Empty token should trigger unhealthy status
+        DISCORD_PUBLIC_KEY: '', // Empty public key should trigger unhealthy status
+      } as typeof mockEnv;
+
+      const request = new Request('https://example.com/', {
+        method: 'GET',
+      });
+
+      // Act - Execute GET request with corrupted env to trigger health check unhealthy path
+      const response = await indexHandler.fetch(request, unhealthyEnv, mockContext);
+
+      // Assert - Verify Lines 85-101 unhealthy response
+      expect(response).toBeInstanceOf(Response);
+      expect(response.status).toBe(503);
+      expect(response.headers.get('Content-Type')).toBe('application/json');
+
+      const responseData = (await response.json()) as {
+        status: string;
+        message: string;
+        timestamp: string;
+        checks: Record<string, unknown>;
+      };
+      expect(responseData.status).toBe('unhealthy');
+      expect(responseData.message).toBe('Beluga Discord Bot has issues');
+      expect(responseData.timestamp).toBeDefined();
+      expect(responseData.checks).toBeDefined();
+    });
+  });
+
+  describe('unknown command error handling (Lines 441-447)', () => {
+    it('should return error response for unknown Discord command (Lines 441-447)', async () => {
+      // Arrange - Create Discord interaction with unknown command name
+      const unknownCommandInteraction = {
+        type: 2, // APPLICATION_COMMAND
+        data: {
+          name: 'unknown_command_that_does_not_exist',
+        },
+        member: {
+          user: {
+            id: 'test-user-123',
+          },
+        },
+      };
+
+      const request = new Request('https://example.com/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature-Ed25519': 'valid_signature_hex',
+          'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
+        },
+        body: JSON.stringify(unknownCommandInteraction),
+      });
+
+      // Act - Execute POST request with unknown command to trigger Lines 441-447
+      const response = await indexHandler.fetch(request, mockEnv, mockContext);
+
+      // Assert - Verify Lines 441-447 unknown command error response
+      expect(response).toBeInstanceOf(Response);
+      expect(response.status).toBe(200); // Discord interactions return 200 with error content
+      expect(response.headers.get('Content-Type')).toBe('application/json');
+
+      const responseData = (await response.json()) as {
+        type: number;
+        data: {
+          content: string;
+          flags: number;
+        };
+      };
+      expect(responseData.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
+      expect(responseData.data.content).toBe('❌ Unknown command. Please try again.');
+      expect(responseData.data.flags).toBe(64); // EPHEMERAL flag
+    });
+  });
 });
