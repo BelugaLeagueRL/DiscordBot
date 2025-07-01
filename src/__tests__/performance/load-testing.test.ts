@@ -51,7 +51,7 @@ describe('Performance and Load Testing', () => {
   });
 
   describe('Response Time Performance', () => {
-    it('should handle register command within 100ms', async () => {
+    it('should handle register command with successful performance behavior', async () => {
       // Use deterministic known Steam ID for predictable testing
       const knownSteamId = '76561198123456789';
       const registerInteraction = createMockCommandInteraction('register', [
@@ -70,8 +70,18 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const responseTime = endTime - startTime;
 
+      // Assert: Behavioral validation - successful response AND proper Discord format
       expect(response.status).toBe(200);
       expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
+
+      // Behavioral validation: verify it's actually a valid Discord response
+      const rawResponseData = await response.json();
+      expect(isDiscordResponse(rawResponseData)).toBe(true);
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
+      expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
     it('should handle multiple tracker URLs within 150ms', async () => {
