@@ -168,17 +168,18 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const totalTime = endTime - startTime;
 
-      // All requests should succeed - RED: Replace forEach with individual assertions
-      expect(responses[0]?.status).toBe(200);
-      expect(responses[1]?.status).toBe(200);
-      expect(responses[2]?.status).toBe(200);
-      expect(responses[3]?.status).toBe(200);
-      expect(responses[4]?.status).toBe(200);
-      expect(responses[5]?.status).toBe(200);
-      expect(responses[6]?.status).toBe(200);
-      expect(responses[7]?.status).toBe(200);
-      expect(responses[8]?.status).toBe(200);
-      expect(responses[9]?.status).toBe(200);
+      // Behavioral validation: verify concurrent processing actually succeeded
+      const allSuccessful = responses.every(response => response.status === 200);
+      expect(allSuccessful).toBe(true);
+      expect(responses).toHaveLength(10);
+
+      // Behavioral validation: verify at least one response contains valid Discord content
+      const firstResponseData = await responses[0]?.json();
+      expect(isDiscordResponse(firstResponseData)).toBe(true);
+      if (!isDiscordResponse(firstResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      expect(firstResponseData.data.content).toContain('✅ Registration received!');
 
       // Average response time should be reasonable for Workers
       const avgResponseTime = totalTime / concurrentRequests;
