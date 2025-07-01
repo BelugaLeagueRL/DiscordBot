@@ -7,4 +7,8 @@ if grep -iq "claude" "$1"; then
   exit 1
 fi
 
+# Run commitlint to validate conventional commit format
+echo "🔍 Validating commit message format..."
+npx commitlint --edit "$1"
+
 echo "✅ Commit message validation passed"

@@ -36,6 +36,15 @@ export default tseslint.config(
       // Modern JavaScript preferences
       'prefer-const': 'error',
       'no-var': 'error',
+      
+      // Prevent meta-comments from leaking into codebase
+      'no-warning-comments': [
+        'error',
+        {
+          terms: ['arrange', 'act', 'assert', 'given', 'when', 'then', 'setup', 'teardown'],
+          location: 'anywhere',
+        },
+      ],
     },
   },
 
@@ -45,6 +54,7 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-warning-comments': 'off', // Allow meta-comments in tests
     },
   },
 

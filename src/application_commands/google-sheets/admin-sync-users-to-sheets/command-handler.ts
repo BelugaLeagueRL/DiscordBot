@@ -78,8 +78,9 @@ interface CloudflareExecutionContext {
 
 /**
  * Background sync operation parameters
+ * Exported for testing purposes
  */
-interface SyncParameters {
+export interface SyncParameters {
   readonly guildId: string;
   readonly credentials: GoogleSheetsCredentials;
   readonly requestId: string;
@@ -124,8 +125,9 @@ function syncUsersToSheetsBackground(
 
 /**
  * Perform the actual background sync operation
+ * Exported for testing purposes
  */
-async function performBackgroundSync(
+export async function performBackgroundSync(
   params: SyncParameters,
   env: Env
 ): Promise<{ newMembersAdded: number }> {
