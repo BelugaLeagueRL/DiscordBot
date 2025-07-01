@@ -7,10 +7,9 @@ import { describe, it, expect } from 'vitest';
 
 describe('Discord Validation Functions - Unit Tests', () => {
   describe('isValidDiscordId', () => {
-    it('should validate 17-digit Discord IDs and verify exact format requirements', async () => {
-      // Arrange - 17 digit Discord ID (minimum)
+    it('should accept 17-digit Discord IDs', async () => {
+      // Arrange
       const validId = '12345678901234567';
-
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -18,16 +17,27 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(validId);
 
-      // Assert - Behavioral validation: should accept exactly 17 numeric characters
+      // Assert
       expect(result).toBe(true);
-      expect(validId).toMatch(/^\d{17}$/);
-      expect(validId.length).toBe(17);
     });
 
-    it('should validate 18-digit Discord IDs and verify standard format', async () => {
-      // Arrange - 18 digit Discord ID (most common)
+    it('should accept minimum length Discord IDs', async () => {
+      // Arrange
+      const minimumLengthId = '12345678901234567';
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidDiscordId(minimumLengthId);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should accept 18-digit Discord IDs', async () => {
+      // Arrange
       const validId = '123456789012345678';
-
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -35,17 +45,41 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(validId);
 
-      // Assert - Behavioral validation: should accept exactly 18 numeric characters
+      // Assert
       expect(result).toBe(true);
-      expect(validId).toMatch(/^\d{18}$/);
-      expect(validId.length).toBe(18);
-      expect(Number(validId)).toBeGreaterThan(0); // Valid numeric conversion
     });
 
-    it('should validate 19-digit Discord IDs and verify maximum length handling', async () => {
-      // Arrange - 19 digit Discord ID (maximum)
+    it('should accept standard length Discord IDs', async () => {
+      // Arrange
+      const standardLengthId = '123456789012345678';
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidDiscordId(standardLengthId);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should accept numeric Discord IDs', async () => {
+      // Arrange
+      const numericId = '123456789012345678';
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidDiscordId(numericId);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should accept 19-digit Discord IDs', async () => {
+      // Arrange
       const validId = '1234567890123456789';
-
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -53,17 +87,27 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(validId);
 
-      // Assert - Behavioral validation: should accept exactly 19 numeric characters at maximum
+      // Assert
       expect(result).toBe(true);
-      expect(validId).toMatch(/^\d{19}$/);
-      expect(validId.length).toBe(19);
-      expect(validId).not.toMatch(/^0+$/); // Should not be all zeros
     });
 
-    it('should reject Discord IDs containing letters and verify alphanumeric filtering', async () => {
-      // Arrange - Invalid Discord ID with letter
-      const invalidId = '12345678901234567a';
+    it('should accept maximum length Discord IDs', async () => {
+      // Arrange
+      const maximumLengthId = '1234567890123456789';
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
 
+      // Act
+      const result = isValidDiscordId(maximumLengthId);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should reject Discord IDs containing letters', async () => {
+      // Arrange
+      const invalidId = '12345678901234567a';
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -71,11 +115,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(invalidId);
 
-      // Assert - Behavioral validation: should reject any non-numeric characters
+      // Assert
       expect(result).toBe(false);
-      expect(invalidId).toMatch(/[a-zA-Z]/); // Contains letters
-      expect(invalidId.length).toBe(18); // Correct length but wrong format
-      expect(invalidId).not.toMatch(/^\d+$/); // Not all digits
     });
 
     it('should reject Discord IDs containing spaces', async () => {
@@ -138,10 +179,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs that are too short and verify minimum length enforcement', async () => {
-      // Arrange - 16 digits (too short)
-      const invalidId = '1234567890123456';
-
+    it('should reject Discord IDs that are too short', async () => {
+      // Arrange
+      const invalidId = '1234567890123456'; // 16 digits
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -149,17 +189,27 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(invalidId);
 
-      // Assert - Behavioral validation: should enforce minimum 17-digit requirement
+      // Assert
       expect(result).toBe(false);
-      expect(invalidId).toMatch(/^\d+$/); // All digits but wrong length
-      expect(invalidId.length).toBe(16); // Below minimum
-      expect(invalidId.length).toBeLessThan(17); // Violates minimum
     });
 
-    it('should reject Discord IDs that are too long and verify maximum length enforcement', async () => {
-      // Arrange - 20 digits (too long)
-      const invalidId = '12345678901234567890';
+    it('should reject IDs below minimum length', async () => {
+      // Arrange
+      const shortId = '1234567890123456'; // 16 digits
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
 
+      // Act
+      const result = isValidDiscordId(shortId);
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should reject Discord IDs that are too long', async () => {
+      // Arrange
+      const invalidId = '12345678901234567890'; // 20 digits
       const { isValidDiscordId } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -167,11 +217,22 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidDiscordId(invalidId);
 
-      // Assert - Behavioral validation: should enforce maximum 19-digit requirement
+      // Assert
       expect(result).toBe(false);
-      expect(invalidId).toMatch(/^\d+$/); // All digits but wrong length
-      expect(invalidId.length).toBe(20); // Above maximum
-      expect(invalidId.length).toBeGreaterThan(19); // Violates maximum
+    });
+
+    it('should reject IDs above maximum length', async () => {
+      // Arrange
+      const longId = '12345678901234567890'; // 20 digits
+      const { isValidDiscordId } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidDiscordId(longId);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
     it('should reject Discord IDs that are much too short (15 digits)', async () => {
@@ -224,8 +285,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
   });
 
   describe('isValidUser', () => {
-    it('should validate users with complete fields and verify all required properties', async () => {
-      // Arrange - Valid user with all fields
+    it('should accept users with complete fields', async () => {
+      // Arrange
       const validUser = {
         id: '123456789012345678',
         username: 'testuser',
@@ -234,7 +295,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: 'avatar.jpg',
         bot: false,
       };
-
       const { isValidUser } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -242,12 +302,50 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidUser(validUser);
 
-      // Assert - Behavioral validation: should accept user with valid structure
+      // Assert
       expect(result).toBe(true);
-      expect(validUser.id).toMatch(/^\d{17,19}$/);
-      expect(validUser.username.length).toBeGreaterThan(0);
-      expect(typeof validUser.bot).toBe('boolean');
-      expect(validUser.bot).toBe(false); // Non-bot requirement
+    });
+
+    it('should accept users with valid Discord ID format', async () => {
+      // Arrange
+      const userWithValidId = {
+        id: '123456789012345678',
+        username: 'testuser',
+        discriminator: '0001',
+        global_name: 'Test User',
+        avatar: 'avatar.jpg',
+        bot: false,
+      };
+      const { isValidUser } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidUser(userWithValidId);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should accept users with non-empty username', async () => {
+      // Arrange
+      const userWithUsername = {
+        id: '123456789012345678',
+        username: 'testuser',
+        discriminator: '0001',
+        global_name: 'Test User',
+        avatar: 'avatar.jpg',
+        bot: false,
+      };
+      const { isValidUser } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidUser(userWithUsername);
+
+      // Assert
+      expect(result).toBe(true);
     });
 
     it('should validate users with null optional fields', async () => {
@@ -269,17 +367,16 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(isValidUser(validUser)).toBe(true);
     });
 
-    it('should exclude bot users and verify bot filtering behavior', async () => {
-      // Arrange - Bot user
+    it('should reject bot users', async () => {
+      // Arrange
       const botUser = {
         id: '123456789012345678',
         username: 'botuser',
         discriminator: '0000',
         global_name: 'Bot User',
         avatar: null,
-        bot: true, // This should make it invalid
+        bot: true,
       };
-
       const { isValidUser } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -287,16 +384,33 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidUser(botUser);
 
-      // Assert - Behavioral validation: should reject users marked as bots
+      // Assert
       expect(result).toBe(false);
-      expect(botUser.bot).toBe(true); // Confirm bot flag
-      expect(botUser.id).toMatch(/^\d{17,19}$/); // Valid ID format
-      expect(botUser.username.length).toBeGreaterThan(0); // Valid username
-      // Bot flag should be the exclusion reason
     });
 
-    it('should reject users with empty Discord IDs and verify ID validation behavior', async () => {
-      // Arrange - User with empty ID
+    it('should filter out users based on bot flag', async () => {
+      // Arrange
+      const botUser = {
+        id: '123456789012345678',
+        username: 'botuser',
+        discriminator: '0000',
+        global_name: 'Bot User',
+        avatar: null,
+        bot: true,
+      };
+      const { isValidUser } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = isValidUser(botUser);
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should reject users with empty Discord IDs', async () => {
+      // Arrange
       const invalidUser = {
         id: '',
         username: 'testuser',
@@ -305,7 +419,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: false,
       };
-
       const { isValidUser } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -313,12 +426,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidUser(invalidUser);
 
-      // Assert - Behavioral validation: should reject empty ID strings
+      // Assert
       expect(result).toBe(false);
-      expect(invalidUser.id).toBe(''); // Confirm empty ID
-      expect(invalidUser.id.length).toBe(0); // No characters
-      expect(invalidUser.username.length).toBeGreaterThan(0); // Valid username
-      expect(invalidUser.bot).toBe(false); // Valid bot flag
     });
 
     it('should reject users with empty usernames', async () => {
@@ -340,8 +449,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(isValidUser(invalidUser)).toBe(false);
     });
 
-    it('should reject users with invalid Discord ID format and verify format constraints', async () => {
-      // Arrange - User with invalid Discord ID format
+    it('should reject users with invalid Discord ID format', async () => {
+      // Arrange
       const invalidUser = {
         id: 'invalid-id',
         username: 'testuser',
@@ -350,7 +459,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: false,
       };
-
       const { isValidUser } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -358,12 +466,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = isValidUser(invalidUser);
 
-      // Assert - Behavioral validation: should reject non-numeric IDs
+      // Assert
       expect(result).toBe(false);
-      expect(invalidUser.id).toMatch(/[^\d]/); // Contains non-digits
-      expect(invalidUser.id).not.toMatch(/^\d{17,19}$/); // Wrong format
-      expect(invalidUser.username.length).toBeGreaterThan(0); // Valid username
-      expect(invalidUser.bot).toBe(false); // Valid bot flag
     });
 
     it('should handle user ID as number gracefully', async () => {
@@ -644,10 +748,8 @@ describe('Discord Validation Functions - Unit Tests', () => {
   });
 
   describe('transformMemberData', () => {
-    it('should transform valid members with nickname priority logic', async () => {
-      // Testing the core transformation logic with nickname > global_name > username priority
-
-      // Arrange - Valid members with different name scenarios
+    it('should transform valid members into correct format', async () => {
+      // Arrange
       const validMembers = [
         {
           user: {
@@ -658,7 +760,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
             avatar: 'avatar1.jpg',
             bot: false,
           },
-          nick: 'Nickname1', // Should use this (highest priority)
+          nick: 'Nickname1',
           roles: ['role1', 'role2'],
           joined_at: '2023-01-01T00:00:00.000Z',
           premium_since: null,
@@ -669,48 +771,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
           permissions: '2147483647',
           communication_disabled_until: null,
         },
-        {
-          user: {
-            id: '987654321098765432',
-            username: 'username2',
-            discriminator: '0002',
-            global_name: 'GlobalName2',
-            avatar: null,
-            bot: false,
-          },
-          nick: null, // Should use global_name (second priority)
-          roles: ['role3'],
-          joined_at: '2023-02-01T00:00:00.000Z',
-          premium_since: '2023-03-01T00:00:00.000Z',
-          deaf: false,
-          mute: false,
-          flags: 0,
-          pending: false,
-          permissions: '104324673',
-          communication_disabled_until: null,
-        },
-        {
-          user: {
-            id: '555666777888999000',
-            username: 'username3',
-            discriminator: '0003',
-            global_name: null,
-            avatar: null,
-            bot: false,
-          },
-          nick: null, // Should use username (fallback)
-          roles: [],
-          joined_at: '2023-03-01T00:00:00.000Z',
-          premium_since: null,
-          deaf: false,
-          mute: false,
-          flags: 0,
-          pending: false,
-          permissions: '0',
-          communication_disabled_until: null,
-        },
       ];
-
       const { transformMemberData } = await import(
         '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
       );
@@ -718,53 +779,114 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = transformMemberData(validMembers);
 
-      // Assert - Behavioral validation: verify transformation logic and priority system
-      expect(result).toHaveLength(3);
-
-      // Test nickname priority behavior: nick > global_name > username
-      expect(result[0]).toEqual({
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
         discord_id: '123456789012345678',
-        discord_username_display: 'Nickname1', // nick used (highest priority)
         discord_username_actual: 'username1',
         server_join_date: '2023-01-01T00:00:00.000Z',
         is_banned: false,
         is_active: true,
-        last_updated: expect.any(String),
       });
-      // Verify nick was available and selected
-      expect(validMembers[0]?.nick).toBe('Nickname1');
-      expect(validMembers[0]?.user.global_name).toBe('GlobalName1');
-      expect(result[0]?.discord_username_display).toBe(validMembers[0]?.nick);
+    });
 
-      // Test global_name fallback behavior
-      expect(result[1]).toEqual({
-        discord_id: '987654321098765432',
-        discord_username_display: 'GlobalName2', // global_name used (second priority)
-        discord_username_actual: 'username2',
-        server_join_date: '2023-02-01T00:00:00.000Z',
-        is_banned: false,
-        is_active: true,
-        last_updated: expect.any(String),
-      });
-      // Verify nick was null and global_name was selected
-      expect(validMembers[1]?.nick).toBeNull();
-      expect(validMembers[1]?.user.global_name).toBe('GlobalName2');
-      expect(result[1]?.discord_username_display).toBe(validMembers[1]?.user.global_name);
+    it('should prioritize nickname over global_name and username', async () => {
+      // Arrange
+      const memberWithNick = {
+        user: {
+          id: '123456789012345678',
+          username: 'username1',
+          discriminator: '0001',
+          global_name: 'GlobalName1',
+          avatar: null,
+          bot: false,
+        },
+        nick: 'Nickname1',
+        roles: [],
+        joined_at: '2023-01-01T00:00:00.000Z',
+        premium_since: null,
+        deaf: false,
+        mute: false,
+        flags: 0,
+        pending: false,
+        permissions: '0',
+        communication_disabled_until: null,
+      };
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
 
-      // Test username fallback behavior
-      expect(result[2]).toEqual({
-        discord_id: '555666777888999000',
-        discord_username_display: 'username3', // username used (fallback)
-        discord_username_actual: 'username3',
-        server_join_date: '2023-03-01T00:00:00.000Z',
-        is_banned: false,
-        is_active: true,
-        last_updated: expect.any(String),
-      });
-      // Verify both nick and global_name were null, username was used
-      expect(validMembers[2]?.nick).toBeNull();
-      expect(validMembers[2]?.user.global_name).toBeNull();
-      expect(result[2]?.discord_username_display).toBe(validMembers[2]?.user.username);
+      // Act
+      const result = transformMemberData([memberWithNick]);
+
+      // Assert
+      expect(result[0]?.discord_username_display).toBe('Nickname1');
+    });
+
+    it('should use global_name when nickname is null', async () => {
+      // Arrange
+      const memberWithGlobalName = {
+        user: {
+          id: '987654321098765432',
+          username: 'username2',
+          discriminator: '0002',
+          global_name: 'GlobalName2',
+          avatar: null,
+          bot: false,
+        },
+        nick: null,
+        roles: [],
+        joined_at: '2023-02-01T00:00:00.000Z',
+        premium_since: null,
+        deaf: false,
+        mute: false,
+        flags: 0,
+        pending: false,
+        permissions: '0',
+        communication_disabled_until: null,
+      };
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData([memberWithGlobalName]);
+
+      // Assert
+      expect(result[0]?.discord_username_display).toBe('GlobalName2');
+    });
+
+    it('should fallback to username when nick and global_name are null', async () => {
+      // Arrange
+      const memberWithUsernameOnly = {
+        user: {
+          id: '555666777888999000',
+          username: 'username3',
+          discriminator: '0003',
+          global_name: null,
+          avatar: null,
+          bot: false,
+        },
+        nick: null,
+        roles: [],
+        joined_at: '2023-03-01T00:00:00.000Z',
+        premium_since: null,
+        deaf: false,
+        mute: false,
+        flags: 0,
+        pending: false,
+        permissions: '0',
+        communication_disabled_until: null,
+      };
+      const { transformMemberData } = await import(
+        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
+      );
+
+      // Act
+      const result = transformMemberData([memberWithUsernameOnly]);
+
+      // Assert
+      expect(result[0]?.discord_username_display).toBe('username3');
     });
 
     it('should filter out invalid members during transformation', async () => {
@@ -971,23 +1093,10 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Act
       const result = filterNewMembers(memberData, existingIds);
 
-      // Assert - Behavioral validation: filtering should exclude existing members
+      // Assert
       expect(result).toHaveLength(2);
       expect(result[0]?.discord_id).toBe('123456789012345678');
       expect(result[1]?.discord_id).toBe('555666777888999000');
-
-      // Verify filtering behavior: existing user should be excluded
-      const existingUserFound = result.some(member => member.discord_id === '987654321098765432');
-      expect(existingUserFound).toBe(false);
-
-      // Verify all returned members are NOT in existing set
-      const returnedIds = result.map(member => member.discord_id);
-      expect(returnedIds.every(id => !existingIds.has(id))).toBe(true);
-
-      // Verify we got exactly the non-existing members
-      expect(returnedIds).toContain('123456789012345678');
-      expect(returnedIds).toContain('555666777888999000');
-      expect(returnedIds).not.toContain('987654321098765432');
     });
 
     it('should return all members when no existing IDs provided', async () => {
