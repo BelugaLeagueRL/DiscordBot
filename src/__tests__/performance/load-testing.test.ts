@@ -419,10 +419,18 @@ describe('Performance and Load Testing', () => {
       // Error handling should be very fast
       expect(avgResponseTime).toBeLessThan(2);
 
-      // All should return 200 with error messages - RED: Replace forEach with individual assertions
-      expect(responses[0]?.status).toBe(200);
-      expect(responses[1]?.status).toBe(200);
-      expect(responses[2]?.status).toBe(200);
+      // Behavioral validation: verify all validation errors handled gracefully
+      const allErrorsHandled = responses.every(response => response.status === 200);
+      expect(allErrorsHandled).toBe(true);
+      expect(responses).toHaveLength(3);
+
+      // Behavioral validation: verify error responses contain Discord error content
+      const firstErrorResponse = await responses[0]?.json();
+      expect(isDiscordResponse(firstErrorResponse)).toBe(true);
+      if (!isDiscordResponse(firstErrorResponse)) {
+        throw new Error('Invalid response format');
+      }
+      expect(firstErrorResponse.data.content).toMatch(/error|invalid|failed/i);
 
       console.log(`Error handling performance: ${avgResponseTime.toFixed(2)}ms average`);
     });
