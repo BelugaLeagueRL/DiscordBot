@@ -359,4 +359,36 @@ describe('index.ts error paths for coverage', () => {
       expect(responseData.data.flags).toBe(64); // EPHEMERAL flag
     });
   });
+
+  describe('unknown interaction type error handling (Lines 622-623)', () => {
+    it('should return 400 Bad Request for unknown interaction type (Lines 622-623)', async () => {
+      // Arrange - Create Discord interaction with unknown interaction type
+      const unknownInteractionType = {
+        type: 999, // Unknown interaction type (not PING=1 or APPLICATION_COMMAND=2)
+        id: 'test-interaction-123',
+        application_id: 'test-app-456',
+        token: 'test-token-789',
+        version: 1,
+      };
+
+      const request = new Request('https://example.com/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature-Ed25519': 'valid_signature_hex',
+          'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
+        },
+        body: JSON.stringify(unknownInteractionType),
+      });
+
+      // Act - Execute POST request with unknown interaction type to trigger Lines 622-623
+      const response = await indexHandler.fetch(request, mockEnv, mockContext);
+
+      // Assert - Verify Lines 622-623 unknown interaction type error response
+      expect(response).toBeInstanceOf(Response);
+      expect(response.status).toBe(400); // Bad Request for unknown interaction type
+      expect(await response.text()).toBe('Bad request');
+      expect(response.headers.get('Content-Security-Policy')).toBeDefined(); // Security headers included
+    });
+  });
 });
