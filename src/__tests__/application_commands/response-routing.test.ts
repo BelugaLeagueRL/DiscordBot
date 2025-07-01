@@ -61,14 +61,14 @@ describe('Response Routing', () => {
         ok: false,
         status: 403,
         statusText: 'Forbidden',
-        text: async () => await Promise.resolve('Missing permissions'),
+        json: async () => await Promise.resolve({ message: 'Missing permissions' }),
       });
 
       const message = 'Test response message';
       const result = await routeResponseToChannel(message, mockEnv);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Failed to send message: 403 Forbidden - Missing permissions');
+      expect(result.error).toBe('Discord API error (403): Missing permissions');
     });
 
     it('should handle missing response channel configuration', async () => {
@@ -92,7 +92,7 @@ describe('Response Routing', () => {
       const result = await routeResponseToChannel(message, mockEnv);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Network error occurred while sending message.');
+      expect(result.error).toBe('Network error');
     });
   });
 });
