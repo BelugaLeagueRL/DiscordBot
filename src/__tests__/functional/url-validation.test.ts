@@ -78,11 +78,13 @@ describe('Current URL Validation Implementation', () => {
       expect(results).toHaveLength(5);
 
       // Behavioral validation: verify each platform parsed correctly
-      results.forEach(({ platform, platformId, result }) => {
-        expect(result.platform).toBe(platform);
-        expect(result.platformId).toBe(platformId);
-        expect(result.error).toBeUndefined();
-      });
+      for (const { platform, platformId, result } of results) {
+        expect(result.platform, `Platform mismatch for ${platform}/${platformId}`).toBe(platform);
+        expect(result.platformId, `Platform ID mismatch for ${platform}/${platformId}`).toBe(
+          platformId
+        );
+        expect(result.error, `Unexpected error for ${platform}/${platformId}`).toBeUndefined();
+      }
     });
 
     it('should reject unsupported platforms', () => {

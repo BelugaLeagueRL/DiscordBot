@@ -6,6 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../index';
 import type { DiscordInteraction } from '../../types/discord';
+import { executeAdminSyncAndNotify } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
+import * as discordMembers from '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
+import * as googleSheetsBuilder from '../../utils/google-sheets-builder';
+import * as discordUtils from '../../utils/discord';
 
 // Mock all dependencies
 vi.mock(
@@ -79,14 +83,6 @@ describe('executeAdminSyncAndNotify', () => {
   describe('Success Path with Member Count Variations', () => {
     it('should successfully sync 0 new members and notify Discord', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-      const discordUtils = await import('../../utils/discord');
 
       // Mock successful fetch with 0 new members
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
@@ -128,14 +124,6 @@ describe('executeAdminSyncAndNotify', () => {
 
     it('should successfully sync 10 new members and notify Discord', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-      const discordUtils = await import('../../utils/discord');
 
       // Mock 10 members data
       const mockMembers = Array.from({ length: 10 }, (_, i) => ({
@@ -220,14 +208,6 @@ describe('executeAdminSyncAndNotify', () => {
 
     it('should successfully sync 1000 new members and notify Discord', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-      const discordUtils = await import('../../utils/discord');
 
       // Mock 1000 members - this tests the performance boundary
       const mockMembers = Array.from({ length: 1000 }, (_, i) => ({
@@ -314,11 +294,6 @@ describe('executeAdminSyncAndNotify', () => {
   describe('Error Handling - Google Sheets Failures', () => {
     it('should handle Google Sheets OAuth authentication failure', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-      const discordUtils = await import('../../utils/discord');
 
       // Mock OAuth failure
       const mockOAuth = {
@@ -342,14 +317,6 @@ describe('executeAdminSyncAndNotify', () => {
 
     it('should handle Google Sheets API write failure', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-      const discordUtils = await import('../../utils/discord');
 
       // Mock successful Discord fetch but failed Sheets write
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
@@ -448,13 +415,6 @@ describe('executeAdminSyncAndNotify', () => {
   describe('Error Handling - Discord API Failures', () => {
     it('should handle Discord member fetch failure', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const discordUtils = await import('../../utils/discord');
 
       // Mock Discord API failure
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
@@ -477,13 +437,6 @@ describe('executeAdminSyncAndNotify', () => {
 
     it('should handle Discord API rate limiting', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const discordUtils = await import('../../utils/discord');
 
       // Mock Discord API rate limiting
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
@@ -508,13 +461,6 @@ describe('executeAdminSyncAndNotify', () => {
   describe('Error Handling - Network Failures', () => {
     it('should handle network timeout during Discord fetch', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const discordUtils = await import('../../utils/discord');
 
       // Mock network timeout
       vi.mocked(discordMembers.fetchGuildMembers).mockRejectedValue(
@@ -536,13 +482,6 @@ describe('executeAdminSyncAndNotify', () => {
 
     it('should handle unknown error types gracefully', async () => {
       // Arrange
-      const { executeAdminSyncAndNotify } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const discordUtils = await import('../../utils/discord');
 
       // Mock unknown error type
       vi.mocked(discordMembers.fetchGuildMembers).mockRejectedValue(

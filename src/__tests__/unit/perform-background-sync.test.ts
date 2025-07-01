@@ -6,6 +6,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../index';
+import { performBackgroundSync } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
+import * as discordMembers from '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
+import * as googleSheetsBuilder from '../../utils/google-sheets-builder';
 
 // Mock all external dependencies for unit testing
 vi.mock(
@@ -61,14 +64,6 @@ describe('performBackgroundSync', () => {
 
   describe('Success Scenarios', () => {
     it('should successfully sync 0 new members (empty guild)', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
         success: true,
         members: [],
@@ -100,15 +95,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should successfully sync 10 new members', async () => {
-      // Arrange
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       // Mock 10 members
       const mockMembers = Array.from({ length: 10 }, (_, i) => ({
         user: {
@@ -187,13 +173,6 @@ describe('performBackgroundSync', () => {
 
     it('should successfully sync 1000 new members (performance boundary)', async () => {
       // Arrange
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
 
       // Mock 1000 members for performance testing
       const mockMembers = Array.from({ length: 1000 }, (_, i) => ({
@@ -273,13 +252,6 @@ describe('performBackgroundSync', () => {
 
     it('should handle duplicate filtering correctly', async () => {
       // Arrange
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
 
       // Mock 5 members but only 2 are new after filtering
       const mockMembers = Array.from({ length: 5 }, (_, i) => ({
@@ -369,11 +341,6 @@ describe('performBackgroundSync', () => {
 
   describe('Google Sheets OAuth Failures', () => {
     it('should throw when OAuth authentication fails', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi.fn().mockRejectedValue(new Error('OAuth failed: Invalid credentials')),
@@ -386,11 +353,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should throw when OAuth returns invalid token', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi.fn().mockResolvedValue(''),
@@ -415,14 +377,6 @@ describe('performBackgroundSync', () => {
 
   describe('Discord API Failures', () => {
     it('should throw when Discord member fetch fails', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi.fn().mockResolvedValue('mock_access_token'),
@@ -440,14 +394,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should throw when Discord returns invalid member data', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi.fn().mockResolvedValue('mock_access_token'),
@@ -467,14 +413,6 @@ describe('performBackgroundSync', () => {
 
   describe('Google Sheets API Failures', () => {
     it('should throw when existing data read fails', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
         success: true,
         members: [],
@@ -503,14 +441,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should throw when member append operation fails', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockMemberData = [
         {
           discord_id: 'user_1',
@@ -587,14 +517,6 @@ describe('performBackgroundSync', () => {
 
   describe('Data Processing Edge Cases', () => {
     it('should handle empty existing data correctly', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
         success: true,
         members: [],
@@ -623,14 +545,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should handle malformed existing data gracefully', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const discordMembers = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       vi.mocked(discordMembers.fetchGuildMembers).mockResolvedValue({
         success: true,
         members: [],
@@ -661,11 +575,6 @@ describe('performBackgroundSync', () => {
 
   describe('Network and Unknown Errors', () => {
     it('should throw on network timeout during OAuth', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi
@@ -680,11 +589,6 @@ describe('performBackgroundSync', () => {
     });
 
     it('should throw on unknown errors gracefully', async () => {
-      const { performBackgroundSync } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const googleSheetsBuilder = await import('../../utils/google-sheets-builder');
-
       const mockOAuth = {
         setCredentials: vi.fn().mockReturnThis(),
         getAccessToken: vi.fn().mockRejectedValue('Non-Error object thrown'),

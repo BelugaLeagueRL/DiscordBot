@@ -6,6 +6,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../index';
+import * as worker from '../../index';
+import * as commandHandler from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
+import * as auditModule from '../../utils/audit';
+import * as discordUtils from '../../utils/discord';
+import * as securityMiddleware from '../../middleware/security';
 
 // Mock the admin sync handler - THIS IS THE INTEGRATION BOUNDARY WE'RE TESTING
 vi.mock(
@@ -84,11 +89,9 @@ describe('Index.ts → Command Handler Integration', () => {
     vi.clearAllMocks();
 
     // Setup minimal mocks - focus on the integration boundary
-    const discordUtils = await import('../../utils/discord');
     vi.mocked(discordUtils.verifyDiscordRequest).mockResolvedValue(true);
 
     // Setup security middleware mocks
-    const securityMiddleware = await import('../../middleware/security');
     vi.mocked(securityMiddleware.verifyDiscordRequestSecure).mockResolvedValue({
       isValid: true,
       context: {
@@ -99,9 +102,6 @@ describe('Index.ts → Command Handler Integration', () => {
       },
     });
 
-    const commandHandler = await import(
-      '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-    );
     vi.mocked(commandHandler.handleAdminSyncUsersToSheetsDiscord).mockReturnValue(
       new Response('{"type": 5}', { status: 200, headers: { 'Content-Type': 'application/json' } })
     );
@@ -127,11 +127,6 @@ describe('Index.ts → Command Handler Integration', () => {
       };
 
       // Import the modules we need to test
-      const worker = await import('../../index');
-      const commandHandler = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
-      const auditModule = await import('../../utils/audit');
 
       // Create audit logger mock
       const mockAuditLogger = new auditModule.AuditLogger('test');
@@ -178,15 +173,10 @@ describe('Index.ts → Command Handler Integration', () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      const commandHandler = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler'
-      );
       vi.mocked(commandHandler.handleAdminSyncUsersToSheetsDiscord).mockReturnValue(
         expectedResponse
       );
 
-      const worker = await import('../../index');
-      const auditModule = await import('../../utils/audit');
       const mockAuditLogger = new auditModule.AuditLogger('test');
 
       // Act - Test response integration using direct approach

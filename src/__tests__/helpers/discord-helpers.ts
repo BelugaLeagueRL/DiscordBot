@@ -400,9 +400,9 @@ export function assertSecurityHeaders(response: Response): void {
     'Strict-Transport-Security',
   ];
 
-  requiredHeaders.forEach(header => {
-    expect(response.headers.get(header)).toBeTruthy();
-  });
+  for (const header of requiredHeaders) {
+    expect(response.headers.get(header), `Missing security header: ${header}`).toBeTruthy();
+  }
 }
 
 /**
