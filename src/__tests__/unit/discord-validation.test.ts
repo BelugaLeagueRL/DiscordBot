@@ -4,15 +4,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import {
+  isValidDiscordId,
+  isValidUser,
+  isValidMember,
+  transformMemberData,
+  filterNewMembers,
+} from '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
 
 describe('Discord Validation Functions - Unit Tests', () => {
   describe('isValidDiscordId', () => {
-    it('should accept 17-digit Discord IDs', async () => {
+    it('should accept 17-digit Discord IDs', () => {
       // Arrange
       const validId = '12345678901234567';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(validId);
@@ -21,12 +25,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept minimum length Discord IDs', async () => {
+    it('should accept minimum length Discord IDs', () => {
       // Arrange
       const minimumLengthId = '12345678901234567';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(minimumLengthId);
@@ -35,12 +36,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept 18-digit Discord IDs', async () => {
+    it('should accept 18-digit Discord IDs', () => {
       // Arrange
       const validId = '123456789012345678';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(validId);
@@ -49,12 +47,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept standard length Discord IDs', async () => {
+    it('should accept standard length Discord IDs', () => {
       // Arrange
       const standardLengthId = '123456789012345678';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(standardLengthId);
@@ -63,12 +58,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept numeric Discord IDs', async () => {
+    it('should accept numeric Discord IDs', () => {
       // Arrange
       const numericId = '123456789012345678';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(numericId);
@@ -77,12 +69,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept 19-digit Discord IDs', async () => {
+    it('should accept 19-digit Discord IDs', () => {
       // Arrange
       const validId = '1234567890123456789';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(validId);
@@ -91,12 +80,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept maximum length Discord IDs', async () => {
+    it('should accept maximum length Discord IDs', () => {
       // Arrange
       const maximumLengthId = '1234567890123456789';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(maximumLengthId);
@@ -105,12 +91,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should reject Discord IDs containing letters', async () => {
+    it('should reject Discord IDs containing letters', () => {
       // Arrange
       const invalidId = '12345678901234567a';
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(invalidId);
@@ -119,72 +102,49 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject Discord IDs containing spaces', async () => {
+    it('should reject Discord IDs containing spaces', () => {
       // Arrange - Invalid Discord ID with space
       const invalidId = '123456789012345 78';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs containing hyphens', async () => {
+    it('should reject Discord IDs containing hyphens', () => {
       // Arrange - Invalid Discord ID with hyphen
       const invalidId = '123456789012345-78';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs with mixed letters and numbers', async () => {
+    it('should reject Discord IDs with mixed letters and numbers', () => {
       // Arrange - Invalid Discord ID with mixed content
       const invalidId = 'abc123def456ghi789';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs containing decimal points', async () => {
+    it('should reject Discord IDs containing decimal points', () => {
       // Arrange - Invalid Discord ID with decimal point
       const invalidId = '12345678901234567.8';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs containing special characters', async () => {
+    it('should reject Discord IDs containing special characters', () => {
       // Arrange - Invalid Discord ID with special character
       const invalidId = '123456789012345678!';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs that are too short', async () => {
+    it('should reject Discord IDs that are too short', () => {
       // Arrange
       const invalidId = '1234567890123456'; // 16 digits
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(invalidId);
@@ -193,12 +153,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject IDs below minimum length', async () => {
+    it('should reject IDs below minimum length', () => {
       // Arrange
       const shortId = '1234567890123456'; // 16 digits
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(shortId);
@@ -207,12 +164,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject Discord IDs that are too long', async () => {
+    it('should reject Discord IDs that are too long', () => {
       // Arrange
       const invalidId = '12345678901234567890'; // 20 digits
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(invalidId);
@@ -221,12 +175,9 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject IDs above maximum length', async () => {
+    it('should reject IDs above maximum length', () => {
       // Arrange
       const longId = '12345678901234567890'; // 20 digits
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidDiscordId(longId);
@@ -235,49 +186,33 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject Discord IDs that are much too short (15 digits)', async () => {
+    it('should reject Discord IDs that are much too short (15 digits)', () => {
       // Arrange - 15 digits (too short)
       const invalidId = '123456789012345';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject Discord IDs that are much too long (21 digits)', async () => {
+    it('should reject Discord IDs that are much too long (21 digits)', () => {
       // Arrange - 21 digits (too long)
       const invalidId = '123456789012345678901';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject empty Discord IDs', async () => {
+    it('should reject empty Discord IDs', () => {
       // Arrange - Empty string
       const invalidId = '';
 
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
     });
 
-    it('should reject single digit Discord IDs', async () => {
+    it('should reject single digit Discord IDs', () => {
       // Arrange - Single digit
       const invalidId = '1';
-
-      const { isValidDiscordId } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act & Assert
       expect(isValidDiscordId(invalidId)).toBe(false);
@@ -285,7 +220,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
   });
 
   describe('isValidUser', () => {
-    it('should accept users with complete fields', async () => {
+    it('should accept users with complete fields', () => {
       // Arrange
       const validUser = {
         id: '123456789012345678',
@@ -295,9 +230,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: 'avatar.jpg',
         bot: false,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(validUser);
@@ -306,7 +238,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept users with valid Discord ID format', async () => {
+    it('should accept users with valid Discord ID format', () => {
       // Arrange
       const userWithValidId = {
         id: '123456789012345678',
@@ -316,9 +248,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: 'avatar.jpg',
         bot: false,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(userWithValidId);
@@ -327,7 +256,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should accept users with non-empty username', async () => {
+    it('should accept users with non-empty username', () => {
       // Arrange
       const userWithUsername = {
         id: '123456789012345678',
@@ -337,9 +266,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: 'avatar.jpg',
         bot: false,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(userWithUsername);
@@ -348,7 +274,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should validate users with null optional fields', async () => {
+    it('should validate users with null optional fields', () => {
       // Arrange - Valid user with null optional fields
       const validUser = {
         id: '987654321098765432',
@@ -359,15 +285,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         bot: false,
       };
 
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidUser(validUser)).toBe(true);
     });
 
-    it('should reject bot users', async () => {
+    it('should reject bot users', () => {
       // Arrange
       const botUser = {
         id: '123456789012345678',
@@ -377,9 +299,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: true,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(botUser);
@@ -388,7 +307,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should filter out users based on bot flag', async () => {
+    it('should filter out users based on bot flag', () => {
       // Arrange
       const botUser = {
         id: '123456789012345678',
@@ -398,9 +317,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: true,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(botUser);
@@ -409,7 +325,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject users with empty Discord IDs', async () => {
+    it('should reject users with empty Discord IDs', () => {
       // Arrange
       const invalidUser = {
         id: '',
@@ -419,9 +335,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: false,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(invalidUser);
@@ -430,7 +343,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject users with empty usernames', async () => {
+    it('should reject users with empty usernames', () => {
       // Arrange - User with empty username
       const invalidUser = {
         id: '123456789012345678',
@@ -441,15 +354,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         bot: false,
       };
 
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidUser(invalidUser)).toBe(false);
     });
 
-    it('should reject users with invalid Discord ID format', async () => {
+    it('should reject users with invalid Discord ID format', () => {
       // Arrange
       const invalidUser = {
         id: 'invalid-id',
@@ -459,9 +368,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         avatar: null,
         bot: false,
       };
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = isValidUser(invalidUser);
@@ -470,7 +376,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle user ID as number gracefully', async () => {
+    it('should handle user ID as number gracefully', () => {
       // Arrange - User with number ID instead of string
       const malformedUser = {
         id: 12345 as any,
@@ -481,15 +387,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         bot: false,
       };
 
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidUser(malformedUser as any)).toBe(false);
     });
 
-    it('should handle null username gracefully', async () => {
+    it('should handle null username gracefully', () => {
       // Arrange - User with null username
       const malformedUser = {
         id: '123456789012345678',
@@ -500,15 +402,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         bot: false,
       };
 
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidUser(malformedUser as any)).toBe(false);
     });
 
-    it('should handle bot field as string gracefully', async () => {
+    it('should handle bot field as string gracefully', () => {
       // Arrange - User with string bot field instead of boolean
       const malformedUser = {
         id: '123456789012345678',
@@ -519,17 +417,13 @@ describe('Discord Validation Functions - Unit Tests', () => {
         bot: 'false',
       };
 
-      const { isValidUser } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidUser(malformedUser as any)).toBe(false);
     });
   });
 
   describe('isValidMember', () => {
-    it('should validate members with complete fields', async () => {
+    it('should validate members with complete fields', () => {
       // Arrange - Valid member with complete fields
       const validMember = {
         user: {
@@ -552,15 +446,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(validMember)).toBe(true);
     });
 
-    it('should validate members with minimal fields', async () => {
+    it('should validate members with minimal fields', () => {
       // Arrange - Valid member with minimal fields
       const validMember = {
         user: {
@@ -583,15 +473,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(validMember)).toBe(true);
     });
 
-    it('should reject members with bot users', async () => {
+    it('should reject members with bot users', () => {
       // Arrange - Member with bot user
       const invalidMember = {
         user: {
@@ -614,15 +500,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(invalidMember)).toBe(false);
     });
 
-    it('should reject members with invalid Discord IDs', async () => {
+    it('should reject members with invalid Discord IDs', () => {
       // Arrange - Member with invalid Discord ID
       const invalidMember = {
         user: {
@@ -645,15 +527,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(invalidMember)).toBe(false);
     });
 
-    it('should reject members with non-array roles field', async () => {
+    it('should reject members with non-array roles field', () => {
       // Arrange - Member with roles as string instead of array
       const malformedMember = {
         user: {
@@ -676,15 +554,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(malformedMember)).toBe(false);
     });
 
-    it('should reject members with null joined_at field', async () => {
+    it('should reject members with null joined_at field', () => {
       // Arrange - Member with null joined_at
       const malformedMember = {
         user: {
@@ -707,15 +581,11 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(malformedMember)).toBe(false);
     });
 
-    it('should reject members with numeric joined_at field', async () => {
+    it('should reject members with numeric joined_at field', () => {
       // Arrange - Member with number joined_at instead of string
       const malformedMember = {
         user: {
@@ -738,17 +608,13 @@ describe('Discord Validation Functions - Unit Tests', () => {
         communication_disabled_until: null,
       };
 
-      const { isValidMember } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act & Assert
       expect(isValidMember(malformedMember)).toBe(false);
     });
   });
 
   describe('transformMemberData', () => {
-    it('should transform valid members into correct format', async () => {
+    it('should transform valid members into correct format', () => {
       // Arrange
       const validMembers = [
         {
@@ -772,9 +638,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
           communication_disabled_until: null,
         },
       ];
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData(validMembers);
@@ -790,7 +653,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       });
     });
 
-    it('should prioritize nickname over global_name and username', async () => {
+    it('should prioritize nickname over global_name and username', () => {
       // Arrange
       const memberWithNick = {
         user: {
@@ -812,9 +675,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         permissions: '0',
         communication_disabled_until: null,
       };
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData([memberWithNick]);
@@ -823,7 +683,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result[0]?.discord_username_display).toBe('Nickname1');
     });
 
-    it('should use global_name when nickname is null', async () => {
+    it('should use global_name when nickname is null', () => {
       // Arrange
       const memberWithGlobalName = {
         user: {
@@ -845,9 +705,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         permissions: '0',
         communication_disabled_until: null,
       };
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData([memberWithGlobalName]);
@@ -856,7 +713,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result[0]?.discord_username_display).toBe('GlobalName2');
     });
 
-    it('should fallback to username when nick and global_name are null', async () => {
+    it('should fallback to username when nick and global_name are null', () => {
       // Arrange
       const memberWithUsernameOnly = {
         user: {
@@ -878,9 +735,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         permissions: '0',
         communication_disabled_until: null,
       };
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData([memberWithUsernameOnly]);
@@ -956,10 +810,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         },
       ];
 
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act
       const result = transformMemberData(mixedMembers);
 
@@ -985,10 +835,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
 
     it('should handle empty input arrays gracefully', async () => {
       // Testing edge case of empty input
-
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData([]);
@@ -1024,10 +870,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
         permissions: '0',
         communication_disabled_until: null,
       };
-
-      const { transformMemberData } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = transformMemberData([validMember]);
@@ -1086,10 +928,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // Set of existing IDs (middle user already exists)
       const existingIds = new Set(['987654321098765432']);
 
-      const { filterNewMembers } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act
       const result = filterNewMembers(memberData, existingIds);
 
@@ -1099,7 +937,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result[1]?.discord_id).toBe('555666777888999000');
     });
 
-    it('should return all members when no existing IDs provided', async () => {
+    it('should return all members when no existing IDs provided', () => {
       // Testing the case where Google Sheets is empty (no existing members)
 
       // Arrange - Member data with empty existing IDs set
@@ -1126,10 +964,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
 
       const existingIds = new Set<string>(); // Empty set
 
-      const { filterNewMembers } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act
       const result = filterNewMembers(memberData, existingIds);
 
@@ -1144,7 +978,7 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result[1]?.discord_id).toBe(memberData[1]?.discord_id);
     });
 
-    it('should return empty array when all members already exist', async () => {
+    it('should return empty array when all members already exist', () => {
       // Testing the case where all Discord members are already in Google Sheets
 
       // Arrange - Member data where all IDs already exist
@@ -1172,10 +1006,6 @@ describe('Discord Validation Functions - Unit Tests', () => {
       // All IDs exist in sheets
       const existingIds = new Set(['123456789012345678', '987654321098765432']);
 
-      const { filterNewMembers } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
-
       // Act
       const result = filterNewMembers(memberData, existingIds);
 
@@ -1191,16 +1021,12 @@ describe('Discord Validation Functions - Unit Tests', () => {
       expect(result.length).toBe(0); // All filtered out
     });
 
-    it('should handle empty input arrays gracefully', async () => {
+    it('should handle empty input arrays gracefully', () => {
       // Testing edge case of empty member data input
 
       // Arrange - Empty member data
       const memberData: any[] = [];
       const existingIds = new Set(['123456789012345678', '987654321098765432']);
-
-      const { filterNewMembers } = await import(
-        '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members'
-      );
 
       // Act
       const result = filterNewMembers(memberData, existingIds);
