@@ -584,7 +584,16 @@ export function handleAdminSyncUsersToSheetsDiscord(
   };
 
   // Use context.waitUntil for background work with notification
-  context.waitUntil(executeAdminSyncAndNotify(interaction, env, syncParams));
+  // Handle potential context errors gracefully to ensure deferred response is always returned
+  try {
+    context.waitUntil(executeAdminSyncAndNotify(interaction, env, syncParams));
+  } catch (error: unknown) {
+    // Log error but don't block the deferred response - background sync will be skipped
+    console.error(
+      'Failed to schedule background sync:',
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 
   return deferredResponse;
 }
