@@ -4,6 +4,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Use vi.hoisted for shared mock state (2025 best practice)
+const mockVerifyKey = vi.hoisted(() => vi.fn());
+
+// Mock the discord-interactions module completely
+vi.mock('discord-interactions', () => ({
+  verifyKey: mockVerifyKey,
+  InteractionType: {
+    PING: 1,
+    APPLICATION_COMMAND: 2,
+  },
+  InteractionResponseType: {
+    PONG: 1,
+    CHANNEL_MESSAGE_WITH_SOURCE: 4,
+  },
+}));
+
 import type { Env } from '../../index';
 
 describe('index.ts conditional branches', () => {
@@ -12,6 +29,9 @@ describe('index.ts conditional branches', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+
+    // Set default mock behavior for Discord signature verification
+    mockVerifyKey.mockReturnValue(true); // Bypass signature validation
 
     mockEnv = {
       DISCORD_TOKEN: 'test-token',
@@ -88,6 +108,55 @@ describe('index.ts conditional branches', () => {
       // Assert - Should reach the test endpoint handler
       expect(response).toBeInstanceOf(Response);
       expect(response.status).toBeDefined();
+    });
+  });
+
+  describe('admin_sync_users_to_sheets command routing (Lines 436-438)', () => {
+    it('should route to admin sync handler when admin_sync_users_to_sheets command received (Lines 436-438)', async () => {
+      // Arrange - Create valid Discord interaction for admin sync command
+      const adminSyncInteraction = {
+        type: 2, // APPLICATION_COMMAND
+        id: '123456789012345678',
+        application_id: mockEnv.DISCORD_APPLICATION_ID,
+        guild_id: '987654321098765432',
+        channel_id: mockEnv.TEST_CHANNEL_ID,
+        user: {
+          id: mockEnv.PRIVILEGED_USER_ID,
+          username: 'admin-user',
+          discriminator: '1234',
+          global_name: 'Admin User',
+        },
+        data: {
+          id: 'command-987654321',
+          name: 'admin_sync_users_to_sheets', // This triggers Lines 436-438
+          type: 1, // CHAT_INPUT
+          options: [], // No options required for admin sync
+        },
+        token: 'discord-interaction-token-12345',
+        version: 1,
+        locale: 'en-US',
+        guild_locale: 'en-US',
+        app_permissions: '0',
+      };
+
+      const currentTimestamp = Math.floor(Date.now() / 1000).toString();
+      const request = new Request('https://example.com/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature-Ed25519': '1'.repeat(128), // Mock bypasses validation
+          'X-Signature-Timestamp': currentTimestamp,
+        },
+        body: JSON.stringify(adminSyncInteraction),
+      });
+
+      // Act - Execute handler to trigger admin sync routing (signature validation is mocked to pass)
+      const { default: handler } = await import('../../index');
+      const response = await handler.fetch(request, mockEnv, mockContext);
+
+      // Assert - Should successfully route to admin sync handler (Lines 436-438)
+      expect(response).toBeInstanceOf(Response);
+      expect(response.status).toBe(200); // Discord slash commands return 200 for ephemeral responses
     });
   });
 
