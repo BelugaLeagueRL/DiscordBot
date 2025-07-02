@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { faker } from '@faker-js/faker';
 import type { Env } from '../../index';
 import { handleAdminSyncUsersToSheetsDiscord } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/command-handler';
 import type { DiscordInteraction } from '../../types/discord';
@@ -68,7 +69,7 @@ describe('handleAdminSyncUsersToSheetsDiscord ephemeral deferred response valida
       },
       roles: ['test_role'],
     },
-    token: 'test_interaction_token',
+    token: faker.string.alphanumeric(16),
     version: 1,
     data: {
       id: 'command-id',

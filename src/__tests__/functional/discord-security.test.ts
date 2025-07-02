@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { MockedFunction } from 'vitest';
+import { faker } from '@faker-js/faker';
 import { verifyDiscordRequest } from '../../utils/discord';
 
 // Mock the discord-interactions module
@@ -305,7 +306,7 @@ describe('Discord Signature Verification Functional Tests', () => {
       const pingPayload = {
         id: '123456789012345678',
         type: 1, // PING
-        token: 'discord_interaction_token',
+        token: faker.string.alphanumeric(16),
         version: 1,
       };
 
@@ -359,7 +360,7 @@ describe('Discord Signature Verification Functional Tests', () => {
             discriminator: '1234',
           },
         },
-        token: 'interaction_token_string',
+        token: faker.string.alphanumeric(16),
         version: 1,
       };
 

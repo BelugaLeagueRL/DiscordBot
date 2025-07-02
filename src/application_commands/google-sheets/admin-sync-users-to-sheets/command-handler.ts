@@ -309,8 +309,9 @@ export function validateChannelPermissions(
 
 /**
  * Validate basic context and interaction structure
+ * Exported for testing purposes
  */
-function validateBasics(
+export function validateBasics(
   interaction: DiscordInteraction,
   context: ExecutionContext
 ): Result<{ extendedInteraction: ExtendedDiscordInteraction; validatedContext: ExecutionContext }> {
@@ -337,8 +338,9 @@ function validateBasics(
 
 /**
  * Extract and validate user ID from interaction
+ * Exported for testing purposes
  */
-function extractUserId(extendedInteraction: ExtendedDiscordInteraction): Result<string> {
+export function extractUserId(extendedInteraction: ExtendedDiscordInteraction): Result<string> {
   const userId = extendedInteraction.user?.id ?? extendedInteraction.member?.user?.id;
   if ((userId ?? '').length === 0) {
     return { success: false, error: 'User information not available' };
@@ -348,8 +350,9 @@ function extractUserId(extendedInteraction: ExtendedDiscordInteraction): Result<
 
 /**
  * Validate user and environment requirements
+ * Exported for testing purposes
  */
-function validateUserAndEnvironment(
+export function validateUserAndEnvironment(
   extendedInteraction: ExtendedDiscordInteraction,
   env: Env
 ): Result<string> {
@@ -372,8 +375,9 @@ function validateUserAndEnvironment(
 
 /**
  * Perform all validation steps for the command
+ * Exported for testing purposes
  */
-function performValidation(
+export function performValidation(
   interaction: DiscordInteraction,
   context: ExecutionContext,
   env: Env
@@ -404,8 +408,9 @@ function performValidation(
 
 /**
  * Execute the background sync operation
+ * Exported for testing purposes
  */
-function executeSyncOperation(
+export function executeSyncOperation(
   validatedData: {
     extendedInteraction: ExtendedDiscordInteraction;
     userId: string;

@@ -125,7 +125,7 @@ export class OAuthResponseBuilder
       error_description?: string | undefined;
     }>
 {
-  private accessToken: string = 'ya29.c.b0Aaekm1K7-valid-access-token-here';
+  private accessToken: string = 'ya29.mock_oauth_token_test';
   private expiresIn: number | string = 3600;
   private tokenType: string = 'Bearer';
   private error?: string;
@@ -234,7 +234,7 @@ export class ApiBuilderConfigBuilder
 {
   private spreadsheetId: string = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
   private range: string = 'Sheet1!A:G';
-  private accessToken: string = 'ya29.a0AfH6SMBeiGFHJT9k...';
+  private accessToken: string = 'ya29.mock_oauth_token_test';
   private valueInputOption: 'USER_ENTERED' | 'RAW' = 'USER_ENTERED';
 
   withSpreadsheetId(id: string): this {

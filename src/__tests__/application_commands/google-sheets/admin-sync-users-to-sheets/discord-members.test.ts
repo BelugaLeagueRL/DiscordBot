@@ -108,6 +108,97 @@ describe('Discord Guild Member Operations', () => {
       expect(result.members).toBeUndefined();
     });
 
+    it('should handle missing "View Server Members" permission specifically', async () => {
+      // Arrange - Discord returns 403 when bot lacks "View Server Members" permission
+      const memberPermissionError = {
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: () =>
+          Promise.resolve({
+            message: 'Missing Access',
+            code: 50001, // Missing Access error code
+          }),
+      };
+      vi.mocked(global.fetch).mockResolvedValue(memberPermissionError as Response);
+
+      // Act
+      const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Failed to fetch guild members');
+      expect(result.error).toContain('403');
+      expect(result.members).toBeUndefined();
+    });
+
+    it('should handle "Bot lacks permission" error message pattern', async () => {
+      // Arrange - Specific error message that matches convertErrorToUserMessage pattern
+      const botPermissionError = {
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: () =>
+          Promise.resolve({
+            message: 'Bot lacks permission to access server members',
+            code: 50013,
+          }),
+      };
+      vi.mocked(global.fetch).mockResolvedValue(botPermissionError as Response);
+
+      // Act
+      const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Bot lacks permission');
+      expect(result.members).toBeUndefined();
+    });
+
+    it('should handle insufficient permissions for guild member access', async () => {
+      // Arrange - Different permission error scenarios
+      const permissionScenarios = [
+        {
+          name: 'Missing Access',
+          response: {
+            ok: false,
+            status: 403,
+            json: () => Promise.resolve({ message: 'Missing Access', code: 50001 }),
+          },
+        },
+        {
+          name: 'Missing Permissions',
+          response: {
+            ok: false,
+            status: 403,
+            json: () => Promise.resolve({ message: 'Missing Permissions', code: 50013 }),
+          },
+        },
+        {
+          name: 'Bot lacks permission',
+          response: {
+            ok: false,
+            status: 403,
+            json: () =>
+              Promise.resolve({ message: 'Bot lacks permission to view members', code: 50013 }),
+          },
+        },
+      ];
+
+      for (const scenario of permissionScenarios) {
+        // Arrange
+        vi.mocked(global.fetch).mockResolvedValue(scenario.response as Response);
+
+        // Act
+        const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+        // Assert
+        expect(result.success, `Failed for scenario: ${scenario.name}`).toBe(false);
+        expect(result.error, `Failed for scenario: ${scenario.name}`).toContain('403');
+        expect(result.members, `Failed for scenario: ${scenario.name}`).toBeUndefined();
+      }
+    });
+
     it('should handle network errors gracefully', async () => {
       // Arrange
       vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
@@ -383,6 +474,137 @@ describe('Discord Guild Member Operations', () => {
 
       // Assert
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('Discord Permission Error Integration', () => {
+    it('should produce error messages compatible with convertErrorToUserMessage', async () => {
+      // Arrange - Test errors that will be processed by convertErrorToUserMessage
+      const permissionError = {
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: () =>
+          Promise.resolve({
+            message: 'Bot lacks permission to access server members',
+            code: 50013,
+          }),
+      };
+      vi.mocked(global.fetch).mockResolvedValue(permissionError as Response);
+
+      // Act
+      const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+      // Assert - Error message should contain pattern that convertErrorToUserMessage recognizes
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/Bot lacks permission/i);
+    });
+
+    it('should handle permission errors that map to user-friendly messages', async () => {
+      // Arrange - Different error scenarios that should map to specific user messages
+      const errorMappingScenarios = [
+        {
+          discordError: 'Bot lacks permission to access server members',
+          expectedPattern: /Bot lacks permission/i,
+          description: 'Bot permission error',
+        },
+        {
+          discordError: 'Missing Access',
+          expectedPattern: /Failed to fetch guild members.*Missing Access/i,
+          description: 'Missing access error',
+        },
+        {
+          discordError: 'The bot lacks permission to view members',
+          expectedPattern: /bot lacks permission/i,
+          description: 'Bot lacks permission variation',
+        },
+      ];
+
+      for (const scenario of errorMappingScenarios) {
+        // Arrange
+        const errorResponse = {
+          ok: false,
+          status: 403,
+          json: () => Promise.resolve({ message: scenario.discordError, code: 50013 }),
+        };
+        vi.mocked(global.fetch).mockResolvedValue(errorResponse as Response);
+
+        // Act
+        const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+        // Assert
+        expect(result.success, `Failed for: ${scenario.description}`).toBe(false);
+        expect(result.error, `Failed for: ${scenario.description}`).toMatch(
+          scenario.expectedPattern
+        );
+      }
+    });
+
+    it('should distinguish between different Discord API error codes', async () => {
+      // Arrange - Test different Discord error codes for permission issues
+      const errorCodeScenarios = [
+        {
+          code: 50001, // Missing Access
+          message: 'Missing Access',
+          description: 'Missing Access code',
+        },
+        {
+          code: 50013, // Missing Permissions
+          message: 'Missing Permissions',
+          description: 'Missing Permissions code',
+        },
+        {
+          code: 50035, // Invalid Form Body
+          message: 'Invalid Form Body',
+          description: 'Invalid form body',
+        },
+      ];
+
+      for (const scenario of errorCodeScenarios) {
+        // Arrange
+        const errorResponse = {
+          ok: false,
+          status: 403,
+          json: () => Promise.resolve({ message: scenario.message, code: scenario.code }),
+        };
+        vi.mocked(global.fetch).mockResolvedValue(errorResponse as Response);
+
+        // Act
+        const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+        // Assert
+        expect(result.success, `Failed for: ${scenario.description}`).toBe(false);
+        expect(result.error, `Failed for: ${scenario.description}`).toContain(scenario.message);
+      }
+    });
+
+    it('should handle permission errors in error propagation chain', async () => {
+      // Arrange - Test that permission errors propagate correctly for background sync
+      const permissionError = {
+        ok: false,
+        status: 403,
+        json: () =>
+          Promise.resolve({
+            message: 'Bot lacks permission to access server members',
+            code: 50013,
+          }),
+      };
+      vi.mocked(global.fetch).mockResolvedValue(permissionError as Response);
+
+      // Act
+      const result = await fetchGuildMembers(mockGuildId, mockEnv);
+
+      // Assert - Verify error format that will be used in background sync
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Bot lacks permission');
+      expect(result.members).toBeUndefined();
+
+      // Verify error can be thrown and caught properly
+      expect(() => {
+        if (!result.success) {
+          throw new Error(`Failed to fetch members: ${result.error}`);
+        }
+      }).toThrow(/Failed to fetch members.*Bot lacks permission/);
     });
   });
 

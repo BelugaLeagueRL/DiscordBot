@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../index';
+import type { DiscordMember } from '../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
 
 /**
  * Discord API base configuration
@@ -18,7 +19,10 @@ export class DiscordApiService {
   private readonly fetchFn: typeof fetch;
 
   constructor(env: Env, fetchFn: typeof fetch = fetch.bind(globalThis)) {
-    this.token = env.DISCORD_TOKEN;
+    // Remove 'Bot ' prefix if already present to avoid duplication
+    this.token = env.DISCORD_TOKEN.startsWith('Bot ')
+      ? env.DISCORD_TOKEN.slice(4)
+      : env.DISCORD_TOKEN;
     this.fetchFn = fetchFn;
   }
 
@@ -48,7 +52,13 @@ export class DiscordApiService {
           ? String(errorData.message)
           : 'Unknown error';
 
-      throw new Error(`Discord API error (${response.status.toString()}): ${message}`);
+      // Create enhanced error for rate limiting
+      const error = new Error(`Discord API error (${response.status.toString()}): ${message}`);
+      // Attach rate limit data for retry logic
+      if (response.status === 429 && typeof errorData === 'object' && errorData !== null) {
+        (error as Error & { rateLimitData?: unknown }).rateLimitData = errorData;
+      }
+      throw error;
     }
 
     return (await response.json()) as T;
@@ -80,8 +90,93 @@ export class DiscordApiService {
   /**
    * Get guild members
    */
-  async getGuildMembers(guildId: string, limit: number = 1000): Promise<unknown[]> {
-    return await this.get(`/guilds/${guildId}/members?limit=${limit.toString()}`);
+  async getGuildMembers(guildId: string, limit: number = 1000): Promise<DiscordMember[]> {
+    return await this.getWithRetry<DiscordMember[]>(
+      `/guilds/${guildId}/members?limit=${limit.toString()}`
+    );
+  }
+
+  /**
+   * Get all guild members with automatic pagination for large guilds (>1000 members)
+   * Implements Discord API v10 pagination using 'after' parameter with rate limiting support
+   */
+  async getAllGuildMembers(guildId: string): Promise<DiscordMember[]> {
+    const allMembers: DiscordMember[] = [];
+    let after: string | undefined;
+    let hasMoreMembers = true;
+
+    while (hasMoreMembers) {
+      try {
+        // Build endpoint with pagination
+        let endpoint = `/guilds/${guildId}/members?limit=1000`;
+        if (after !== undefined) {
+          endpoint += `&after=${after}`;
+        }
+
+        // Fetch current page with rate limiting support
+        const currentPage = await this.getWithRetry<DiscordMember[]>(endpoint);
+
+        // Validate response format
+        if (!Array.isArray(currentPage)) {
+          throw new Error('Invalid response format: Expected array of members');
+        }
+
+        // Add members to result
+        allMembers.push(...currentPage);
+
+        // Check if we need to fetch more pages
+        if (currentPage.length < 1000) {
+          // Last page was not full, no more members
+          hasMoreMembers = false;
+        } else {
+          // Extract last member ID for next page
+          const lastMember = currentPage[currentPage.length - 1];
+          after = lastMember?.user?.id;
+
+          if (!after) {
+            // Can't continue pagination without member ID
+            hasMoreMembers = false;
+          }
+        }
+      } catch (error: unknown) {
+        // Re-throw with additional context for pagination errors
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(errorMessage);
+      }
+    }
+
+    return allMembers;
+  }
+
+  /**
+   * Make authenticated GET request with rate limiting retry logic
+   */
+  private async getWithRetry<T>(endpoint: string, maxRetries: number = 1): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.get<T>(endpoint);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('429')) {
+          // Check rate limit data for global flag
+          const rateLimitData = (error as Error & { rateLimitData?: { global?: boolean } })
+            .rateLimitData;
+          if (rateLimitData && rateLimitData.global === true) {
+            // Global rate limit - don't retry
+            throw error;
+          }
+
+          if (attempt < maxRetries) {
+            // Local rate limit - wait and retry
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            continue;
+          }
+        }
+        throw error;
+      }
+    }
+
+    // This should never be reached, but TypeScript requires it
+    throw new Error('Unexpected end of retry loop');
   }
 
   /**

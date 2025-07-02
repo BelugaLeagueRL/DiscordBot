@@ -47,7 +47,7 @@ describe('GoogleSheetsApiBuilder - Unit Tests', () => {
     it('should set the access token and return builder instance for chaining', () => {
       // Arrange
       const builder = GoogleSheetsApiBuilder.create();
-      const testToken = 'ya29.a0AfH6SMBeiGFHJT9k...';
+      const testToken = 'ya29.mock_oauth_token_test';
 
       // Act
       const result = builder.setAccessToken(testToken);

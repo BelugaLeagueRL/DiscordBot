@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { faker } from '@faker-js/faker';
 import { handleRegisterCommand } from '../../application_commands/register/handler';
 import { createMockCommandInteraction } from '../helpers/discord-helpers';
 import {
@@ -285,7 +286,7 @@ describe('Performance and Load Testing', () => {
           },
         ],
         {
-          token: 'very_long_interaction_token_string_'.repeat(10),
+          token: faker.string.alphanumeric(200), // Very long token for load testing
           channel_id: getRequestChannelId(mockEnv),
         }
       );

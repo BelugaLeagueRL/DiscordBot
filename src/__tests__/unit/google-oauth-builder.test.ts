@@ -43,7 +43,7 @@ describe('GoogleOAuthBuilder', () => {
       const mockOAuthResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
-          access_token: 'ya29.mock-access-token',
+          access_token: 'ya29.mock_oauth_token',
           expires_in: 3600,
           token_type: 'Bearer',
         }),
@@ -83,7 +83,7 @@ describe('GoogleOAuthBuilder', () => {
         })
       );
 
-      expect(accessToken).toBe('ya29.mock-access-token');
+      expect(accessToken).toBe('ya29.mock_oauth_token');
     });
 
     it('should throw error when credentials are missing (Lines 696-697)', async () => {

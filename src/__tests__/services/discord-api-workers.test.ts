@@ -50,7 +50,7 @@ describe('Discord API Service - Workers Environment', () => {
         'https://discord.com/api/v10/guilds/123456789012345678/members?limit=1000',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: `Bot ${mockEnv.DISCORD_TOKEN}`,
+            Authorization: mockEnv.DISCORD_TOKEN,
           }),
         })
       );
@@ -130,7 +130,7 @@ describe('Discord API Service - Workers Environment', () => {
         expect.any(String),
         expect.objectContaining({
           headers: {
-            Authorization: `Bot ${mockEnv.DISCORD_TOKEN}`,
+            Authorization: mockEnv.DISCORD_TOKEN,
             'Content-Type': 'application/json',
           },
         })

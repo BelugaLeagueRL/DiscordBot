@@ -436,7 +436,9 @@ export async function handleApplicationCommand(
         break;
 
       case 'admin_sync_users_to_sheets':
-        response = handleAdminSyncUsersToSheetsDiscord(interaction, ctx, env);
+        response = await withTimeout(
+          Promise.resolve(handleAdminSyncUsersToSheetsDiscord(interaction, ctx, env))
+        );
         break;
 
       default:

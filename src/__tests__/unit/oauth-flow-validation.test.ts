@@ -22,7 +22,7 @@ describe('OAuth Flow Validation - Unit Tests', () => {
       // Assert - Focus on behavior: validation succeeds for valid response
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.access_token).toBe('ya29.c.b0Aaekm1K7-valid-access-token-here');
+        expect(result.data.access_token).toBe('ya29.mock_oauth_token_test');
         expect(result.data.expires_in).toBe(3600);
         expect(result.data.token_type).toBe('Bearer');
       }

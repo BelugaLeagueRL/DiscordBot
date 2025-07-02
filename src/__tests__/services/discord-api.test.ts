@@ -24,7 +24,7 @@ describe('Discord API Service', () => {
       'https://discord.com/api/v10/guilds/123456789012345678/members?limit=1000',
       expect.objectContaining({
         headers: expect.objectContaining({
-          Authorization: `Bot ${mockEnv.DISCORD_TOKEN}`,
+          Authorization: mockEnv.DISCORD_TOKEN,
         }),
       })
     );

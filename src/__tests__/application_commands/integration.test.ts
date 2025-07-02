@@ -102,7 +102,7 @@ describe('Register Command Integration', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            Authorization: `Bot ${mockEnv.DISCORD_TOKEN}`,
+            Authorization: mockEnv.DISCORD_TOKEN,
             'Content-Type': 'application/json',
           }) as Record<string, string>,
         }) as RequestInit
