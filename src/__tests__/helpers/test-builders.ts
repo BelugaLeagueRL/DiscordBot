@@ -4,6 +4,8 @@
  * Based on 2025 best practices combining Object Mother + Builder patterns
  */
 
+import { SecurityTestFactory } from './security-test-factory';
+
 /**
  * Base builder interface for fluent API
  */
@@ -125,7 +127,7 @@ export class OAuthResponseBuilder
       error_description?: string | undefined;
     }>
 {
-  private accessToken: string = 'ya29.mock_oauth_token_test';
+  private accessToken: string = SecurityTestFactory.fakeOAuthToken();
   private expiresIn: number | string = 3600;
   private tokenType: string = 'Bearer';
   private error?: string;

@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { Env } from '../../index';
+import { SecurityTestFactory } from '../helpers/security-test-factory';
 
 // Import validation functions for testing
 import {
@@ -188,7 +189,7 @@ describe('Environment Variable Validation', () => {
     describe('GOOGLE_SHEETS_PRIVATE_KEY_ID validation', () => {
       it('should accept valid private key ID format', () => {
         // Arrange
-        const validKeyId = 'fake_test_key_id_not_real_credentials_1234';
+        const validKeyId = SecurityTestFactory.fakeGoogleKeyId();
         const env = { GOOGLE_SHEETS_PRIVATE_KEY_ID: validKeyId } as Env;
 
         // Act & Assert

@@ -24,6 +24,13 @@ else
   echo "⏭️  Skipping type coverage (SKIP_TYPE_COVERAGE=1)"
 fi
 
+if [ "$SKIP_ANTIPATTERN" != "1" ]; then
+  echo "🛡️  Running anti-pattern detection..."
+  npm run antipattern:check
+else
+  echo "⏭️  Skipping anti-pattern check (SKIP_ANTIPATTERN=1)"
+fi
+
 if [ "$SKIP_COVERAGE" != "1" ]; then
   echo "🧪 Running test coverage check (90% threshold)..."
   npm run test:coverage-check

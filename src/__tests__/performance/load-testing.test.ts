@@ -13,6 +13,7 @@ import {
   ExecutionContextFactory,
   getRequestChannelId,
 } from '../helpers/test-factories';
+import { UrlFactory } from '../helpers/url-factories';
 import type { Env } from '../../index';
 
 // Type guard for Discord response data
@@ -54,12 +55,11 @@ describe('Performance and Load Testing', () => {
   describe('Response Time Performance', () => {
     it('should handle register command with successful performance behavior', async () => {
       // Use deterministic known Steam ID for predictable testing
-      const knownSteamId = '76561198123456789';
       const registerInteraction = createMockCommandInteraction('register', [
         {
           name: 'tracker1',
           type: 3,
-          value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+          value: UrlFactory.rocketLeague.knownProfiles.steam(),
         },
       ]);
 
@@ -87,32 +87,28 @@ describe('Performance and Load Testing', () => {
 
     it('should handle multiple tracker URLs within 150ms', async () => {
       // Use deterministic known platform IDs for predictable testing
-      const knownSteamId = '76561198123456789';
-      const knownEpicUser = 'TestEpicUser';
-      const knownPsnUser = 'TestPsnUser';
-      const knownXblUser = 'TestXblUser';
       const registerInteraction = createMockCommandInteraction(
         'register',
         [
           {
             name: 'tracker1',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
           {
             name: 'tracker2',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.epic(),
           },
           {
             name: 'tracker3',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.psn(),
           },
           {
             name: 'tracker4',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.xbox(),
           },
         ],
         {
@@ -147,14 +143,13 @@ describe('Performance and Load Testing', () => {
 
       const requests = Array.from({ length: concurrentRequests }, (_, i) => {
         // Use deterministic known Steam ID for predictable testing
-        const knownSteamId = '76561198123456789';
         const interaction = createMockCommandInteraction(
           'register',
           [
             {
               name: 'tracker1',
               type: 3,
-              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
             },
           ],
           {
@@ -206,8 +201,7 @@ describe('Performance and Load Testing', () => {
                   {
                     name: 'tracker1',
                     type: 3,
-                    value:
-                      'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+                    value: UrlFactory.rocketLeague.knownProfiles.steam(),
                   },
                 ],
                 { id: `valid_${String(i)}` }
@@ -218,7 +212,7 @@ describe('Performance and Load Testing', () => {
                   {
                     name: 'tracker1',
                     type: 3,
-                    value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+                    value: UrlFactory.rocketLeague.invalid.invalidDomain(),
                   },
                 ],
                 { id: `invalid_${String(i)}` }
@@ -257,32 +251,28 @@ describe('Performance and Load Testing', () => {
   describe('Memory and Resource Usage', () => {
     it('should handle large payloads efficiently', async () => {
       // Use deterministic known platform IDs for predictable testing
-      const knownSteamId = '76561198123456789';
-      const knownEpicUser = 'TestEpicUser';
-      const knownPsnUser = 'TestPsnUser';
-      const knownXblUser = 'TestXblUser';
       const largeInteraction = createMockCommandInteraction(
         'register',
         [
           {
             name: 'tracker1',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
           {
             name: 'tracker2',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/epic/${knownEpicUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.epic(),
           },
           {
             name: 'tracker3',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/psn/${knownPsnUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.psn(),
           },
           {
             name: 'tracker4',
             type: 3,
-            value: `https://rocketleague.tracker.network/rocket-league/profile/xbl/${knownXblUser}/overview`,
+            value: UrlFactory.rocketLeague.knownProfiles.xbox(),
           },
         ],
         {
@@ -319,14 +309,13 @@ describe('Performance and Load Testing', () => {
         const startTime = performance.now();
 
         // Use deterministic known Steam ID for predictable testing
-        const knownSteamId = '76561198123456789';
         const interaction = createMockCommandInteraction(
           'register',
           [
             {
               name: 'tracker1',
               type: 3,
-              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
             },
           ],
           {
@@ -373,8 +362,7 @@ describe('Performance and Load Testing', () => {
               {
                 name: 'tracker1',
                 type: 3,
-                value:
-                  'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+                value: UrlFactory.rocketLeague.knownProfiles.steam(),
               },
             ],
             {
@@ -394,7 +382,7 @@ describe('Performance and Load Testing', () => {
             {
               name: 'tracker1',
               type: 3,
-              value: 'https://invalid-domain.com/profile/steam/testuser/overview',
+              value: UrlFactory.rocketLeague.invalid.invalidDomain(),
             },
           ],
           {
@@ -447,14 +435,13 @@ describe('Performance and Load Testing', () => {
         const startTime = performance.now();
 
         // Use deterministic known Steam ID for predictable testing
-        const knownSteamId = '76561198123456789';
         const interaction = createMockCommandInteraction(
           'register',
           [
             {
               name: 'tracker1',
               type: 3,
-              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
             },
           ],
           {
@@ -513,7 +500,7 @@ describe('Performance and Load Testing', () => {
             {
               name: 'tracker1',
               type: 3,
-              value: `https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview`,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
             },
           ],
           { id: `memory_test_${String(i)}` }
@@ -551,26 +538,22 @@ describe('Performance and Load Testing', () => {
           {
             name: 'tracker1',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
           {
             name: 'tracker2',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/epic/VeryLongEpicUsernameForComplexValidation/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.epicLong(),
           },
           {
             name: 'tracker3',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/psn/ComplexPSNUsername123/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.psn(),
           },
           {
             name: 'tracker4',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/xbl/ComplexXboxGamertag/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.xbox(),
           },
         ],
         { channel_id: getRequestChannelId(mockEnv) }
@@ -641,8 +624,7 @@ describe('Performance and Load Testing', () => {
           {
             name: 'tracker1',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
         ],
         {
@@ -670,7 +652,7 @@ describe('Performance and Load Testing', () => {
       const startTime = performance.now();
 
       const requests = Array.from({ length: concurrentErrorRequests }, (_, i) => {
-        const errorTypes = ['invalid_url', 'missing_data', 'malformed_input'];
+        const errorTypes = ['nonexistent', 'fake', 'differentSite'];
         const errorType = errorTypes[i % errorTypes.length];
 
         const interaction = createMockCommandInteraction(
@@ -679,7 +661,12 @@ describe('Performance and Load Testing', () => {
             {
               name: 'tracker1',
               type: 3,
-              value: `https://error-${errorType}-${String(i)}.com/invalid`,
+              value:
+                errorType === 'nonexistent'
+                  ? UrlFactory.rocketLeague.invalid.nonexistentDomain()
+                  : errorType === 'fake'
+                    ? UrlFactory.rocketLeague.invalid.fakeDomain()
+                    : UrlFactory.rocketLeague.invalid.differentSite(),
             },
           ],
           { id: `concurrent_error_${String(i)}` }
