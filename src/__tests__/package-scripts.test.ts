@@ -74,10 +74,10 @@ describe('Development NPM Scripts', () => {
       expect(packageJson.scripts['deploy:dev']).toContain('--env development');
     });
 
-    it('should update existing deploy script for production environment', () => {
-      // RED: Test that deploy script is environment-aware
-      expect(packageJson.scripts).toHaveProperty('deploy');
-      expect(packageJson.scripts['deploy']).toContain('--env production');
+    it('should NOT have direct deploy script (security: prevent accidental production deployments)', () => {
+      // RED: Test that direct deploy script is removed for security
+      expect(packageJson.scripts).not.toHaveProperty('deploy');
+      // Direct production deployments should go through CI/CD pipeline instead
     });
   });
 

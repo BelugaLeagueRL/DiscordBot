@@ -3,29 +3,33 @@
  * Tests real-world signature validation scenarios based on Discord's Ed25519 requirements
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { MockedFunction } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type MockedFunction } from 'vitest';
 import { verifyDiscordRequest } from '../../utils/discord';
 
-// Mock the discord-interactions module
-vi.mock('discord-interactions', () => ({
-  verifyKey: vi.fn(),
+// Mock the tweetnacl module
+vi.mock('tweetnacl', () => ({
+  default: {
+    sign: {
+      detached: {
+        verify: vi.fn(),
+      },
+    },
+  },
 }));
 
 describe('Discord Signature Verification Functional Tests', () => {
-  let mockVerifyKey: MockedFunction<
-    (
-      rawBody: string | ArrayBuffer | Uint8Array | Buffer,
-      signature: string | ArrayBuffer | Uint8Array | Buffer,
-      timestamp: string | ArrayBuffer | Uint8Array | Buffer,
-      clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer
-    ) => boolean
+  let mockNaclVerify: MockedFunction<
+    (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
   >;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
+    const { default: nacl } = await import('tweetnacl');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    mockNaclVerify = nacl.sign.detached.verify as MockedFunction<
+      (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
+    >;
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
       // Mock implementation
     });
@@ -34,7 +38,7 @@ describe('Discord Signature Verification Functional Tests', () => {
   describe('Real Discord Request Format Validation', () => {
     it('should verify request with valid Discord headers and signature', async () => {
       // Based on research: real Discord request format
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -55,17 +59,16 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalledWith(
-        expect.any(ArrayBuffer), // body as ArrayBuffer
-        'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
-        '1640995200',
-        'test_public_key_hex'
+      expect(mockNaclVerify).toHaveBeenCalledWith(
+        expect.any(Uint8Array), // combined timestamp + body as Uint8Array
+        expect.any(Uint8Array), // signature as Uint8Array
+        expect.any(Uint8Array) // public key as Uint8Array
       );
     });
 
     it('should reject request with invalid signature', async () => {
       // Real scenario: signature verification fails
-      mockVerifyKey.mockReturnValue(false);
+      mockNaclVerify.mockReturnValue(false);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -79,7 +82,7 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
       expect(result).toBe(false);
-      expect(mockVerifyKey).toHaveBeenCalled();
+      expect(mockNaclVerify).toHaveBeenCalled();
     });
   });
 
@@ -97,7 +100,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith('Missing signature headers');
-      expect(mockVerifyKey).not.toHaveBeenCalled();
+      expect(mockNaclVerify).not.toHaveBeenCalled();
     });
 
     it('should reject request missing timestamp header', async () => {
@@ -113,7 +116,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith('Missing signature headers');
-      expect(mockVerifyKey).not.toHaveBeenCalled();
+      expect(mockNaclVerify).not.toHaveBeenCalled();
     });
 
     it('should reject request with empty signature headers', async () => {
@@ -130,14 +133,14 @@ describe('Discord Signature Verification Functional Tests', () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith('Missing signature headers');
-      expect(mockVerifyKey).not.toHaveBeenCalled();
+      expect(mockNaclVerify).not.toHaveBeenCalled();
     });
   });
 
   describe('Cryptographic Edge Cases', () => {
     it('should handle verification library errors gracefully', async () => {
       // Real scenario: crypto library throws error
-      mockVerifyKey.mockImplementation(() => {
+      mockNaclVerify.mockImplementation(() => {
         throw new Error('Invalid key format');
       });
 
@@ -161,7 +164,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
     it('should handle malformed hex signatures', async () => {
       // Discord signatures should be valid hex strings
-      mockVerifyKey.mockImplementation(() => {
+      mockNaclVerify.mockImplementation(() => {
         throw new Error('Invalid hex encoding');
       });
 
@@ -186,7 +189,7 @@ describe('Discord Signature Verification Functional Tests', () => {
 
   describe('Body Handling Edge Cases', () => {
     it('should handle empty request body', async () => {
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -200,17 +203,16 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalledWith(
-        expect.any(ArrayBuffer),
-        'valid_signature_hex',
-        '1640995200',
-        'test_public_key_hex'
+      expect(mockNaclVerify).toHaveBeenCalledWith(
+        expect.any(Uint8Array), // combined timestamp + body
+        expect.any(Uint8Array), // signature
+        expect.any(Uint8Array) // public key
       );
     });
 
     it('should handle large request bodies', async () => {
       // Test with realistic Discord interaction payload size
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const largePayload = {
         id: '123456789012345678',
@@ -266,14 +268,14 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalled();
+      expect(mockNaclVerify).toHaveBeenCalled();
     });
   });
 
   describe('Timestamp Security Considerations', () => {
     it('should accept current timestamp values', async () => {
       // Real scenario: current Unix timestamp
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
       const currentTimestamp = Math.floor(Date.now() / 1000).toString();
 
       const request = new Request('https://example.com/discord-webhook', {
@@ -288,18 +290,17 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key_hex');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalledWith(
-        expect.any(ArrayBuffer),
-        'valid_signature_hex',
-        currentTimestamp,
-        'test_public_key_hex'
+      expect(mockNaclVerify).toHaveBeenCalledWith(
+        expect.any(Uint8Array), // combined timestamp + body
+        expect.any(Uint8Array), // signature
+        expect.any(Uint8Array) // public key
       );
     });
 
     it('should handle very old timestamp values', async () => {
       // Test with old timestamp - signature verification should still work
       // (timestamp age validation would happen at higher level)
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const request = new Request('https://example.com/discord-webhook', {
         method: 'POST',
@@ -319,7 +320,7 @@ describe('Discord Signature Verification Functional Tests', () => {
   describe('Real-World Integration Scenarios', () => {
     it('should handle Discord PING interaction verification', async () => {
       // Real Discord PING interaction format
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const pingPayload = {
         id: '123456789012345678',
@@ -342,17 +343,16 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'discord_app_public_key');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalledWith(
-        expect.any(ArrayBuffer),
-        'valid_discord_signature',
-        '1640995200',
-        'discord_app_public_key'
+      expect(mockNaclVerify).toHaveBeenCalledWith(
+        expect.any(Uint8Array), // combined timestamp + body
+        expect.any(Uint8Array), // signature
+        expect.any(Uint8Array) // public key
       );
     });
 
     it('should handle Discord APPLICATION_COMMAND interaction verification', async () => {
       // Real Discord application command interaction
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const commandPayload = {
         id: '123456789012345678',
@@ -396,11 +396,10 @@ describe('Discord Signature Verification Functional Tests', () => {
       const result = await verifyDiscordRequest(request, 'discord_app_public_key');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalledWith(
-        expect.any(ArrayBuffer),
-        'valid_command_signature',
-        '1640995300',
-        'discord_app_public_key'
+      expect(mockNaclVerify).toHaveBeenCalledWith(
+        expect.any(Uint8Array), // combined timestamp + body
+        expect.any(Uint8Array), // signature
+        expect.any(Uint8Array) // public key
       );
     });
   });

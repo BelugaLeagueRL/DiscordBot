@@ -2,7 +2,8 @@
  * Security middleware for Discord request validation and protection
  */
 
-import { verifyKey } from 'discord-interactions';
+import nacl from 'tweetnacl';
+import { Buffer } from 'buffer';
 
 // Rate limiting storage (in-memory for Workers)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -154,7 +155,11 @@ export async function verifyDiscordRequestSecure(
       };
     }
 
-    const isValidSignature = verifyKey(body, signature, timestamp, publicKey);
+    const isValidSignature = nacl.sign.detached.verify(
+      Buffer.from(timestamp + new TextDecoder().decode(body)),
+      Buffer.from(signature, 'hex'),
+      Buffer.from(publicKey, 'hex')
+    );
 
     if (!isValidSignature) {
       return {

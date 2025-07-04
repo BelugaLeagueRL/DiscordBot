@@ -3,7 +3,8 @@
  * Following Discord sample app patterns
  */
 
-import { verifyKey } from 'discord-interactions';
+import nacl from 'tweetnacl';
+import { Buffer } from 'buffer';
 
 // Discord interaction types
 export enum InteractionType {
@@ -45,7 +46,11 @@ export async function verifyDiscordRequest(
       return false;
     }
 
-    return verifyKey(body, signature, timestamp, publicKey);
+    return nacl.sign.detached.verify(
+      Buffer.from(timestamp + new TextDecoder().decode(body)),
+      Buffer.from(signature, 'hex'),
+      Buffer.from(publicKey, 'hex')
+    );
   } catch (error) {
     console.error('Error verifying Discord request:', error);
     return false;
