@@ -11,7 +11,7 @@ export interface HealthCheckResult {
   readonly checks: {
     readonly secrets: 'pass' | 'fail';
     readonly environment: string;
-    readonly deploymentSource: 'manual' | 'github-integration';
+    readonly deploymentSource: 'manual' | 'github-integration' | 'cloudflare-github-integration';
   };
 }
 
@@ -30,7 +30,7 @@ export function createProductionHealthCheck(env: Partial<Env>): ProductionHealth
         checks: {
           secrets: secretsValidation.isValid ? 'pass' : 'fail',
           environment: env.ENVIRONMENT ?? 'unknown',
-          deploymentSource: 'github-integration', // This will show after GitHub deploys
+          deploymentSource: 'cloudflare-github-integration', // Updated after config change
         },
       };
     },
