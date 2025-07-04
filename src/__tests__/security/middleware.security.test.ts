@@ -36,41 +36,68 @@ describe('Security Middleware', () => {
   });
 
   describe('extractSecurityContext', () => {
-    it('should extract security context from request', () => {
-      const request = createMockRequest({
-        headers: {
-          'CF-Connecting-IP': '192.168.1.100',
-          'User-Agent': 'Discord-Interactions/1.0',
-        },
+    describe('extracting security context from request', () => {
+      let request: Request;
+      let context: ReturnType<typeof extractSecurityContext>;
+
+      beforeEach(() => {
+        request = createMockRequest({
+          headers: {
+            'CF-Connecting-IP': '192.168.1.100',
+            'User-Agent': 'Discord-Interactions/1.0',
+          },
+        });
+        context = extractSecurityContext(request);
       });
 
-      const context = extractSecurityContext(request);
-
-      expect(context).toMatchObject({
-        clientIP: '192.168.1.100',
-        userAgent: 'Discord-Interactions/1.0',
+      it('should extract client IP and user agent', () => {
+        expect(context).toMatchObject({
+          clientIP: '192.168.1.100',
+          userAgent: 'Discord-Interactions/1.0',
+        });
       });
-      expect(context.timestamp).toBeTypeOf('number');
-      expect(context.requestId).toBeTypeOf('string');
-      expect(context.requestId).toMatch(/^[0-9a-f-]{36}$/); // UUID format
+
+      it('should generate timestamp as number', () => {
+        expect(context.timestamp).toBeTypeOf('number');
+      });
+
+      it('should generate request ID as string', () => {
+        expect(context.requestId).toBeTypeOf('string');
+      });
+
+      it('should generate request ID in UUID format', () => {
+        expect(context.requestId).toMatch(/^[0-9a-f-]{36}$/);
+      });
     });
 
-    it('should handle missing headers gracefully', () => {
-      // Create request with truly empty headers, overriding defaults
-      const request = new Request('https://example.com/', {
-        method: 'POST',
-        headers: {},
-        body: '{}',
+    describe('handling missing headers gracefully', () => {
+      let request: Request;
+      let context: ReturnType<typeof extractSecurityContext>;
+
+      beforeEach(() => {
+        // Create request with truly empty headers, overriding defaults
+        request = new Request('https://example.com/', {
+          method: 'POST',
+          headers: {},
+          body: '{}',
+        });
+        context = extractSecurityContext(request);
       });
 
-      const context = extractSecurityContext(request);
-
-      expect(context).toMatchObject({
-        clientIP: 'unknown',
-        userAgent: 'unknown',
+      it('should set unknown values for missing headers', () => {
+        expect(context).toMatchObject({
+          clientIP: 'unknown',
+          userAgent: 'unknown',
+        });
       });
-      expect(context.timestamp).toBeTypeOf('number');
-      expect(context.requestId).toBeTypeOf('string');
+
+      it('should still generate timestamp as number', () => {
+        expect(context.timestamp).toBeTypeOf('number');
+      });
+
+      it('should still generate request ID as string', () => {
+        expect(context.requestId).toBeTypeOf('string');
+      });
     });
 
     it('should prefer CF-Connecting-IP over X-Forwarded-For', () => {
@@ -248,19 +275,28 @@ describe('Security Middleware', () => {
   });
 
   describe('validateDiscordHeaders', () => {
-    it('should validate correct Discord headers', () => {
-      const request = createMockRequest({
-        headers: {
-          'X-Signature-Ed25519': 'valid_signature_hex',
-          'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
-          'Content-Type': 'application/json',
-        },
+    describe('validating correct Discord headers', () => {
+      let request: Request;
+      let result: ReturnType<typeof validateDiscordHeaders>;
+
+      beforeEach(() => {
+        request = createMockRequest({
+          headers: {
+            'X-Signature-Ed25519': 'valid_signature_hex',
+            'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
+            'Content-Type': 'application/json',
+          },
+        });
+        result = validateDiscordHeaders(request);
       });
 
-      const result = validateDiscordHeaders(request);
+      it('should return valid result', () => {
+        expect(result.isValid).toBe(true);
+      });
 
-      expect(result.isValid).toBe(true);
-      expect(result.error).toBeUndefined();
+      it('should not return error message', () => {
+        expect(result.error).toBeUndefined();
+      });
     });
 
     it('should reject request missing signature header', () => {
@@ -291,19 +327,28 @@ describe('Security Middleware', () => {
       expect(result.error).toBe('Missing X-Signature-Timestamp header');
     });
 
-    it('should reject request with invalid content type', () => {
-      const request = createMockRequest({
-        headers: {
-          'X-Signature-Ed25519': 'valid_signature_hex',
-          'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
-          'Content-Type': 'text/plain',
-        },
+    describe('rejecting request with invalid content type', () => {
+      let request: Request;
+      let result: ReturnType<typeof validateDiscordHeaders>;
+
+      beforeEach(() => {
+        request = createMockRequest({
+          headers: {
+            'X-Signature-Ed25519': 'valid_signature_hex',
+            'X-Signature-Timestamp': Math.floor(Date.now() / 1000).toString(),
+            'Content-Type': 'text/plain',
+          },
+        });
+        result = validateDiscordHeaders(request);
       });
 
-      const result = validateDiscordHeaders(request);
+      it('should return invalid result', () => {
+        expect(result.isValid).toBe(false);
+      });
 
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Invalid Content-Type, expected application/json');
+      it('should return content type error message', () => {
+        expect(result.error).toBe('Invalid Content-Type, expected application/json');
+      });
     });
 
     it('should reject request with old timestamp', () => {
@@ -342,18 +387,30 @@ describe('Security Middleware', () => {
   });
 
   describe('verifyDiscordRequestSecure', () => {
-    it('should verify valid Discord request', async () => {
-      const interaction = mockInteractions.ping();
-      const request = createMockDiscordRequest(interaction, { validSignature: true });
-      const context = SecurityContextFactory.create();
+    describe('verifying valid Discord request', () => {
+      let interaction: ReturnType<typeof mockInteractions.ping>;
+      let request: Request;
+      let context: ReturnType<typeof SecurityContextFactory.create>;
+      let result: Awaited<ReturnType<typeof verifyDiscordRequestSecure>>;
 
-      // Mock the verifyKey function properly using vi.mock
-      vi.mocked(verifyKey).mockResolvedValue(true);
+      beforeEach(async () => {
+        interaction = mockInteractions.ping();
+        request = createMockDiscordRequest(interaction, { validSignature: true });
+        context = SecurityContextFactory.create();
 
-      const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
+        // Mock the verifyKey function properly using vi.mock
+        vi.mocked(verifyKey).mockResolvedValue(true);
 
-      expect(result.isValid).toBe(true);
-      expect(result.context).toBe(context);
+        result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
+      });
+
+      it('should return valid result', () => {
+        expect(result.isValid).toBe(true);
+      });
+
+      it('should preserve security context', () => {
+        expect(result.context).toBe(context);
+      });
     });
 
     it('should reject request with invalid signature', async () => {
@@ -451,15 +508,34 @@ describe('Security Middleware', () => {
   });
 
   describe('sanitizeInput', () => {
-    it('should remove dangerous HTML characters', () => {
-      const maliciousInput = '<script>alert("xss")</script>';
-      const sanitized = sanitizeInput(maliciousInput);
+    describe('removing dangerous HTML characters', () => {
+      let maliciousInput: string;
+      let sanitized: string;
 
-      expect(sanitized).not.toContain('<');
-      expect(sanitized).not.toContain('>');
-      expect(sanitized).not.toContain('"');
-      expect(sanitized).not.toContain("'");
-      expect(sanitized).not.toContain('&');
+      beforeEach(() => {
+        maliciousInput = '<script>alert("xss")</script>';
+        sanitized = sanitizeInput(maliciousInput);
+      });
+
+      it('should remove less-than characters', () => {
+        expect(sanitized).not.toContain('<');
+      });
+
+      it('should remove greater-than characters', () => {
+        expect(sanitized).not.toContain('>');
+      });
+
+      it('should remove double quote characters', () => {
+        expect(sanitized).not.toContain('"');
+      });
+
+      it('should remove single quote characters', () => {
+        expect(sanitized).not.toContain("'");
+      });
+
+      it('should remove ampersand characters', () => {
+        expect(sanitized).not.toContain('&');
+      });
     });
 
     it('should remove unsafe characters', () => {

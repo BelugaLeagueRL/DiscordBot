@@ -5,6 +5,7 @@
 import { faker } from '@faker-js/faker';
 import { expect } from 'vitest';
 import type { DiscordInteraction } from '../../types/discord';
+import { UrlFactory } from './url-factories';
 
 /**
  * Factory for creating valid tracker URLs for different platforms
@@ -12,20 +13,18 @@ import type { DiscordInteraction } from '../../types/discord';
 export function createValidTrackerUrl(
   platform: 'steam' | 'epic' | 'psn' | 'xbl' | 'switch' = 'steam'
 ): string {
-  const baseUrl = 'https://rocketleague.tracker.network/rocket-league/profile';
-
   switch (platform) {
     case 'steam':
       // Steam ID64 format: must start with 7656119 followed by 10 digits
-      return `${baseUrl}/steam/7656119${faker.string.numeric(10)}/overview`;
+      return UrlFactory.rocketLeague.profiles.steam(`7656119${faker.string.numeric(10)}`);
     case 'epic':
-      return `${baseUrl}/epic/${faker.internet.username()}/overview`;
+      return UrlFactory.rocketLeague.profiles.epic(faker.internet.username());
     case 'psn':
-      return `${baseUrl}/psn/${faker.internet.username()}/overview`;
+      return UrlFactory.rocketLeague.profiles.psn(faker.internet.username());
     case 'xbl':
-      return `${baseUrl}/xbl/${faker.internet.username()}/overview`;
+      return UrlFactory.rocketLeague.profiles.xbox(faker.internet.username());
     case 'switch':
-      return `${baseUrl}/switch/${faker.internet.username()}/overview`;
+      return UrlFactory.rocketLeague.profiles.switch(faker.internet.username());
     default:
       throw new Error(`Unknown platform: ${platform as string}`);
   }
@@ -36,9 +35,9 @@ export function createValidTrackerUrl(
  */
 export function createInvalidTrackerUrl(): string {
   const invalidDomains = [
-    'https://invalid-domain.com/profile/steam/testuser/overview',
-    'https://rocketleague.tracker.network/wrong/path/format',
-    'https://another-invalid.com/profile/epic/testuser/overview',
+    UrlFactory.rocketLeague.invalid.invalidDomain(),
+    UrlFactory.rocketLeague.invalid.wrongPath(),
+    UrlFactory.rocketLeague.invalid.anotherInvalid(),
   ];
 
   return faker.helpers.arrayElement(invalidDomains);
@@ -241,8 +240,8 @@ export function createMockCommandInteraction(
  */
 export function createMockRegisterCommand(trackerUrls: string[] = []): DiscordInteraction {
   const defaultUrls = [
-    'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
-    'https://rocketleague.tracker.network/rocket-league/profile/epic/TestPlayer123/overview',
+    UrlFactory.rocketLeague.knownProfiles.steam(),
+    UrlFactory.rocketLeague.knownProfiles.epic(),
   ];
 
   const urls = trackerUrls.length > 0 ? trackerUrls : defaultUrls;
@@ -281,7 +280,7 @@ export function createMockDiscordRequest(
       'Content-Type': 'application/json',
       'X-Signature-Ed25519': signature,
       'X-Signature-Timestamp': timestamp,
-      'User-Agent': 'Discord-Interactions/1.0 (+https://discord.com)',
+      'User-Agent': UrlFactory.discord.headers.userAgent(),
       'CF-Connecting-IP': faker.internet.ip(),
     },
     body,
@@ -358,22 +357,28 @@ export function generateTrackerUrls(count: number = 2): string[] {
     switch (platform) {
       case 'steam':
         playerId = faker.string.numeric(17); // Steam ID64
+        urls.push(UrlFactory.rocketLeague.profiles.steam(playerId));
         break;
       case 'epic':
         playerId = faker.internet.username();
+        urls.push(UrlFactory.rocketLeague.profiles.epic(playerId));
         break;
       case 'psn':
+        playerId = faker.internet.username();
+        urls.push(UrlFactory.rocketLeague.profiles.psn(playerId));
+        break;
       case 'xbox':
+        playerId = faker.internet.username();
+        urls.push(UrlFactory.rocketLeague.profiles.xbox(playerId));
+        break;
       case 'switch':
         playerId = faker.internet.username();
+        urls.push(UrlFactory.rocketLeague.profiles.switch(playerId));
         break;
       default:
         playerId = faker.internet.username();
+        urls.push(UrlFactory.rocketLeague.profiles.epic(playerId));
     }
-
-    urls.push(
-      `https://rocketleague.tracker.network/rocket-league/profile/${platform}/${playerId}/overview`
-    );
   }
 
   return urls;

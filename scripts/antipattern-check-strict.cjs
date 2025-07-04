@@ -55,7 +55,10 @@ function checkPattern(command, description, errorMessage) {
       stdio: 'pipe'
     });
     
-    if (output.trim()) {
+    // Special handling for Free Ride detection script
+    if (command.includes('detect-free-ride.js') && output.includes('✅ No Free Ride patterns detected!')) {
+      logSuccess(`No ${description.toLowerCase()} found`);
+    } else if (output.trim()) {
       // Found patterns - this is an error
       hasErrors = true;
       errorCount++;
@@ -98,8 +101,9 @@ function main() {
   log(`${colors.bold}${colors.blue}=====================================${colors.reset}`);
   
   // 1. Free Ride Patterns (Multiple unrelated assertions)
+  // Use a custom script to find tests with multiple expect( statements
   checkPattern(
-    "rg 'expect.*expect' src/__tests__ --type ts",
+    "node scripts/detect-free-ride.js",
     "Free Ride patterns (multiple unrelated assertions)",
     "Found tests with multiple unrelated assertions - violates 'One Assert Per Test' principle"
   );
@@ -134,7 +138,7 @@ function main() {
   
   // 6. Hardcoded API Keys
   checkPattern(
-    "rg 'key.*[A-Za-z0-9_-]{20,}|apikey.*[A-Za-z0-9_-]{20,}' src/__tests__ --type ts",
+    "rg 'key.*[A-Za-z0-9_-]{20,}|apikey.*[A-Za-z0-9_-]{20,}' src/__tests__ --type ts | grep -v 'typeof.*keyof'",
     "Hardcoded API keys",
     "Found potential hardcoded API keys - security and maintainability risk"
   );
@@ -153,7 +157,7 @@ function main() {
     
     // Filter out acceptable test URLs
     const filteredOutput = execSync(
-      "rg 'https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}' src/__tests__ --type ts | grep -v 'example.com\\|localhost\\|127.0.0.1'",
+      "rg 'https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}' src/__tests__ --type ts | grep -v 'example.com\\|localhost\\|127.0.0.1\\|test-urls.ts'",
       { 
         cwd: path.join(__dirname, '..'),
         encoding: 'utf8',

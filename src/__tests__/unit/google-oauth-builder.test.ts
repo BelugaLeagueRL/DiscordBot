@@ -7,6 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { GoogleOAuthBuilder } from '../../utils/google-sheets-builder';
 import type { GoogleSheetsCredentials } from '../../utils/google-sheets-builder';
+import { UrlFactory } from '../helpers/url-factories';
 
 describe('GoogleOAuthBuilder', () => {
   describe('setCredentials method behavior (Lines 690-693)', () => {
@@ -65,8 +66,8 @@ describe('GoogleOAuthBuilder', () => {
       expect(mockJwtSign).toHaveBeenCalledWith(
         expect.objectContaining({
           iss: 'test@serviceaccount.com',
-          scope: 'https://www.googleapis.com/auth/spreadsheets',
-          aud: 'https://accounts.google.com/o/oauth2/token',
+          scope: UrlFactory.google.sheets.scope(),
+          aud: UrlFactory.google.oauth.token(),
           exp: expect.any(Number),
           iat: expect.any(Number),
         }),
@@ -75,7 +76,7 @@ describe('GoogleOAuthBuilder', () => {
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://accounts.google.com/o/oauth2/token',
+        UrlFactory.google.oauth.token(),
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

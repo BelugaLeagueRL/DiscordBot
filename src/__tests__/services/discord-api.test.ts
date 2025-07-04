@@ -5,6 +5,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { DiscordApiService } from '../../services/discord-api';
 import { EnvFactory } from '../helpers/test-factories';
+import { UrlFactory } from '../helpers/url-factories';
 
 describe('Discord API Service', () => {
   it('should make authenticated requests with Bot prefix', async () => {
@@ -21,7 +22,7 @@ describe('Discord API Service', () => {
 
     // Assert
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://discord.com/api/v10/guilds/123456789012345678/members?limit=1000',
+      UrlFactory.discord.guildMembers.withLimit('123456789012345678', 1000),
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: mockEnv.DISCORD_TOKEN,

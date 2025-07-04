@@ -92,12 +92,28 @@ describe('Command Definitions', () => {
         throw new Error('tracker2 option not found');
       }
 
-      // Behavioral validation: verify optional tracker design behavior
       expect(tracker2.required).toBe(false);
-      expect(tracker2.type).toBe(3); // STRING type
-      expect(tracker2.description).toMatch(/tracker|URL|optional/i);
+    });
 
-      // Behavioral validation: verify command structure supports multiple optional trackers
+    it('should have tracker2 option with consistent type', () => {
+      const tracker2 = REGISTER_COMMAND.options[1];
+      if (!tracker2) {
+        throw new Error('tracker2 option not found');
+      }
+
+      expect(tracker2.type).toBe(3); // STRING type
+    });
+
+    it('should have tracker2 option description with user-friendly terms', () => {
+      const tracker2 = REGISTER_COMMAND.options[1];
+      if (!tracker2) {
+        throw new Error('tracker2 option not found');
+      }
+
+      expect(tracker2.description).toMatch(/tracker|URL|optional/i);
+    });
+
+    it('should have command structure supporting multiple optional trackers', () => {
       const optionalTrackers = REGISTER_COMMAND.options.filter(opt => opt.required === false);
       expect(optionalTrackers).toHaveLength(3);
     });
@@ -132,12 +148,33 @@ describe('Command Definitions', () => {
         throw new Error('tracker3 option not found');
       }
 
-      // Behavioral validation: verify tracker3 optional behavior and consistency
       expect(tracker3.required).toBe(false);
-      expect(tracker3.type).toBe(3); // STRING type for URL input
-      expect(tracker3.description).toMatch(/tracker|URL|optional/i);
+    });
 
-      // Behavioral validation: verify consistent naming pattern
+    it('should have tracker3 with consistent type for URL input', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
+
+      expect(tracker3.type).toBe(3); // STRING type for URL input
+    });
+
+    it('should have tracker3 description with user-friendly terms', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
+
+      expect(tracker3.description).toMatch(/tracker|URL|optional/i);
+    });
+
+    it('should have tracker3 following consistent naming pattern', () => {
+      const tracker3 = REGISTER_COMMAND.options[2];
+      if (!tracker3) {
+        throw new Error('tracker3 option not found');
+      }
+
       expect(tracker3.name).toBe('tracker3');
     });
 
@@ -171,13 +208,37 @@ describe('Command Definitions', () => {
         throw new Error('tracker4 option not found');
       }
 
-      // Behavioral validation: verify tracker4 completes the optional tracker set
       expect(tracker4.required).toBe(false);
-      expect(tracker4.type).toBe(3); // STRING type for URL input
-      expect(tracker4.description).toMatch(/tracker|URL|optional/i);
+    });
 
-      // Behavioral validation: verify complete command structure
+    it('should have tracker4 with consistent type for URL input', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
+
+      expect(tracker4.type).toBe(3); // STRING type for URL input
+    });
+
+    it('should have tracker4 description with user-friendly terms', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
+
+      expect(tracker4.description).toMatch(/tracker|URL|optional/i);
+    });
+
+    it('should have tracker4 following consistent naming pattern', () => {
+      const tracker4 = REGISTER_COMMAND.options[3];
+      if (!tracker4) {
+        throw new Error('tracker4 option not found');
+      }
+
       expect(tracker4.name).toBe('tracker4');
+    });
+
+    it('should have complete command structure with all options', () => {
       expect(REGISTER_COMMAND.options).toHaveLength(4); // Total command options
     });
 

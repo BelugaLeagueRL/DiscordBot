@@ -6,6 +6,7 @@ import { faker } from '@faker-js/faker';
 import { vi } from 'vitest';
 import type { SecurityContext } from '../../middleware/security';
 import type { Env } from '../../index';
+import { UrlFactory } from './url-factories';
 
 /**
  * Factory for creating mock security contexts
@@ -14,7 +15,7 @@ export const SecurityContextFactory = {
   create(overrides: Partial<SecurityContext> = {}): SecurityContext {
     return {
       clientIP: faker.internet.ip(),
-      userAgent: 'Discord-Interactions/1.0 (+https://discord.com)',
+      userAgent: UrlFactory.discord.headers.userAgent(),
       timestamp: Date.now(),
       requestId: faker.string.uuid(),
       ...overrides,
@@ -241,10 +242,12 @@ export const GoogleSheetsCredentialsFactory = {
       private_key: '-----BEGIN PRIVATE KEY-----\nTEST_PRIVATE_KEY\n-----END PRIVATE KEY-----',
       client_email: `test-${faker.string.numeric(3)}@test-project.iam.gserviceaccount.com`,
       client_id: faker.string.numeric(21),
-      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-      token_uri: 'https://oauth2.googleapis.com/token',
-      auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-      client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/test%40test-project.iam.gserviceaccount.com`,
+      auth_uri: UrlFactory.google.oauth.auth(),
+      token_uri: UrlFactory.google.oauth.token(),
+      auth_provider_x509_cert_url: UrlFactory.google.certificates.oauth(),
+      client_x509_cert_url: UrlFactory.google.certificates.robot(
+        'test@test-project.iam.gserviceaccount.com'
+      ),
       universe_domain: 'googleapis.com',
       ...overrides,
     };
@@ -338,7 +341,6 @@ export function createOverLimitRateLimit(limit: number = 100) {
  * Factory for creating test tracker URLs
  */
 const VALID_PLATFORMS = ['steam', 'epic', 'psn', 'xbox', 'switch'] as const;
-const BASE_URL = 'https://rocketleague.tracker.network/rocket-league/profile';
 
 function generatePlayerId(platform: string): string {
   switch (platform) {
@@ -358,7 +360,21 @@ function generatePlayerId(platform: string): string {
 export function createValidTrackerUrl(platform?: string): string {
   const selectedPlatform = platform ?? faker.helpers.arrayElement(VALID_PLATFORMS);
   const playerId = generatePlayerId(selectedPlatform);
-  return `${BASE_URL}/${selectedPlatform}/${playerId}/overview`;
+
+  switch (selectedPlatform) {
+    case 'steam':
+      return UrlFactory.rocketLeague.profiles.steam(playerId);
+    case 'epic':
+      return UrlFactory.rocketLeague.profiles.epic(playerId);
+    case 'psn':
+      return UrlFactory.rocketLeague.profiles.psn(playerId);
+    case 'xbox':
+      return UrlFactory.rocketLeague.profiles.xbox(playerId);
+    case 'switch':
+      return UrlFactory.rocketLeague.profiles.switch(playerId);
+    default:
+      return UrlFactory.rocketLeague.profiles.steam(playerId);
+  }
 }
 
 export function createValidTrackerUrlBatch(count: number = 4): string[] {
@@ -367,32 +383,32 @@ export function createValidTrackerUrlBatch(count: number = 4): string[] {
 
 export function createInvalidTrackerUrl(): string {
   const invalidUrls = [
-    'https://example.com/profile/steam/123',
+    UrlFactory.rocketLeague.invalid.invalidDomain(),
     'not-a-url',
-    'https://rocketleague.tracker.network/invalid',
-    'https://different-site.com/rocket-league/profile/steam/123/overview',
+    UrlFactory.rocketLeague.invalid.wrongPath(),
+    UrlFactory.rocketLeague.invalid.differentSite(),
   ];
   return faker.helpers.arrayElement(invalidUrls);
 }
 
 export function createSteamTrackerUrl(): string {
-  return createValidTrackerUrl('steam');
+  return UrlFactory.rocketLeague.profiles.steam(generatePlayerId('steam'));
 }
 
 export function createEpicTrackerUrl(): string {
-  return createValidTrackerUrl('epic');
+  return UrlFactory.rocketLeague.profiles.epic(generatePlayerId('epic'));
 }
 
 export function createPsnTrackerUrl(): string {
-  return createValidTrackerUrl('psn');
+  return UrlFactory.rocketLeague.profiles.psn(generatePlayerId('psn'));
 }
 
 export function createXboxTrackerUrl(): string {
-  return createValidTrackerUrl('xbox');
+  return UrlFactory.rocketLeague.profiles.xbox(generatePlayerId('xbox'));
 }
 
 export function createSwitchTrackerUrl(): string {
-  return createValidTrackerUrl('switch');
+  return UrlFactory.rocketLeague.profiles.switch(generatePlayerId('switch'));
 }
 
 /**

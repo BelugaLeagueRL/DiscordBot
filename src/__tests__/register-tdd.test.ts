@@ -8,12 +8,27 @@ import {
   validateEnvironmentVariables,
   determineRegistrationEnvironment,
 } from '../utils/command-registration';
+import { TEST_URLS } from './config/test-urls';
 
 describe('TDD Register Coverage', () => {
   let originalEnv: typeof process.env;
 
   beforeEach(() => {
     originalEnv = { ...process.env };
+    // Clear all environment variables to start with clean state
+    delete process.env['DISCORD_TOKEN'];
+    delete process.env['DISCORD_APPLICATION_ID'];
+    delete process.env['DISCORD_PUBLIC_KEY'];
+    delete process.env['GOOGLE_SHEET_ID'];
+    delete process.env['GOOGLE_SHEETS_TYPE'];
+    delete process.env['GOOGLE_SHEETS_PROJECT_ID'];
+    delete process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'];
+    delete process.env['GOOGLE_SHEETS_PRIVATE_KEY'];
+    delete process.env['GOOGLE_SHEETS_CLIENT_EMAIL'];
+    delete process.env['GOOGLE_SHEETS_CLIENT_ID'];
+    delete process.env['TEST_CHANNEL_ID'];
+    delete process.env['PRIVILEGED_USER_ID'];
+    delete process.env['DISCORD_ENV'];
   });
 
   afterEach(() => {
@@ -23,36 +38,74 @@ describe('TDD Register Coverage', () => {
   describe('environment validation', () => {
     it('should throw when DISCORD_TOKEN is missing', () => {
       // REFACTOR: Test the extracted validation function directly
-      delete process.env['DISCORD_TOKEN'];
+      // Only DISCORD_TOKEN is missing, all others are present
+      process.env['DISCORD_APPLICATION_ID'] = 'test_app_id';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       expect(() => {
         validateEnvironmentVariables();
-      }).toThrow(
-        'Missing required environment variables: DISCORD_TOKEN and DISCORD_APPLICATION_ID'
-      );
+      }).toThrow('Missing required environment variable: DISCORD_TOKEN');
     });
 
     it('should throw when DISCORD_APPLICATION_ID is missing', () => {
       // GREEN: Test for missing APP_ID using extracted function
-      delete process.env['DISCORD_APPLICATION_ID'];
+      // Only DISCORD_APPLICATION_ID is missing, all others are present
+      process.env['DISCORD_TOKEN'] = 'test_token';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       expect(() => {
         validateEnvironmentVariables();
-      }).toThrow(
-        'Missing required environment variables: DISCORD_TOKEN and DISCORD_APPLICATION_ID'
-      );
+      }).toThrow('Missing required environment variable: DISCORD_APPLICATION_ID');
     });
 
-    it('should return environment variables when both are present', () => {
+    it('should return environment variables when all are present', () => {
       // GREEN: Positive test case
       process.env['DISCORD_TOKEN'] = 'test_token_123';
       process.env['DISCORD_APPLICATION_ID'] = 'test_app_id_456';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       const result = validateEnvironmentVariables();
 
       expect(result).toEqual({
         token: 'test_token_123',
         applicationId: 'test_app_id_456',
+        publicKey: 'test_public_key',
+        googleSheetId: 'test_sheet_id',
+        googleSheetsType: 'service_account',
+        googleSheetsProjectId: 'test_project_id',
+        googleSheetsPrivateKeyId: 'test_private_key_id',
+        googleSheetsPrivateKey: 'test_private_key',
+        googleSheetsClientEmail: 'test@test.com',
+        googleSheetsClientId: 'test_client_id',
+        testChannelId: 'test_channel_id',
+        privilegedUserId: 'test_user_id',
       });
     });
   });
@@ -63,6 +116,16 @@ describe('TDD Register Coverage', () => {
       process.env['DISCORD_ENV'] = 'development';
       process.env['DISCORD_TOKEN'] = 'test_token';
       process.env['DISCORD_APPLICATION_ID'] = 'test_app_id';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       const result = determineRegistrationEnvironment();
 
@@ -75,6 +138,16 @@ describe('TDD Register Coverage', () => {
       process.env['DISCORD_ENV'] = 'production';
       process.env['DISCORD_TOKEN'] = 'prod_token';
       process.env['DISCORD_APPLICATION_ID'] = 'prod_app_id';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       const result = determineRegistrationEnvironment();
 
@@ -87,6 +160,16 @@ describe('TDD Register Coverage', () => {
       delete process.env['DISCORD_ENV'];
       process.env['DISCORD_TOKEN'] = 'default_token';
       process.env['DISCORD_APPLICATION_ID'] = 'default_app_id';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       const result = determineRegistrationEnvironment();
 
@@ -99,6 +182,16 @@ describe('TDD Register Coverage', () => {
       process.env['DISCORD_ENV'] = 'development';
       process.env['DISCORD_TOKEN'] = 'dev_token';
       process.env['DISCORD_APPLICATION_ID'] = 'dev_app_id';
+      process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+      process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+      process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+      process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+      process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+      process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+      process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+      process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+      process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
       const devResult = determineRegistrationEnvironment();
 
@@ -106,12 +199,8 @@ describe('TDD Register Coverage', () => {
       process.env['DISCORD_APPLICATION_ID'] = 'prod_app_id';
       const prodResult = determineRegistrationEnvironment();
 
-      expect(devResult.endpoint).toBe(
-        'https://discord.com/api/v10/applications/dev_app_id/commands'
-      );
-      expect(prodResult.endpoint).toBe(
-        'https://discord.com/api/v10/applications/prod_app_id/commands'
-      );
+      expect(devResult.endpoint).toBe(TEST_URLS.DISCORD.COMMANDS('dev_app_id'));
+      expect(prodResult.endpoint).toBe(TEST_URLS.DISCORD.COMMANDS('prod_app_id'));
     });
   });
 });

@@ -115,8 +115,15 @@ describe('handleAdminSyncUsersToSheetsDiscord ephemeral deferred response valida
       // Act
       handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
 
-      // Assert - Verify background work is scheduled
+      // Assert - Verify background work is scheduled with Promise
       expect(mockContext.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
+    });
+
+    it('should call context.waitUntil exactly once', () => {
+      // Act
+      handleAdminSyncUsersToSheetsDiscord(validInteraction, mockContext, mockEnv);
+
+      // Assert - Verify single call count
       expect(mockContext.waitUntil).toHaveBeenCalledTimes(1);
     });
 

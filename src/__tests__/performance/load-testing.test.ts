@@ -53,7 +53,23 @@ describe('Performance and Load Testing', () => {
   });
 
   describe('Response Time Performance', () => {
-    it('should handle register command with successful performance behavior', async () => {
+    it('should handle register command with successful response status', async () => {
+      // Use deterministic known Steam ID for predictable testing
+      const registerInteraction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: UrlFactory.rocketLeague.knownProfiles.steam(),
+        },
+      ]);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle register command within performance limits', async () => {
       // Use deterministic known Steam ID for predictable testing
       const registerInteraction = createMockCommandInteraction('register', [
         {
@@ -71,13 +87,41 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const responseTime = endTime - startTime;
 
-      // Assert: Behavioral validation - successful response AND proper Discord format
-      expect(response.status).toBe(200);
+      expect(response).toBeDefined();
       expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
+    });
 
-      // Behavioral validation: verify it's actually a valid Discord response
+    it('should handle register command with valid Discord response format', async () => {
+      // Use deterministic known Steam ID for predictable testing
+      const registerInteraction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: UrlFactory.rocketLeague.knownProfiles.steam(),
+        },
+      ]);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
+
       const rawResponseData = await response.json();
       expect(isDiscordResponse(rawResponseData)).toBe(true);
+    });
+
+    it('should handle register command with success content', async () => {
+      // Use deterministic known Steam ID for predictable testing
+      const registerInteraction = createMockCommandInteraction('register', [
+        {
+          name: 'tracker1',
+          type: 3,
+          value: UrlFactory.rocketLeague.knownProfiles.steam(),
+        },
+      ]);
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
+
+      const rawResponseData = await response.json();
       if (!isDiscordResponse(rawResponseData)) {
         throw new Error('Invalid response format');
       }
@@ -85,7 +129,86 @@ describe('Performance and Load Testing', () => {
       expect(responseData.data.content).toContain('✅ Registration received!');
     });
 
-    it('should handle multiple tracker URLs within 150ms', async () => {
+    it('should handle multiple tracker URLs with successful response', async () => {
+      // Use deterministic known platform IDs for predictable testing
+      const registerInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.epic(),
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.psn(),
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.xbox(),
+          },
+        ],
+        {
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle multiple tracker URLs with success content', async () => {
+      // Use deterministic known platform IDs for predictable testing
+      const registerInteraction = createMockCommandInteraction(
+        'register',
+        [
+          {
+            name: 'tracker1',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
+          },
+          {
+            name: 'tracker2',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.epic(),
+          },
+          {
+            name: 'tracker3',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.psn(),
+          },
+          {
+            name: 'tracker4',
+            type: 3,
+            value: UrlFactory.rocketLeague.knownProfiles.xbox(),
+          },
+        ],
+        {
+          channel_id: getRequestChannelId(mockEnv),
+        }
+      );
+
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await handleRegisterCommand(registerInteraction, mockEnv, mockCtx);
+
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
+      expect(responseData.data.content).toContain('✅ Registration received!');
+    });
+
+    it('should handle multiple tracker URLs within performance limits', async () => {
       // Use deterministic known platform IDs for predictable testing
       const registerInteraction = createMockCommandInteraction(
         'register',
@@ -124,20 +247,129 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const responseTime = endTime - startTime;
 
-      expect(response.status).toBe(200);
-
-      const rawResponseData = await response.json();
-      if (!isDiscordResponse(rawResponseData)) {
-        throw new Error('Invalid response format');
-      }
-      const responseData = rawResponseData;
-      expect(responseData.data.content).toContain('✅ Registration received!');
+      expect(response).toBeDefined();
       expect(responseTime).toBeLessThan(10); // Cloudflare Workers 10ms CPU limit
     });
   });
 
   describe('Concurrent Processing Performance', () => {
-    it('should handle 10 concurrent register commands efficiently', async () => {
+    it('should handle 10 concurrent register commands with all successful responses', async () => {
+      const concurrentRequests = 10;
+
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        // Use deterministic known Steam ID for predictable testing
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
+            },
+          ],
+          {
+            id: `concurrent_${String(i)}`,
+          }
+        );
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
+      });
+
+      const responses = await Promise.all(requests);
+
+      // Behavioral validation: verify concurrent processing actually succeeded
+      const allSuccessful = responses.every(response => response.status === 200);
+      expect(allSuccessful).toBe(true);
+    });
+
+    it('should handle 10 concurrent register commands with correct response count', async () => {
+      const concurrentRequests = 10;
+
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        // Use deterministic known Steam ID for predictable testing
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
+            },
+          ],
+          {
+            id: `concurrent_${String(i)}`,
+          }
+        );
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
+      });
+
+      const responses = await Promise.all(requests);
+
+      expect(responses).toHaveLength(10);
+    });
+
+    it('should handle 10 concurrent register commands with valid Discord response format', async () => {
+      const concurrentRequests = 10;
+
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        // Use deterministic known Steam ID for predictable testing
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
+            },
+          ],
+          {
+            id: `concurrent_${String(i)}`,
+          }
+        );
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
+      });
+
+      const responses = await Promise.all(requests);
+
+      // Behavioral validation: verify at least one response contains valid Discord content
+      const firstResponseData = await responses[0]?.json();
+      expect(isDiscordResponse(firstResponseData)).toBe(true);
+    });
+
+    it('should handle 10 concurrent register commands with success content', async () => {
+      const concurrentRequests = 10;
+
+      const requests = Array.from({ length: concurrentRequests }, (_, i) => {
+        // Use deterministic known Steam ID for predictable testing
+        const interaction = createMockCommandInteraction(
+          'register',
+          [
+            {
+              name: 'tracker1',
+              type: 3,
+              value: UrlFactory.rocketLeague.knownProfiles.steam(),
+            },
+          ],
+          {
+            id: `concurrent_${String(i)}`,
+          }
+        );
+        const mockCtx = ExecutionContextFactory.create();
+        return handleRegisterCommand(interaction, mockEnv, mockCtx);
+      });
+
+      const responses = await Promise.all(requests);
+
+      const firstResponseData = await responses[0]?.json();
+      if (!isDiscordResponse(firstResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      expect(firstResponseData.data.content).toContain('✅ Registration received!');
+    });
+
+    it('should handle 10 concurrent register commands within performance limits', async () => {
       const concurrentRequests = 10;
       const startTime = performance.now();
 
@@ -164,18 +396,11 @@ describe('Performance and Load Testing', () => {
       const endTime = performance.now();
       const totalTime = endTime - startTime;
 
-      // Behavioral validation: verify concurrent processing actually succeeded
-      const allSuccessful = responses.every(response => response.status === 200);
-      expect(allSuccessful).toBe(true);
-      expect(responses).toHaveLength(10);
-
-      // Behavioral validation: verify at least one response contains valid Discord content
-      const firstResponseData = await responses[0]?.json();
-      expect(isDiscordResponse(firstResponseData)).toBe(true);
-      if (!isDiscordResponse(firstResponseData)) {
-        throw new Error('Invalid response format');
+      // Verify all responses completed successfully
+      expect(responses).toHaveLength(concurrentRequests);
+      for (const response of responses) {
+        expect(response).toBeDefined();
       }
-      expect(firstResponseData.data.content).toContain('✅ Registration received!');
 
       // Average response time should be reasonable for Workers
       const avgResponseTime = totalTime / concurrentRequests;

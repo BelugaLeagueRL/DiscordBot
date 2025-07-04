@@ -9,6 +9,7 @@ import {
   updateDeferredResponse,
   InteractionResponseType,
 } from '../../utils/discord';
+import { UrlFactory } from '../helpers/url-factories';
 
 // Mock fetch globally for updateDeferredResponse tests
 const mockFetch = vi.fn();
@@ -70,7 +71,7 @@ describe('updateDeferredResponse', () => {
 
     // Assert
     expect(mockFetch).toHaveBeenCalledWith(
-      `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}/messages/@original`,
+      UrlFactory.discord.webhooks.editMessage(applicationId, interactionToken),
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DiscordApiService } from '../../services/discord-api';
 import type { Env } from '../../index';
 import type { DiscordMember } from '../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
+import { UrlFactory } from '../helpers/url-factories';
 
 describe('Discord API v10 Pagination Tests', () => {
   let mockEnv: Env;
@@ -117,7 +118,7 @@ describe('Discord API v10 Pagination Tests', () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
       expect(mockFetch).toHaveBeenNthCalledWith(
         1,
-        'https://discord.com/api/v10/guilds/large-guild-123456789012345678/members?limit=1000',
+        UrlFactory.discord.guildMembers.withLimit(guildId, 1000),
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -127,12 +128,12 @@ describe('Discord API v10 Pagination Tests', () => {
       );
       expect(mockFetch).toHaveBeenNthCalledWith(
         2,
-        `https://discord.com/api/v10/guilds/large-guild-123456789012345678/members?limit=1000&after=${page1Members[999]?.user.id}`,
+        UrlFactory.discord.guildMembers.paginated(guildId, page1Members[999]?.user.id ?? ''),
         expect.any(Object)
       );
       expect(mockFetch).toHaveBeenNthCalledWith(
         3,
-        `https://discord.com/api/v10/guilds/large-guild-123456789012345678/members?limit=1000&after=${page2Members[999]?.user.id}`,
+        UrlFactory.discord.guildMembers.paginated(guildId, page2Members[999]?.user.id ?? ''),
         expect.any(Object)
       );
     });

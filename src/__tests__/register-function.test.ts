@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import type { MockedFunction } from 'vitest';
 import { registerCommands } from '../utils/command-registration';
+import { UrlFactory } from './helpers/url-factories';
 
 describe('registerCommands function with valid environment', () => {
   let originalEnv: typeof process.env;
@@ -23,6 +24,16 @@ describe('registerCommands function with valid environment', () => {
     // Set valid environment variables
     process.env['DISCORD_TOKEN'] = 'test_token';
     process.env['DISCORD_APPLICATION_ID'] = 'test_app_id';
+    process.env['DISCORD_PUBLIC_KEY'] = 'test_public_key';
+    process.env['GOOGLE_SHEET_ID'] = 'test_sheet_id';
+    process.env['GOOGLE_SHEETS_TYPE'] = 'service_account';
+    process.env['GOOGLE_SHEETS_PROJECT_ID'] = 'test_project_id';
+    process.env['GOOGLE_SHEETS_PRIVATE_KEY_ID'] = 'test_private_key_id';
+    process.env['GOOGLE_SHEETS_PRIVATE_KEY'] = 'test_private_key';
+    process.env['GOOGLE_SHEETS_CLIENT_EMAIL'] = 'test@test.com';
+    process.env['GOOGLE_SHEETS_CLIENT_ID'] = 'test_client_id';
+    process.env['TEST_CHANNEL_ID'] = 'test_channel_id';
+    process.env['PRIVILEGED_USER_ID'] = 'test_user_id';
 
     // Mock fetch
     globalThis.fetch = vi.fn();
@@ -54,7 +65,7 @@ describe('registerCommands function with valid environment', () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, options] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://discord.com/api/v10/applications/test_app_id/commands');
+    expect(url).toBe(UrlFactory.discord.commands.test('test_app_id'));
     expect(options.method).toBe('PUT');
     expect(options.headers).toBeDefined();
     const headers = options.headers as Record<string, string>;
@@ -107,7 +118,7 @@ describe('registerCommands function with valid environment', () => {
 
     // Verify the command payload structure
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://discord.com/api/v10/applications/test_app_id/commands',
+      UrlFactory.discord.commands.test('test_app_id'),
       expect.objectContaining({
         method: 'PUT',
         headers: {

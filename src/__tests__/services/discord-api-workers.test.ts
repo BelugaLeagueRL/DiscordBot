@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DiscordApiService } from '../../services/discord-api';
 import { EnvFactory } from '../helpers/test-factories';
+import { UrlFactory } from '../helpers/url-factories';
 import type { Env } from '../../index';
 
 describe('Discord API Service - Workers Environment', () => {
@@ -21,7 +22,7 @@ describe('Discord API Service - Workers Environment', () => {
       // Arrange - Create a fetch function that mimics Workers context loss
       const contextLossFetch = vi.fn().mockImplementation(() => {
         throw new Error(
-          'Illegal invocation: function called with incorrect `this` reference. See https://developers.cloudflare.com/workers/observability/errors/#illegal-invocation-errors for details.'
+          `Illegal invocation: function called with incorrect \`this\` reference. See ${UrlFactory.cloudflare.docs.illegalInvocation()} for details.`
         );
       });
 
@@ -47,7 +48,7 @@ describe('Discord API Service - Workers Environment', () => {
       // Assert
       expect(result).toEqual([{ id: 'member1', user: { id: 'user1' } }]);
       expect(boundFetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/guilds/123456789012345678/members?limit=1000',
+        UrlFactory.discord.guildMembers.withLimit('123456789012345678', 1000),
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: mockEnv.DISCORD_TOKEN,

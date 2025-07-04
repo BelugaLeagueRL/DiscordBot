@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { MockedFunction } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { verifyDiscordRequest } from '../../utils/discord';
+import { UrlFactory } from '../helpers/url-factories';
 
 // Mock the discord-interactions module
 vi.mock('discord-interactions', () => ({
@@ -44,7 +45,7 @@ describe('Discord Signature Verification Functional Tests', () => {
           'X-Signature-Ed25519': 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
           'X-Signature-Timestamp': '1640995200',
           'Content-Type': 'application/json',
-          'User-Agent': 'Discord-Interactions/1.0 (+https://discord.com)',
+          'User-Agent': UrlFactory.discord.headers.userAgent(),
         },
         body: JSON.stringify({
           id: '123456789012345678',
@@ -316,7 +317,7 @@ describe('Discord Signature Verification Functional Tests', () => {
           'X-Signature-Ed25519': 'valid_discord_signature',
           'X-Signature-Timestamp': '1640995200',
           'Content-Type': 'application/json',
-          'User-Agent': 'Discord-Interactions/1.0 (+https://discord.com)',
+          'User-Agent': UrlFactory.discord.headers.userAgent(),
         },
         body: JSON.stringify(pingPayload),
       });
@@ -346,8 +347,7 @@ describe('Discord Signature Verification Functional Tests', () => {
             {
               name: 'tracker1',
               type: 3, // STRING
-              value:
-                'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198144145654/overview',
+              value: UrlFactory.rocketLeague.profiles.steam('76561198144145654'),
             },
           ],
         },
@@ -370,7 +370,7 @@ describe('Discord Signature Verification Functional Tests', () => {
           'X-Signature-Ed25519': 'valid_command_signature',
           'X-Signature-Timestamp': '1640995300',
           'Content-Type': 'application/json',
-          'User-Agent': 'Discord-Interactions/1.0 (+https://discord.com)',
+          'User-Agent': UrlFactory.discord.headers.userAgent(),
         },
         body: JSON.stringify(commandPayload),
       });

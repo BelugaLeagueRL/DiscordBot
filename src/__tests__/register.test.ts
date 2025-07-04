@@ -6,6 +6,7 @@ import {
   createInvalidTrackerUrl,
 } from './helpers/discord-helpers';
 import { EnvFactory, ExecutionContextFactory, getRequestChannelId } from './helpers/test-factories';
+import { UrlFactory } from './helpers/url-factories';
 import type { Env } from '../index';
 
 // Type guard for Discord response data
@@ -37,8 +38,7 @@ const mockEnv: Env = EnvFactory.create();
 describe('Register command handler', () => {
   it('should validate tracker URLs correctly', async () => {
     // Use a specific known Steam ID for deterministic testing
-    const knownSteamId = '76561198144145654';
-    const knownTrackerUrl = `https://rocketleague.tracker.network/rocket-league/profile/steam/${knownSteamId}/overview`;
+    const knownTrackerUrl = UrlFactory.rocketLeague.knownProfiles.steamAlt();
 
     const validInteraction = createMockCommandInteraction(
       'register',

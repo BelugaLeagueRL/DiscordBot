@@ -13,6 +13,7 @@ import {
   type MemberData,
 } from '../../../../application_commands/google-sheets/admin-sync-users-to-sheets/discord-members';
 import { MemberDataFactory } from '../../../helpers/test-factories';
+import { UrlFactory } from '../../../helpers/url-factories';
 
 // Focused member creation helpers
 const createAdminMember = () => ({
@@ -222,7 +223,7 @@ describe('Discord Guild Member Operations', () => {
 
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(
-        `https://discord.com/api/v10/guilds/${mockGuildId}/members?limit=1000`,
+        UrlFactory.discord.guildMembers.withLimit(mockGuildId, 1000),
         {
           method: 'GET',
           headers: expect.objectContaining({

@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DiscordApiService } from '../../services/discord-api';
 import { EnvFactory, DiscordMemberFactory } from '../helpers/test-factories';
+import { UrlFactory } from '../helpers/url-factories';
 
 // Mock fetch for controlled timing tests
 const mockFetch = vi.fn();
@@ -51,7 +52,7 @@ describe('Discord API Performance Requirements', () => {
       expect(actualTimeMs).toBeGreaterThanOrEqual(targetTimeMs - 50); // Allow 50ms tolerance
       expect(actualTimeMs).toBeLessThanOrEqual(targetTimeMs + 50); // Allow 50ms tolerance
       expect(mockFetch).toHaveBeenCalledWith(
-        `https://discord.com/api/v10/guilds/${testGuildId}/members?limit=${targetMemberCount}`,
+        UrlFactory.discord.guildMembers.withLimit(testGuildId, targetMemberCount),
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({

@@ -7,6 +7,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { faker } from '@faker-js/faker';
 import { beforeAll, afterEach, afterAll } from 'vitest';
+import { TEST_URLS } from '../config/test-urls';
 
 // Discord API Type Definitions (matching official API specification)
 interface DiscordUser {
@@ -283,7 +284,7 @@ export function createMockDiscordCommand(overrides: Partial<DiscordCommand> = {}
 /**
  * Discord API base URL
  */
-const DISCORD_API_BASE = 'https://discord.com/api/v10';
+const DISCORD_API_BASE = TEST_URLS.DISCORD.API_BASE;
 
 /**
  * Mock handlers for Discord API endpoints

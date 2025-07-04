@@ -5,6 +5,7 @@
  */
 
 import { SecurityTestFactory } from './security-test-factory';
+import { UrlFactory } from './url-factories';
 
 /**
  * Base builder interface for fluent API
@@ -24,8 +25,7 @@ export class CredentialsBuilder
     }>
 {
   private email: string = 'test-service@test-project.iam.gserviceaccount.com';
-  private key: string =
-    '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1234567890...\n-----END PRIVATE KEY-----\n';
+  private key: string = SecurityTestFactory.fakePrivateKey();
 
   withEmail(email: string): this {
     this.email = email;
@@ -33,13 +33,15 @@ export class CredentialsBuilder
   }
 
   withValidPrivateKey(): this {
-    this.key =
-      '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1234567890...\n-----END PRIVATE KEY-----\n';
+    this.key = SecurityTestFactory.fakePrivateKey();
     return this;
   }
 
   withInvalidPrivateKey(): this {
-    this.key = 'not-a-valid-private-key';
+    this.key = SecurityTestFactory.fakePrivateKey().replace(
+      'FAKE_KEY_DATA_NOT_REAL',
+      'INVALID_KEY_DATA'
+    );
     return this;
   }
 
@@ -74,8 +76,8 @@ export class JwtConfigBuilder
       iat: number;
     }>
 {
-  private scope: string = 'https://www.googleapis.com/auth/spreadsheets';
-  private aud: string = 'https://oauth2.googleapis.com/token';
+  private scope: string = UrlFactory.google.sheets.scope();
+  private aud: string = UrlFactory.google.oauth.tokenV2();
   private expiry: number = Math.floor(Date.now() / 1000) + 3600;
   private issuedAt: number = Math.floor(Date.now() / 1000);
 

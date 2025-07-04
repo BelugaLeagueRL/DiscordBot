@@ -11,6 +11,7 @@ import {
   ExecutionContextFactory,
   getRequestChannelId,
 } from '../helpers/test-factories';
+import { UrlFactory } from '../helpers/url-factories';
 import type { Env } from '../../index';
 
 // Type interface for Discord response body
@@ -53,8 +54,7 @@ describe('Register Command Integration', () => {
           {
             name: 'tracker1',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
         ],
         {
@@ -83,8 +83,7 @@ describe('Register Command Integration', () => {
           {
             name: 'tracker1',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
         ],
         {
@@ -98,7 +97,9 @@ describe('Register Command Integration', () => {
       expect(response.status).toBe(200);
       // Should call Discord API for response routing
       expect(mockFetch).toHaveBeenCalledWith(
-        `https://discord.com/api/v10/channels/${mockEnv.REGISTER_COMMAND_RESPONSE_CHANNEL_ID ?? 'default'}/messages`,
+        UrlFactory.discord.channels.messages(
+          mockEnv.REGISTER_COMMAND_RESPONSE_CHANNEL_ID ?? 'default'
+        ),
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -124,8 +125,7 @@ describe('Register Command Integration', () => {
           {
             name: 'tracker1',
             type: 3,
-            value:
-              'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview',
+            value: UrlFactory.rocketLeague.knownProfiles.steam(),
           },
         ],
         {
@@ -148,15 +148,13 @@ describe('Register Command Integration', () => {
       const fetchCall = mockFetch.mock.calls[0] as [string, RequestInit];
       const bodyObj = JSON.parse(fetchCall[1].body as string) as { content: string };
       expect(bodyObj.content).toContain('has registered the following trackers');
-      expect(bodyObj.content).toContain(
-        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview'
-      );
+      expect(bodyObj.content).toContain(UrlFactory.rocketLeague.knownProfiles.steam());
     });
 
     it('should handle invalid URLs without routing', async () => {
       const interaction = createMockCommandInteraction(
         'register',
-        [{ name: 'tracker1', type: 3, value: 'https://invalid-url.com' }],
+        [{ name: 'tracker1', type: 3, value: UrlFactory.testDomains.invalid.general() }],
         {
           channel_id: getRequestChannelId(mockEnv),
         }
@@ -183,9 +181,7 @@ describe('Register Command Integration', () => {
         REGISTER_COMMAND_REQUEST_CHANNEL_ID: undefined as unknown as string,
       };
 
-      const interaction = createRegisterInteraction(
-        'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198123456789/overview'
-      );
+      const interaction = createRegisterInteraction(UrlFactory.rocketLeague.knownProfiles.steam());
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await handleRegisterCommand(interaction, envWithoutChannels, mockCtx);

@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { routeResponseToChannel } from '../../application_commands/register';
+import { UrlFactory } from '../helpers/url-factories';
 import type { Env } from '../../index';
 
 // Mock fetch for Discord API calls
@@ -42,7 +43,7 @@ describe('Response Routing', () => {
 
       expect(result.success).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/channels/1388177835331424386/messages',
+        UrlFactory.discord.channels.specific('1388177835331424386'),
         {
           method: 'POST',
           headers: {

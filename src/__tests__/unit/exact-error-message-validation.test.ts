@@ -169,206 +169,552 @@ describe('Exact Error Message Validation', () => {
   });
 
   describe('Character-Level Validation of Predefined Messages', () => {
-    it('should validate exact character count and content for bot permission message', () => {
-      // Arrange
+    describe('Bot Permission Message Validation', () => {
       const error = new Error('Bot lacks permission');
       const expectedMessage = 'Bot needs "View Server Members" permission';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact bot permission message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.includes('"View Server Members"')).toBe(true);
-      expect(result.startsWith('Bot needs')).toBe(true);
-      expect(result.endsWith('permission')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for bot permission message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should include quoted View Server Members text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('"View Server Members"')).toBe(true);
+      });
+
+      it('should start with Bot needs prefix', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.startsWith('Bot needs')).toBe(true);
+      });
+
+      it('should end with permission suffix', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.endsWith('permission')).toBe(true);
+      });
     });
 
-    it('should validate exact character content for Google Sheets configuration message', () => {
-      // Arrange
+    describe('Google Sheets Configuration Message Validation', () => {
       const error = new Error('authentication failed');
       const expectedMessage = 'Google Sheets configuration error';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact Google Sheets configuration message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.includes('Google Sheets')).toBe(true);
-      expect(result.includes('configuration')).toBe(true);
-      expect(result.includes('error')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for Google Sheets message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should include Google Sheets text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('Google Sheets')).toBe(true);
+      });
+
+      it('should include configuration text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('configuration')).toBe(true);
+      });
+
+      it('should include error text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('error')).toBe(true);
+      });
     });
 
-    it('should validate exact character content for Discord service message', () => {
-      // Arrange
+    describe('Discord Service Message Validation', () => {
       const error = new Error('Discord API error');
       const expectedMessage = 'Discord service temporarily unavailable';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact Discord service message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.includes('Discord service')).toBe(true);
-      expect(result.includes('temporarily')).toBe(true);
-      expect(result.includes('unavailable')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for Discord service message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should include Discord service text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('Discord service')).toBe(true);
+      });
+
+      it('should include temporarily text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('temporarily')).toBe(true);
+      });
+
+      it('should include unavailable text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('unavailable')).toBe(true);
+      });
     });
 
-    it('should validate exact character content for member access message', () => {
-      // Arrange
+    describe('Member Access Message Validation', () => {
       const error = new Error('Failed to fetch members');
       const expectedMessage = 'Could not access Discord server members';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact member access message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.startsWith('Could not access')).toBe(true);
-      expect(result.includes('Discord server members')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for member access message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should start with Could not access prefix', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.startsWith('Could not access')).toBe(true);
+      });
+
+      it('should include Discord server members text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('Discord server members')).toBe(true);
+      });
     });
 
-    it('should validate exact character content for sheets update message', () => {
-      // Arrange
+    describe('Sheets Update Message Validation', () => {
       const error = new Error('Failed to append members');
       const expectedMessage = 'Could not update Google Sheets';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact sheets update message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.startsWith('Could not update')).toBe(true);
-      expect(result.includes('Google Sheets')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for sheets update message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should start with Could not update prefix', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.startsWith('Could not update')).toBe(true);
+      });
+
+      it('should include Google Sheets text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('Google Sheets')).toBe(true);
+      });
     });
 
-    it('should validate exact character content for fallback message', () => {
-      // Arrange
+    describe('Fallback Message Validation', () => {
       const error = new Error('unknown error type');
       const expectedMessage = 'Unexpected error - check server logs';
 
-      // Act
-      const result = convertErrorToUserMessage(error);
+      it('should return exact fallback message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
 
-      // Assert - Character-level validation
-      expect(result).toBe(expectedMessage);
-      expect(result.length).toBe(expectedMessage.length);
-      expect(result.includes('Unexpected error')).toBe(true);
-      expect(result.includes(' - ')).toBe(true);
-      expect(result.includes('check server logs')).toBe(true);
+        // Assert
+        expect(result).toBe(expectedMessage);
+      });
+
+      it('should have correct character count for fallback message', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.length).toBe(expectedMessage.length);
+      });
+
+      it('should include Unexpected error text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('Unexpected error')).toBe(true);
+      });
+
+      it('should include separator dash', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes(' - ')).toBe(true);
+      });
+
+      it('should include check server logs text', () => {
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result.includes('check server logs')).toBe(true);
+      });
     });
   });
 
   describe('Message Immutability and Consistency', () => {
-    it('should return the same exact message for identical inputs', () => {
-      // Arrange
+    describe('Identical Input Consistency', () => {
       const error = new Error('Bot lacks permission');
+      const expectedMessage = 'Bot needs "View Server Members" permission';
 
-      // Act - Multiple calls
-      const result1 = convertErrorToUserMessage(error);
-      const result2 = convertErrorToUserMessage(error);
-      const result3 = convertErrorToUserMessage(error);
+      it('should return exact message on first call', () => {
+        // Act
+        const result1 = convertErrorToUserMessage(error);
 
-      // Assert - Consistent exact results
-      expect(result1).toBe('Bot needs "View Server Members" permission');
-      expect(result2).toBe('Bot needs "View Server Members" permission');
-      expect(result3).toBe('Bot needs "View Server Members" permission');
-      expect(result1).toBe(result2);
-      expect(result2).toBe(result3);
+        // Assert
+        expect(result1).toBe(expectedMessage);
+      });
+
+      it('should return exact message on second call', () => {
+        // Act
+        const result2 = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result2).toBe(expectedMessage);
+      });
+
+      it('should return exact message on third call', () => {
+        // Act
+        const result3 = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result3).toBe(expectedMessage);
+      });
+
+      it('should return consistent results across multiple calls', () => {
+        // Act
+        const result1 = convertErrorToUserMessage(error);
+        const result2 = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result1).toBe(result2);
+      });
+
+      it('should maintain consistency across three calls', () => {
+        // Act
+        const result1 = convertErrorToUserMessage(error);
+        const result2 = convertErrorToUserMessage(error);
+        const result3 = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result1).toBe(result2);
+        expect(result2).toBe(result3);
+      });
     });
 
-    it('should maintain message immutability across different error instances', () => {
-      // Arrange - Different Error instances with same message
-      const error1 = new Error('authentication failed');
-      const error2 = new Error('authentication failed');
+    describe('Different Error Instance Consistency', () => {
+      const expectedMessage = 'Google Sheets configuration error';
 
-      // Act
-      const result1 = convertErrorToUserMessage(error1);
-      const result2 = convertErrorToUserMessage(error2);
+      it('should return exact message for first error instance', () => {
+        // Arrange
+        const error1 = new Error('authentication failed');
 
-      // Assert - Exact consistency
-      expect(result1).toBe('Google Sheets configuration error');
-      expect(result2).toBe('Google Sheets configuration error');
-      expect(result1).toBe(result2);
+        // Act
+        const result1 = convertErrorToUserMessage(error1);
+
+        // Assert
+        expect(result1).toBe(expectedMessage);
+      });
+
+      it('should return exact message for second error instance', () => {
+        // Arrange
+        const error2 = new Error('authentication failed');
+
+        // Act
+        const result2 = convertErrorToUserMessage(error2);
+
+        // Assert
+        expect(result2).toBe(expectedMessage);
+      });
+
+      it('should maintain consistency across different error instances', () => {
+        // Arrange
+        const error1 = new Error('authentication failed');
+        const error2 = new Error('authentication failed');
+
+        // Act
+        const result1 = convertErrorToUserMessage(error1);
+        const result2 = convertErrorToUserMessage(error2);
+
+        // Assert
+        expect(result1).toBe(result2);
+      });
     });
   });
 
   describe('Flow 3 Specification Compliance', () => {
-    it('should ensure all 6 predefined messages are user-friendly and actionable', () => {
-      // Arrange - Error types that map to each predefined message
-      const errorScenarios = [
-        {
-          input: new Error('Bot lacks permission'),
-          expected: 'Bot needs "View Server Members" permission',
-        },
-        {
-          input: new Error('authentication failed'),
-          expected: 'Google Sheets configuration error',
-        },
-        {
-          input: new Error('Discord API error'),
-          expected: 'Discord service temporarily unavailable',
-        },
-        {
-          input: new Error('Failed to fetch members'),
-          expected: 'Could not access Discord server members',
-        },
-        {
-          input: new Error('Failed to append members'),
-          expected: 'Could not update Google Sheets',
-        },
-        { input: new Error('unknown'), expected: 'Unexpected error - check server logs' },
-      ];
+    describe('Exact Message Validation', () => {
+      it('should return exact message for bot permission error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('Bot lacks permission'));
 
-      // Act & Assert - Validate Flow 3 compliance
-      for (const scenario of errorScenarios) {
-        const result = convertErrorToUserMessage(scenario.input);
+        // Assert
+        expect(result).toBe('Bot needs "View Server Members" permission');
+      });
 
-        // EXACT message validation
-        expect(result).toBe(scenario.expected);
+      it('should return exact message for authentication error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('authentication failed'));
 
-        // Flow 3 requirements: user-friendly, actionable, no technical details
-        expect(result).not.toContain('Error:');
-        expect(result).not.toContain('Exception');
-        expect(result).not.toContain('Stack trace');
-        expect(result).not.toContain('undefined');
-        expect(result).not.toContain('null');
+        // Assert
+        expect(result).toBe('Google Sheets configuration error');
+      });
 
-        // Must be a complete sentence or phrase
-        expect(result.length).toBeGreaterThan(10);
-        expect(typeof result).toBe('string');
-      }
+      it('should return exact message for Discord API error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('Discord API error'));
+
+        // Assert
+        expect(result).toBe('Discord service temporarily unavailable');
+      });
+
+      it('should return exact message for member fetch error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('Failed to fetch members'));
+
+        // Assert
+        expect(result).toBe('Could not access Discord server members');
+      });
+
+      it('should return exact message for append members error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('Failed to append members'));
+
+        // Assert
+        expect(result).toBe('Could not update Google Sheets');
+      });
+
+      it('should return exact message for unknown error', () => {
+        // Act
+        const result = convertErrorToUserMessage(new Error('unknown'));
+
+        // Assert
+        expect(result).toBe('Unexpected error - check server logs');
+      });
     });
 
-    it('should ensure no message contains technical implementation details', () => {
-      // Arrange - Various technical errors that should be sanitized
-      const technicalErrors = [
-        'Bot lacks permission: TypeError in fetchMembers()',
-        'authentication failed: JWT token expired at line 42',
-        'Discord API error: HTTP 503 with stack trace',
-        'Failed to fetch members: Database connection timeout',
-        'Failed to append members: Google Sheets API quota exceeded',
-      ];
+    describe('Technical Detail Exclusion', () => {
+      it('should not contain Error: prefix in any message', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission'))).not.toContain(
+          'Error:'
+        );
+        expect(convertErrorToUserMessage(new Error('authentication failed'))).not.toContain(
+          'Error:'
+        );
+        expect(convertErrorToUserMessage(new Error('Discord API error'))).not.toContain('Error:');
+      });
 
-      // Act & Assert - Ensure technical details are hidden
-      for (const technicalError of technicalErrors) {
-        const error = new Error(technicalError);
+      it('should not contain Exception text in any message', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission'))).not.toContain(
+          'Exception'
+        );
+        expect(convertErrorToUserMessage(new Error('authentication failed'))).not.toContain(
+          'Exception'
+        );
+        expect(convertErrorToUserMessage(new Error('Discord API error'))).not.toContain(
+          'Exception'
+        );
+      });
+
+      it('should not contain Stack trace text in any message', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission'))).not.toContain(
+          'Stack trace'
+        );
+        expect(convertErrorToUserMessage(new Error('authentication failed'))).not.toContain(
+          'Stack trace'
+        );
+        expect(convertErrorToUserMessage(new Error('Discord API error'))).not.toContain(
+          'Stack trace'
+        );
+      });
+
+      it('should not contain undefined text in any message', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission'))).not.toContain(
+          'undefined'
+        );
+        expect(convertErrorToUserMessage(new Error('authentication failed'))).not.toContain(
+          'undefined'
+        );
+        expect(convertErrorToUserMessage(new Error('Discord API error'))).not.toContain(
+          'undefined'
+        );
+      });
+
+      it('should not contain null text in any message', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission'))).not.toContain('null');
+        expect(convertErrorToUserMessage(new Error('authentication failed'))).not.toContain('null');
+        expect(convertErrorToUserMessage(new Error('Discord API error'))).not.toContain('null');
+      });
+    });
+
+    describe('Message Format Requirements', () => {
+      it('should have meaningful length for all error types', () => {
+        // Act & Assert
+        expect(convertErrorToUserMessage(new Error('Bot lacks permission')).length).toBeGreaterThan(
+          10
+        );
+        expect(
+          convertErrorToUserMessage(new Error('authentication failed')).length
+        ).toBeGreaterThan(10);
+        expect(convertErrorToUserMessage(new Error('Discord API error')).length).toBeGreaterThan(
+          10
+        );
+        expect(convertErrorToUserMessage(new Error('unknown')).length).toBeGreaterThan(10);
+      });
+
+      it('should be string type for all error types', () => {
+        // Act & Assert
+        expect(typeof convertErrorToUserMessage(new Error('Bot lacks permission'))).toBe('string');
+        expect(typeof convertErrorToUserMessage(new Error('authentication failed'))).toBe('string');
+        expect(typeof convertErrorToUserMessage(new Error('Discord API error'))).toBe('string');
+        expect(typeof convertErrorToUserMessage(new Error('unknown'))).toBe('string');
+      });
+    });
+
+    describe('Technical Implementation Detail Sanitization', () => {
+      it('should not contain TypeError in technical error messages', () => {
+        // Arrange
+        const error1 = new Error('Bot lacks permission: TypeError in fetchMembers()');
+        const error2 = new Error('authentication failed: JWT token expired at line 42');
+
+        // Act & Assert
+        expect(convertErrorToUserMessage(error1)).not.toContain('TypeError');
+        expect(convertErrorToUserMessage(error2)).not.toContain('TypeError');
+      });
+
+      it('should not contain line numbers in technical error messages', () => {
+        // Arrange
+        const error = new Error('authentication failed: JWT token expired at line 42');
+
+        // Act
         const result = convertErrorToUserMessage(error);
 
-        // Should not contain technical details
-        expect(result).not.toContain('TypeError');
+        // Assert
         expect(result).not.toContain('line 42');
-        expect(result).not.toContain('HTTP 503');
-        expect(result).not.toContain('Database connection');
-        expect(result).not.toContain('API quota');
-        expect(result).not.toContain('stack trace');
+      });
 
-        // Should be one of the 6 predefined user-friendly messages
+      it('should not contain HTTP status codes in technical error messages', () => {
+        // Arrange
+        const error = new Error('Discord API error: HTTP 503 with stack trace');
+
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result).not.toContain('HTTP 503');
+      });
+
+      it('should not contain database details in technical error messages', () => {
+        // Arrange
+        const error = new Error('Failed to fetch members: Database connection timeout');
+
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result).not.toContain('Database connection');
+      });
+
+      it('should not contain API quota details in technical error messages', () => {
+        // Arrange
+        const error = new Error('Failed to append members: Google Sheets API quota exceeded');
+
+        // Act
+        const result = convertErrorToUserMessage(error);
+
+        // Assert
+        expect(result).not.toContain('API quota');
+      });
+
+      it('should not contain stack trace in technical error messages', () => {
+        // Arrange
+        const error1 = new Error('Discord API error: HTTP 503 with stack trace');
+        const error2 = new Error('Failed to append members: Google Sheets API quota exceeded');
+
+        // Act & Assert
+        expect(convertErrorToUserMessage(error1)).not.toContain('stack trace');
+        expect(convertErrorToUserMessage(error2)).not.toContain('stack trace');
+      });
+
+      it('should return predefined user-friendly messages for technical errors', () => {
+        // Arrange
         const validMessages = [
           'Bot needs "View Server Members" permission',
           'Google Sheets configuration error',
@@ -378,8 +724,29 @@ describe('Exact Error Message Validation', () => {
           'Unexpected error - check server logs',
         ];
 
-        expect(validMessages).toContain(result);
-      }
+        // Act & Assert
+        expect(validMessages).toContain(
+          convertErrorToUserMessage(new Error('Bot lacks permission: TypeError in fetchMembers()'))
+        );
+        expect(validMessages).toContain(
+          convertErrorToUserMessage(
+            new Error('authentication failed: JWT token expired at line 42')
+          )
+        );
+        expect(validMessages).toContain(
+          convertErrorToUserMessage(new Error('Discord API error: HTTP 503 with stack trace'))
+        );
+        expect(validMessages).toContain(
+          convertErrorToUserMessage(
+            new Error('Failed to fetch members: Database connection timeout')
+          )
+        );
+        expect(validMessages).toContain(
+          convertErrorToUserMessage(
+            new Error('Failed to append members: Google Sheets API quota exceeded')
+          )
+        );
+      });
     });
   });
 });
