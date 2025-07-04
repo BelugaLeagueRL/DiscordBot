@@ -79,7 +79,7 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
-    "discord-interactions": "^3.4.0",
+    "discord-interactions": "^4.3.0",
     "tweetnacl": "^1.0.3"
   },
   "engines": {
