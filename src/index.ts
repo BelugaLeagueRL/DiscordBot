@@ -27,6 +27,7 @@ export interface Env {
   readonly ENVIRONMENT: string;
   readonly REGISTER_COMMAND_REQUEST_CHANNEL_ID?: string;
   readonly REGISTER_COMMAND_RESPONSE_CHANNEL_ID?: string;
+  readonly TEST_CHANNEL_ID?: string;
 }
 
 /**

@@ -12,5 +12,9 @@ DATABASE_URL="file:./local.db"
 # Google Sheets API (when implemented)
 GOOGLE_SHEETS_API_KEY="your_google_sheets_api_key_here"
 
+# Channel Configuration
+# Use TEST_CHANNEL_ID for development environment testing
+TEST_CHANNEL_ID="your_test_channel_id_here"
+
 # Environment
 ENVIRONMENT="development"
