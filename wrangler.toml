@@ -22,11 +22,23 @@ vars = { ENVIRONMENT = "production" }
 enabled = true
 head_sampling_rate = 1
 
-# Production secrets (set via wrangler secret put)
-# DISCORD_TOKEN = "..."
-# DISCORD_PUBLIC_KEY = "..."
-# DISCORD_APPLICATION_ID = "..."
-# DATABASE_URL = "..."
-# GOOGLE_SHEETS_API_KEY = "..."
+# Production secrets (set via `wrangler secret put <KEY> --env production`)
+# These must also be configured as GitHub repository secrets for CI/CD deployments
+# 
+# Core Discord Configuration:
+# DISCORD_TOKEN = "..."                              # Discord bot token from Developer Portal
+# DISCORD_PUBLIC_KEY = "..."                         # Discord application public key for signature verification
+# DISCORD_APPLICATION_ID = "..."                     # Discord application ID from Developer Portal
+# 
+# Infrastructure:
+# DATABASE_URL = "..."                               # Database connection string (production DB)
+# GOOGLE_SHEETS_API_KEY = "..."                      # Google Sheets API key for member synchronization
+# 
+# Channel Configuration (CRITICAL for command validation):
+# REGISTER_COMMAND_REQUEST_CHANNEL_ID = "..."        # Discord channel ID where /register command is allowed
+# REGISTER_COMMAND_RESPONSE_CHANNEL_ID = "..."       # Discord channel ID where registration responses are posted
+#
+# Note: Channel secrets are required for production deployments via GitHub Actions.
+# Without these, the /register command will fail with "command can only be used in designated register channel" error.
 
 # For local development, these are loaded from .dev.vars
