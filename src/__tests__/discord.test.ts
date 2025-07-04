@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { MockedFunction } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockedFunction } from 'vitest';
 import {
   InteractionType,
   InteractionResponseType,
@@ -21,19 +20,20 @@ function isDiscordResponseData(
   );
 }
 
-// Mock discord-interactions module
-vi.mock('discord-interactions', () => ({
-  verifyKey: vi.fn(),
+// Mock tweetnacl module
+vi.mock('tweetnacl', () => ({
+  default: {
+    sign: {
+      detached: {
+        verify: vi.fn(),
+      },
+    },
+  },
 }));
 
 describe('Discord utilities', () => {
-  let mockVerifyKey: MockedFunction<
-    (
-      rawBody: string | ArrayBuffer | Uint8Array | Buffer,
-      signature: string | ArrayBuffer | Uint8Array | Buffer,
-      timestamp: string | ArrayBuffer | Uint8Array | Buffer,
-      clientPublicKey: string | ArrayBuffer | Uint8Array | Buffer
-    ) => boolean
+  let mockNaclVerify: MockedFunction<
+    (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
   >;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
@@ -41,7 +41,11 @@ describe('Discord utilities', () => {
     vi.clearAllMocks();
 
     // Setup properly typed mocks
-    mockVerifyKey = vi.mocked((await import('discord-interactions')).verifyKey);
+    const { default: nacl } = await import('tweetnacl');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    mockNaclVerify = nacl.sign.detached.verify as MockedFunction<
+      (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
+    >;
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
       // Mock implementation
     });
@@ -53,7 +57,7 @@ describe('Discord utilities', () => {
 
   describe('verifyDiscordRequest', () => {
     it('should verify valid Discord request', async () => {
-      mockVerifyKey.mockReturnValue(true);
+      mockNaclVerify.mockReturnValue(true);
 
       const request = new Request('https://example.com', {
         method: 'POST',
@@ -67,11 +71,11 @@ describe('Discord utilities', () => {
       const result = await verifyDiscordRequest(request, 'test_public_key');
 
       expect(result).toBe(true);
-      expect(mockVerifyKey).toHaveBeenCalled();
+      expect(mockNaclVerify).toHaveBeenCalled();
     });
 
     it('should return false for invalid signature', async () => {
-      mockVerifyKey.mockReturnValue(false);
+      mockNaclVerify.mockReturnValue(false);
 
       const request = new Request('https://example.com', {
         method: 'POST',
@@ -118,7 +122,7 @@ describe('Discord utilities', () => {
     });
 
     it('should handle verification errors gracefully', async () => {
-      mockVerifyKey.mockImplementation(() => {
+      mockNaclVerify.mockImplementation(() => {
         throw new Error('Verification failed');
       });
 

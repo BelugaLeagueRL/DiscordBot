@@ -2,11 +2,17 @@
  * Comprehensive security middleware testing
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type MockedFunction } from 'vitest';
 
-// Mock discord-interactions module before importing
-vi.mock('discord-interactions', () => ({
-  verifyKey: vi.fn().mockResolvedValue(true),
+// Mock tweetnacl module before importing
+vi.mock('tweetnacl', () => ({
+  default: {
+    sign: {
+      detached: {
+        verify: vi.fn().mockReturnValue(true),
+      },
+    },
+  },
 }));
 import {
   extractSecurityContext,
@@ -269,9 +275,13 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction, { validSignature: true });
       const context = SecurityContextFactory.create();
 
-      // Mock the verifyKey function properly using vi.mock
-      const { verifyKey } = await import('discord-interactions');
-      vi.mocked(verifyKey).mockResolvedValue(true);
+      // Mock the nacl.sign.detached.verify function properly using vi.mock
+      const { default: nacl } = await import('tweetnacl');
+      (
+        nacl.sign.detached.verify as MockedFunction<
+          (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
+        >
+      ).mockReturnValue(true);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -284,9 +294,13 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction, { validSignature: false });
       const context = SecurityContextFactory.create();
 
-      // Mock the verifyKey function to return false
-      const { verifyKey } = await import('discord-interactions');
-      vi.mocked(verifyKey).mockReturnValue(false);
+      // Mock the nacl.sign.detached.verify function to return false
+      const { default: nacl } = await import('tweetnacl');
+      (
+        nacl.sign.detached.verify as MockedFunction<
+          (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
+        >
+      ).mockReturnValue(false);
 
       const result = await verifyDiscordRequestSecure(request, 'valid_public_key', context);
 
@@ -336,9 +350,13 @@ describe('Security Middleware', () => {
       const request = createMockDiscordRequest(interaction);
       const context = SecurityContextFactory.create();
 
-      // Mock verifyKey to throw error
-      const { verifyKey } = await import('discord-interactions');
-      vi.mocked(verifyKey).mockImplementation(() => {
+      // Mock nacl.sign.detached.verify to throw error
+      const { default: nacl } = await import('tweetnacl');
+      (
+        nacl.sign.detached.verify as MockedFunction<
+          (message: Uint8Array, signature: Uint8Array, publicKey: Uint8Array) => boolean
+        >
+      ).mockImplementation(() => {
         throw new Error('Verification failed');
       });
 
