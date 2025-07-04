@@ -49,12 +49,16 @@ export const EnvFactory = {
         process.env['REGISTER_COMMAND_REQUEST_CHANNEL_ID'] ?? '1388177835331424386',
       REGISTER_COMMAND_RESPONSE_CHANNEL_ID:
         process.env['REGISTER_COMMAND_RESPONSE_CHANNEL_ID'] ?? '1388058893552320655',
+      TEST_CHANNEL_ID: process.env['TEST_CHANNEL_ID'] ?? '1234567890123456789',
       ...overrides,
     };
   },
 
   development(): Env {
-    return this.create({ ENVIRONMENT: 'development' });
+    return this.create({
+      ENVIRONMENT: 'development',
+      TEST_CHANNEL_ID: '1234567890123456789', // Realistic test channel ID for development
+    });
   },
 
   production(): Env {

@@ -4,7 +4,12 @@
  * Enhanced with comprehensive security and audit logging
  */
 
-import { InteractionType, InteractionResponseType, createErrorResponse } from './utils/discord';
+import {
+  InteractionType,
+  InteractionResponseType,
+  createErrorResponse,
+  createInteractionResponse,
+} from './utils/discord';
 import { handleRegisterCommand } from './application_commands/register';
 import {
   extractSecurityContext,
@@ -27,6 +32,7 @@ export interface Env {
   readonly ENVIRONMENT: string;
   readonly REGISTER_COMMAND_REQUEST_CHANNEL_ID?: string;
   readonly REGISTER_COMMAND_RESPONSE_CHANNEL_ID?: string;
+  readonly TEST_CHANNEL_ID?: string;
 }
 
 /**
@@ -140,12 +146,8 @@ function handlePingInteraction(
     responseTime,
   });
 
-  return new Response(JSON.stringify({ type: InteractionResponseType.Pong }), {
-    headers: {
-      'Content-Type': 'application/json',
-      ...createSecurityHeaders(),
-    },
-  });
+  // Discord verification requires a clean PONG response without extra headers
+  return createInteractionResponse(InteractionResponseType.Pong);
 }
 
 /**

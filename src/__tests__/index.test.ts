@@ -336,13 +336,14 @@ describe('Main Index Handler', () => {
   });
 
   describe('Security headers', () => {
-    it('should add security headers to all responses', async () => {
-      const interaction = mockInteractions.ping();
-      const request = createMockDiscordRequest(interaction);
+    it('should add security headers to health check responses', async () => {
+      // Health check responses should have security headers
+      const request = new Request('https://example.com/', { method: 'GET' });
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
+      expect(response.status).toBe(200);
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
       expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block');
@@ -351,18 +352,19 @@ describe('Main Index Handler', () => {
       expect(response.headers.get('Strict-Transport-Security')).toContain('max-age=');
     });
 
-    it('should preserve existing response headers', async () => {
+    it('should NOT add security headers to PING responses for Discord verification', async () => {
       const interaction = mockInteractions.ping();
       const request = createMockDiscordRequest(interaction);
 
       const mockCtx = ExecutionContextFactory.create();
       const response = await workerModule.fetch(request, env, mockCtx);
 
-      // Check that security headers are added
+      // PING responses should be minimal for Discord verification
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/json');
-      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
-      expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+      // These should NOT be present on PING responses
+      expect(response.headers.get('X-Content-Type-Options')).toBeNull();
+      expect(response.headers.get('X-Frame-Options')).toBeNull();
     });
   });
 
