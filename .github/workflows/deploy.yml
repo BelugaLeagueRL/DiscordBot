@@ -44,6 +44,18 @@ jobs:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         command: deploy --env production
+        secrets: |
+          DISCORD_TOKEN
+          DISCORD_PUBLIC_KEY
+          DISCORD_APPLICATION_ID
+          REGISTER_COMMAND_REQUEST_CHANNEL_ID
+          REGISTER_COMMAND_RESPONSE_CHANNEL_ID
+      env:
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+        DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
+        REGISTER_COMMAND_REQUEST_CHANNEL_ID: ${{ secrets.REGISTER_COMMAND_REQUEST_CHANNEL_ID }}
+        REGISTER_COMMAND_RESPONSE_CHANNEL_ID: ${{ secrets.REGISTER_COMMAND_RESPONSE_CHANNEL_ID }}
         
     - name: Wrangler Production Validation
       if: success()
