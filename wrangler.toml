@@ -3,9 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
 
-# Default configuration (development)
+# Default configuration (production)
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 
 # Development environment
 [env.development]
