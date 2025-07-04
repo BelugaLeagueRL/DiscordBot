@@ -9,7 +9,6 @@
     "dev": "wrangler dev --env development --port 8787",
     "dev:tunnel": "wrangler dev --env development --remote",
     "dev:local": "wrangler dev --env development --local",
-    "deploy": "wrangler deploy --env production",
     "deploy:dev": "wrangler deploy --env development",
     "test": "vitest",
     "test:watch": "vitest --watch",
@@ -79,7 +78,9 @@
     "wrangler": "^4.22.0"
   },
   "dependencies": {
-    "discord-interactions": "^3.4.0"
+    "buffer": "^6.0.3",
+    "discord-interactions": "^3.4.0",
+    "tweetnacl": "^1.0.3"
   },
   "engines": {
     "node": ">=18"

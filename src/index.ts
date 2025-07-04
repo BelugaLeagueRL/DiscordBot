@@ -4,8 +4,8 @@
  * Enhanced with comprehensive security and audit logging
  */
 
+import { InteractionType } from 'discord-interactions';
 import {
-  InteractionType,
   InteractionResponseType,
   createErrorResponse,
   createInteractionResponse,
@@ -332,12 +332,12 @@ async function processDiscordInteraction(
   }
 
   // Handle ping from Discord
-  if (interaction.type === (InteractionType.Ping as number)) {
+  if (interaction.type === (InteractionType.PING as number)) {
     return handlePingInteraction(audit, context, interaction, startTime);
   }
 
   // Handle application commands
-  if (interaction.type === (InteractionType.ApplicationCommand as number)) {
+  if (interaction.type === (InteractionType.APPLICATION_COMMAND as number)) {
     return await handleApplicationCommand({ interaction, env, audit, context, ctx });
   }
 

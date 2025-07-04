@@ -366,6 +366,27 @@ describe('Main Index Handler', () => {
       expect(response.headers.get('X-Content-Type-Options')).toBeNull();
       expect(response.headers.get('X-Frame-Options')).toBeNull();
     });
+
+    it('should handle interaction type comparison correctly (regression test)', async () => {
+      // This test ensures the InteractionType enum values are compared correctly
+      const interaction = mockInteractions.ping();
+
+      // Verify the interaction type is actually the number 1
+      expect(interaction.type).toBe(1);
+
+      const request = createMockDiscordRequest(interaction);
+      const mockCtx = ExecutionContextFactory.create();
+      const response = await workerModule.fetch(request, env, mockCtx);
+
+      // Should properly handle PING and return PONG (type 1)
+      expect(response.status).toBe(200);
+      const rawResponseData = await response.json();
+      if (!isDiscordResponse(rawResponseData)) {
+        throw new Error('Invalid response format');
+      }
+      const responseData = rawResponseData;
+      expect(responseData.type).toBe(1); // PONG response
+    });
   });
 
   describe('Rate limit cleanup', () => {
