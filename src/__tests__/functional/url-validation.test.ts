@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { validateTrackerUrl } from '../../application_commands/register/handler';
+import { createValidEpicTrackerUrl, createInvalidEpicTrackerUrl } from '../helpers/test-factories';
 
 describe('Current URL Validation Implementation', () => {
   describe('Basic URL Structure Validation', () => {
@@ -144,9 +145,8 @@ describe('Security and Edge Case Analysis', () => {
         'https://rocketleague.tracker.network/rocket-league/profile/epic/Test%20Player/overview';
       const result = validateTrackerUrl(encodedUrl);
 
-      // Enhanced implementation now decodes and validates properly (spaces not allowed in Epic usernames)
-      expect(result.isValid).toBe(false);
-      expect(result.error).toContain('Invalid Epic Games display name format');
+      // Enhanced implementation now decodes and validates properly (spaces are allowed in Epic usernames)
+      expect(result.isValid).toBe(true);
     });
 
     it('FUNCTIONAL FIXED: now validates platform-specific format constraints', () => {
@@ -221,6 +221,26 @@ describe('Platform-Specific Validation Gaps', () => {
       // Enhanced implementation now enforces Xbox 12-character limit
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('Invalid Xbox gamertag format');
+    });
+  });
+});
+
+describe('Epic Games Display Name Validation', () => {
+  describe('Valid Epic URLs', () => {
+    it('should accept valid Epic URLs', () => {
+      const url = createValidEpicTrackerUrl();
+      const result = validateTrackerUrl(url);
+
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Invalid Epic URLs', () => {
+    it('should reject invalid Epic URLs', () => {
+      const url = createInvalidEpicTrackerUrl();
+      const result = validateTrackerUrl(url);
+
+      expect(result.isValid).toBe(false);
     });
   });
 });
