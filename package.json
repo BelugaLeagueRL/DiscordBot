@@ -52,7 +52,7 @@
     "@cloudflare/vitest-pool-workers": "^0.8.47",
     "@cloudflare/workers-types": "^4.20241218.0",
     "@eslint/js": "^9.18.0",
-    "@faker-js/faker": "^9.8.0",
+    "@faker-js/faker": "^9.9.0",
     "@types/node": "^24.0.6",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
