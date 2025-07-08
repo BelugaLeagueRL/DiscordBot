@@ -227,6 +227,43 @@ export function createSwitchTrackerUrl(): string {
 }
 
 /**
+ * Factory for creating Epic tracker URLs with valid characters only
+ * Generates realistic Epic display names with Unicode support
+ */
+export function createValidEpicTrackerUrl(): string {
+  const playerId = faker.internet.displayName();
+  return `${BASE_URL}/epic/${encodeURIComponent(playerId)}/overview`;
+}
+
+/**
+ * Factory for creating Epic tracker URLs with invalid characters
+ * Generates strings that should be rejected by Epic validation
+ */
+export function createInvalidEpicTrackerUrl(): string {
+  const invalidType = faker.helpers.arrayElement(['too_short', 'control_chars', 'empty']);
+
+  switch (invalidType) {
+    case 'too_short':
+      // Generate 1-2 character string (too short for Epic)
+      return `${BASE_URL}/epic/${faker.string.alpha({ length: faker.number.int({ min: 1, max: 2 }) })}/overview`;
+
+    case 'control_chars': {
+      // Generate string with control characters mixed in
+      const base = faker.string.alpha({ length: 5 });
+      const withControls = `${base}\x00\x1F`; // Add control characters
+      return `${BASE_URL}/epic/${encodeURIComponent(withControls)}/overview`;
+    }
+
+    case 'empty':
+      // Empty string
+      return `${BASE_URL}/epic//overview`;
+
+    default:
+      return createInvalidTrackerUrl();
+  }
+}
+
+/**
  * Factory for creating test error scenarios
  */
 export function createNetworkError(): Error {

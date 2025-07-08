@@ -88,13 +88,27 @@ function validateXboxGamertag(platformId: string): { isValid: boolean; error?: s
  * Validate Epic Games display name format
  */
 function validateEpicId(platformId: string): { isValid: boolean; error?: string } {
-  if (platformId.length < 3 || !/^[a-zA-Z0-9._-]+$/.test(platformId)) {
+  if (platformId.length < 3) {
     return {
       isValid: false,
-      error:
-        'Invalid Epic Games display name format. Must be 3+ characters, contain only letters/numbers/periods/hyphens/underscores',
+      error: 'Invalid Epic Games display name format. Must be 3+ characters',
     };
   }
+
+  // Check for control characters without using regex with control chars
+  const CONTROL_CHAR_MAX = 31; // ASCII control characters 0-31
+  const DEL_CHAR = 127; // DEL control character
+
+  for (let i = 0; i < platformId.length; i++) {
+    const charCode = platformId.charCodeAt(i);
+    if ((charCode >= 0 && charCode <= CONTROL_CHAR_MAX) || charCode === DEL_CHAR) {
+      return {
+        isValid: false,
+        error: 'Invalid Epic Games display name format. Cannot contain control characters',
+      };
+    }
+  }
+
   return { isValid: true };
 }
 
